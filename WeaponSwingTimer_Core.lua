@@ -16,7 +16,7 @@ local GetSpellIDs           = addon_data.spells.GetSpellIDs
 local frame                 = CreateFrame("Frame", addon_name .. "CoreFrame", UIParent)
 core.core_frame             = frame
 
-local VERSION = "2.4.4"
+local VERSION = C_AddOns.GetAddOnMetadata(addon_name, "Version")
 local LOAD_MESSAGE = L"Thank you for installing WeaponSwingTimer Version" .. " " .. VERSION .. 
                     " " .. L"by Skad! Use |cFFFFC300/wst|r for more options."
 
