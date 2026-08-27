@@ -19,6 +19,7 @@ local IsCurrentSpell        = addon_data.spells.IsCurrentSpell
 local IsSpeedAura           = addon_data.auras.IsSpeedAura
 local IsShapeshiftAura      = addon_data.auras.IsShapeshiftAura
 local IsSwingResetItemSpell = addon_data.items.IsSwingResetItemSpell
+local IsExplosiveSpell      = addon_data.items.IsExplosiveSpell
 local SimpleRound           = addon_data.utils.SimpleRound
 local IsQueuedSpell         = addon_data.core.IsQueuedSpell
 local GetTimePreciseSec     = GetTimePreciseSec
@@ -601,6 +602,12 @@ local function isResetSpell(spellID)
     return false
 end
 
+local function isExcludedSpell(spellID)
+    if IsExplosiveSpell(spellID) then return true end
+
+    return false
+end
+
 ---When a player's non-instant, non-queued spell cast concludes, there are four distinct effects that this can have on the swing timer.
 ---
 ---First, if the cast succeeds, then the swing timer will be reset.
@@ -613,7 +620,7 @@ end
 ---(that casting duration which exceeded the expected swing time) will be removed from the time until the next swing. This can be 
 ---visualized as the swing timer having reset as normal at the expected time, but without a swing having had occurred.
 ---
----Fourth, if the cast is canceled, interrupted, or otherwise fails after the swing timer as fully progressed but the player does not 
+---Fourth, if the cast is canceled, interrupted, or otherwise fails after the swing timer has fully progressed but the player does not 
 ---have an attack queued, then the swing timer will not be reset, instead remaining fully progressed to attack immediately after the 
 ---player initiates an attack.
 ---@param unit UnitId
@@ -621,6 +628,8 @@ end
 ---@param didCastSucceed? true|false
 local function CheckSpellSwingReset(unit, spellID, didCastSucceed)
     if unit ~= "player" then return end
+
+    if isExcludedSpell(spellID) then return end
 
     --Filter this functionality for only approved classes. Temporary? Goal classes would be Warrior, Rogue, Shaman, Paladin, Hunter.
     if not RESET_SPELL_CLASSES[PLAYER_CLASS] then return end
