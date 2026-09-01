@@ -34,7 +34,7 @@
 ## Notes-zhTW: 跟踪近戰武器的揮動時間獵人自動射擊和魔杖射擊。
 ## IconTexture: Interface\AddOns\WeaponSwingTimer\Images\wst_logo_plain
 ## Author: LeftHandGlove, WatchYourSixx, Skad
-## Version: 2.4.5
+## Version: 2.4.6
 ## DefaultState: enabled
 ## OptionalDeps: ColorPickerPlus
 ## SavedVariablesPerCharacter: character_core_settings, character_player_settings, character_target_settings, character_warrior_settings, character_druid_settings, character_hunter_settings, character_castbar_settings

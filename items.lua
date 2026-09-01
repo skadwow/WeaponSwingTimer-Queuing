@@ -8,24 +8,33 @@ addon_data.items = items
 
 ---@type table<SpellID, ItemID>
 local RESET_ITEM_SPELLS = {
-    -- Oil of Immolation
-    [11350] = 8956,
-    -- Most Potions that restore health
-    [439] = 118,
-    [440] = 858,
-    [441] = 929,
-    [2024] = 1710,
-    [2370] = 2456,
-    [4042] = 3928,
-    [11387] = 9144,
-    [17534] = 13446,
-    [21393] = 17348,
-    [21394] = 17349,
-    [22729] = 18253,
-    [28495] = 22829,
-    [28517] = 22850,
-    [41620] = 32905,
-    [45051] = 34440,
+    -- Classic
+    [11350] = 8956,  -- Oil of Immolation
+
+    [439]   = 118,   -- Minor Healing Potion
+    [440]   = 858,   -- Lesser Healing Potion / Discolored Healing Potion
+    [441]   = 929,   -- Healing Potion
+    [2024]  = 1710,  -- Greater Healing Potion
+    [2370]  = 2456,  -- Minor Rejuvenation Potion
+    [4042]  = 3928,  -- Superior Healing Potion / Combat Healing Potion
+    [11387] = 9144,  -- Wildvine Potion
+    [17534] = 13446, -- Major Healing Potion / Major Combat Healing Potion
+    [21393] = 17348, -- Major Healing Draught
+    [21394] = 17349, -- Superior Healing Draught
+    [22729] = 18253, -- Major Rejuvenation Potion
+    -- TBC
+    [50986] = 38466, -- Sulfuron Slammer
+
+    [28495] = 22829, -- Super Healing Potion + variants
+    [28517] = 22850, -- Super Rejuvenation Potion
+    [41306] = 32784, -- Red Ogre Brew
+    [41620] = 32905, -- Bottled Nethergon Vapor
+    [45051] = 34440, -- Mad Alchemist's Potion
+    -- Wrath
+    [43185] = 33447, -- Runic Healing Potion
+    [53670] = 39971, -- Runic Battle Potion
+    [53750] = 40077, -- Crazy Alchemist's Potion
+    [67489] = 41166, -- Runic Healing Injector
 }
 
 ---Returns the `ItemID` for a given `SpellID` if the spell is registered to reset the swing timer, otherwise `nil`.
