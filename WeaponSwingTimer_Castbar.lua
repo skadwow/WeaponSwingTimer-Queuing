@@ -51,7 +51,7 @@ function castbar.is_spell_shoot(spellID)
 end
 
 local PLAYER_GUID           = addon_data.player.guid
-local PLAYER_CLASS         = addon_data.player.class
+local PLAYER_CLASS          = addon_data.player.class
 local PLAYER_IS_RANGED      = addon_data.player.is_ranged
 
 local PUSHBACK_EVENTS       = {
@@ -61,8 +61,8 @@ local PUSHBACK_EVENTS       = {
     ["SPELL_DAMAGE"]            = true,
 }
 
---- default settings to be loaded on initial load and reset to default
-castbar.default_settings = {
+local settings              = {}
+castbar.default_settings    = {
     enabled = true,
     width = 300,
     height = 12,
@@ -95,19 +95,10 @@ castbar.initial_cast_time = 0
 castbar.total_pushback = 0
 
 function castbar.LoadSettings()
-    -- If the carried over settings dont exist then make them
-    if not character_castbar_settings then
-        character_castbar_settings = {}
-    end
-    -- If the carried over settings aren't set then set them to the defaults
-    for setting, value in pairs(castbar.default_settings) do
-        if character_castbar_settings[setting] == nil then
-            character_castbar_settings[setting] = value
-        end
-    end
+    settings = addon_data.settings.castbar
     -- only load castbar if hunter class, since it's only used for multi and aimed shot
-    if character_castbar_settings.enabled == nil then
-        character_castbar_settings.enabled = PLAYER_CLASS == "HUNTER"
+    if settings.enabled == nil then
+        settings.enabled = PLAYER_CLASS == "HUNTER"
     end
     -- One-time tooltip creation
     if not castbar.scan_tip then
@@ -118,9 +109,9 @@ end
 
 function castbar.RestoreDefaults()
     for setting, value in pairs(castbar.default_settings) do
-        character_castbar_settings[setting] = value
+        settings[setting] = value
     end
-    character_castbar_settings.enabled = PLAYER_IS_RANGED
+    settings.enabled = PLAYER_IS_RANGED
     castbar.UpdateVisualsOnSettingsChange()
     castbar.UpdateConfigPanelValues()
 end
@@ -150,7 +141,7 @@ function castbar.UpdateCastTimer(elapsed)
 end
 
 function castbar.OnUpdate(elapsed)
-    if character_castbar_settings.enabled and (PLAYER_CLASS == "HUNTER") then
+    if settings.enabled and (PLAYER_CLASS == "HUNTER") then
         -- Update the cast bar timers
         if castbar.casting_shot then
             castbar.UpdateCastTimer(elapsed)
@@ -184,7 +175,6 @@ end
 
 -- Selection of starting a timer for casting multi and handling of stopping auto timer from starting
 function castbar.StartCastingSpell(spellID)
-    local settings = character_castbar_settings
     if (GetTime() - castbar.last_failed_time) > 0 then
         if not castbar.casting and UnitCanAttack("player", "target") then
             local spellInfo = C_Spell.GetSpellInfo(spellID)
@@ -245,8 +235,6 @@ end
 --- upon spell cast succeeded, check if is auto shot and reset timer, adjust ranged speed based on haste. 
 --- If not auto shot, set bar to green *commented out
 function castbar.OnUnitSpellCastSucceeded(unit, spellID)
-    local settings = character_castbar_settings
-
     if unit == "player" then
         castbar.casting = false
 
@@ -266,7 +254,6 @@ function castbar.OnUnitSpellCastSucceeded(unit, spellID)
 end
 
 function castbar.OnUnitSpellCastFailed(unit, spellID)
-    local settings = character_castbar_settings
     local frame = castbar.frame
     -- only care about if multi fails to cast, so ignore others
     if unit == "player" and (castbar.is_spell_multi_shot(spellID) or castbar.is_spell_aimed_shot(spellID)) then
@@ -284,7 +271,7 @@ function castbar.OnUnitSpellCastFailed(unit, spellID)
             castbar.casting_spell_id = 0
             if spell_aimed_enabled or spell_multi_enabled then
                 castbar.frame.spell_bar:SetVertexColor(0.7, 0, 0, 1)
-                if character_castbar_settings.show_text then
+                if settings.show_text then
                     frame.spell_text_center:SetText(L"Failed")
                 end
                 frame.spell_bar:SetWidth(settings.width)
@@ -294,7 +281,6 @@ function castbar.OnUnitSpellCastFailed(unit, spellID)
 end
 
 function castbar.OnUnitSpellCastInterrupted(unit, spellID)
-    local settings = character_castbar_settings
     local frame = castbar.frame
     if unit == "player" and (castbar.is_spell_multi_shot(spellID) or castbar.is_spell_aimed_shot(spellID)) then
         castbar.casting = false
@@ -322,7 +308,6 @@ end
 --- Updating and initializing visuals
 --- ---------------------------------
 function castbar.UpdateVisualsOnUpdate()
-    local settings = character_castbar_settings
     local frame = castbar.frame
 
     if addon_data.core.in_combat or castbar.casting_shot then
@@ -378,7 +363,6 @@ end
 function castbar.UpdateVisualsOnSettingsChange()
     if addon_data.player.class ~= "HUNTER" then return end
 
-    local settings = character_castbar_settings
     local frame = castbar.frame
     if (settings.show_multishot_cast_bar or settings.show_aimedshot_cast_bar) and (PLAYER_CLASS == "HUNTER") then
         frame:Show()
@@ -434,14 +418,13 @@ function castbar.UpdateVisualsOnSettingsChange()
 end
 
 function castbar.OnFrameDragStart()
-    if not character_castbar_settings.is_locked then
+    if not settings.is_locked then
         castbar.frame:StartMoving()
     end
 end
 
 function castbar.OnFrameDragStop()
     local frame = castbar.frame
-    local settings = character_castbar_settings
     frame:StopMovingOrSizing()
     local point, _, rel_point, x_offset, y_offset = frame:GetPoint()
     if x_offset < 20 and x_offset > -20 then
@@ -456,7 +439,6 @@ function castbar.OnFrameDragStop()
 end
 
 function castbar.InitializeVisuals()
-    local settings = character_castbar_settings
     -- Create the frame
     castbar.frame = CreateFrame("Frame", addon_name .. "HunterCastbarFrame", UIParent)
     local frame = castbar.frame
@@ -503,7 +485,6 @@ local config = addon_data.config
 
 function castbar.UpdateConfigPanelValues()
     local panel = castbar.config_frame
-    local settings = character_castbar_settings
     panel.show_aimedshot_cast_bar_checkbox:SetChecked(settings.show_aimedshot_cast_bar)
     panel.show_multishot_cast_bar_checkbox:SetChecked(settings.show_multishot_cast_bar)
     panel.show_border_checkbox:SetChecked(settings.show_border)
@@ -529,67 +510,67 @@ function castbar.UpdateConfigPanelValues()
 end
 
 function castbar.ShowAimedShotCastBarCheckBoxOnClick(self)
-    character_castbar_settings.show_aimedshot_cast_bar = self:GetChecked()
+    settings.show_aimedshot_cast_bar = self:GetChecked()
     castbar.UpdateVisualsOnSettingsChange()
 end
 
 function castbar.ShowMultiShotCastBarCheckBoxOnClick(self)
-    character_castbar_settings.show_multishot_cast_bar = self:GetChecked()
+    settings.show_multishot_cast_bar = self:GetChecked()
     castbar.UpdateVisualsOnSettingsChange()
 end
 
 function castbar.ShowBorderCheckBoxOnClick(self)
-    character_castbar_settings.show_border = self:GetChecked()
+    settings.show_border = self:GetChecked()
     castbar.UpdateVisualsOnSettingsChange()
 end
 
 function castbar.ShowLatencyBarsCheckBoxOnClick(self)
-    character_castbar_settings.show_latency_bars = self:GetChecked()
+    settings.show_latency_bars = self:GetChecked()
     castbar.UpdateVisualsOnSettingsChange()
 end
 
 function castbar.ShowCastTextCheckBoxOnClick(self)
-    character_castbar_settings.show_cast_text = self:GetChecked()
+    settings.show_cast_text = self:GetChecked()
     castbar.UpdateVisualsOnSettingsChange()
 end
 
 function castbar.WidthEditBoxOnEnter(self)
-    character_castbar_settings.width = tonumber(self:GetText())
+    settings.width = tonumber(self:GetText())
     castbar.UpdateVisualsOnSettingsChange()
 end
 
 function castbar.HeightEditBoxOnEnter(self)
-    character_castbar_settings.height = tonumber(self:GetText())
+    settings.height = tonumber(self:GetText())
     castbar.UpdateVisualsOnSettingsChange()
 end
 
 function castbar.FontSizeEditBoxOnEnter(self)
-    character_castbar_settings.fontsize = tonumber(self:GetText())
+    settings.fontsize = tonumber(self:GetText())
     castbar.UpdateVisualsOnSettingsChange()
 end
 
 function castbar.XOffsetEditBoxOnEnter(self)
-    character_castbar_settings.x_offset = tonumber(self:GetText())
+    settings.x_offset = tonumber(self:GetText())
     castbar.UpdateVisualsOnSettingsChange()
 end
 
 function castbar.YOffsetEditBoxOnEnter(self)
-    character_castbar_settings.y_offset = tonumber(self:GetText())
+    settings.y_offset = tonumber(self:GetText())
     castbar.UpdateVisualsOnSettingsChange()
 end
 
 function castbar.CombatAlphaOnValChange(self)
-    character_castbar_settings.in_combat_alpha = tonumber(self:GetValue())
+    settings.in_combat_alpha = tonumber(self:GetValue())
     castbar.UpdateVisualsOnSettingsChange()
 end
 
 -- function castbar.OOCAlphaOnValChange(self)
-    -- character_castbar_settings.ooc_alpha = tonumber(self:GetValue())
+    -- settings.ooc_alpha = tonumber(self:GetValue())
     -- castbar.UpdateVisualsOnSettingsChange()
 -- end
 
 function castbar.BackplaneAlphaOnValChange(self)
-    character_castbar_settings.backplane_alpha = tonumber(self:GetValue())
+    settings.backplane_alpha = tonumber(self:GetValue())
     castbar.UpdateVisualsOnSettingsChange()
 end
 --- Initializes the main setting panel including layout, alignment, and design

@@ -39,27 +39,19 @@ local QUEUED_SPELLS         = {
     ["WARRIOR"]     = GetSpellIDs(L"Heroic Strike", L"Cleave"),
 }
 
+local settings              = {}
 core.default_settings       = {
     one_frame = false,
     welcome_message = true
 }
 
 function core.LoadSettings()
-    -- If the carried over settings dont exist then make them
-    if not character_core_settings then
-        character_core_settings = {}
-    end
-    -- If the carried over settings aren't set then set them to the defaults
-    for setting, value in pairs(core.default_settings) do
-        if character_core_settings[setting] == nil then
-            character_core_settings[setting] = value
-        end
-    end
+    settings = addon_data.settings.core
 end
 
 function core.RestoreDefaults()
     for setting, value in pairs(core.default_settings) do
-        character_core_settings[setting] = value
+        settings[setting] = value
     end
 end
 
@@ -69,8 +61,10 @@ end
 
 frame:RegisterEvent("ADDON_LOADED")
 
-local function LoadAllSettings()
-    core.LoadSettings()
+function core.LoadAllSettings()
+    addon_data.profiles.LoadSettings()
+
+    addon_data.core.LoadSettings()
     addon_data.player.LoadSettings()
     addon_data.target.LoadSettings()
     addon_data.warrior.LoadSettings()
@@ -87,6 +81,7 @@ function core.RestoreAllDefaults()
     addon_data.druid.RestoreDefaults()
     addon_data.hunter.RestoreDefaults()
     addon_data.castbar.RestoreDefaults()
+    addon_data.profiles.RestoreDefaults()
 end
 
 local function InitializeAllVisuals()
@@ -101,6 +96,16 @@ local function InitializeAllVisuals()
         addon_data.castbar.InitializeVisuals()
     end
     addon_data.config.InitializeVisuals()
+end
+
+function core.UpdateAllConfigPanelValues()
+    addon_data.profiles.UpdateConfigPanelValues()
+    addon_data.player.UpdateConfigPanelValues()
+    addon_data.target.UpdateConfigPanelValues()
+    addon_data.warrior.UpdateConfigPanelValues()
+    addon_data.druid.UpdateConfigPanelValues()
+    addon_data.hunter.UpdateConfigPanelValues()
+    addon_data.castbar.UpdateConfigPanelValues()
 end
 
 function core.UpdateAllVisualsOnSettingsChange()
@@ -174,13 +179,14 @@ function frame:OnAddonLoaded()
     self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
     self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
     -- Load the settings for the core and all timers
-    LoadAllSettings()
+    addon_data.profiles.LoadProfiles()
+    core.LoadAllSettings()
     InitializeAllVisuals()
     -- Any other misc operations that happen at the start
     addon_data.player.ZeroizeSwingTimers()
     addon_data.target.ZeroizeSwingTimers()
 
-    if character_core_settings.welcome_message then
+    if settings.welcome_message then
         addon_data.utils.PrintMsg(LOAD_MESSAGE)
     end
 end

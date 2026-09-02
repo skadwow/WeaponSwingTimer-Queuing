@@ -85,6 +85,17 @@ function config.InitializeVisuals()
     panel.config_druid_panel.parent = panel.name
     panel.config_druid_panel.default = config.OnDefault
     Settings.RegisterCanvasLayoutSubcategory(category, panel.config_druid_panel, panel.config_druid_panel.name)
+
+    -- Add the profiles panel
+    panel.config_profiles_panel = CreateFrame("Frame", nil, panel)
+    panel.config_profiles_panel:SetSize(1, 1)
+    panel.config_profiles_panel.profiles_panel = addon_data.profiles.CreateConfigPanel(panel.config_profiles_panel)
+    panel.config_profiles_panel.profiles_panel:SetPoint("TOPLEFT", 0, 0)
+    panel.config_profiles_panel.profiles_panel:SetSize(1, 1)
+    panel.config_profiles_panel.name = L"Profiles"
+    panel.config_profiles_panel.parent = panel.name
+    panel.config_profiles_panel.default = config.OnDefault
+    Settings.RegisterCanvasLayoutSubcategory(category, panel.config_profiles_panel, panel.config_profiles_panel.name)
 end
 
 function config.TextFactory(parent, text, size)
@@ -233,36 +244,33 @@ end
 
 function config.UpdateConfigValues()
     local panel = config.config_frame
-    local settings = character_player_settings
-    local settings_core = character_core_settings
 
-    panel.is_locked_checkbox:SetChecked(settings.is_locked)
-    panel.welcome_checkbox:SetChecked(settings_core.welcome_message)
+    panel.is_locked_checkbox:SetChecked(addon_data.settings.player.is_locked)
+    panel.welcome_checkbox:SetChecked(addon_data.settings.core.welcome_message)
 end
 
 function config.IsLockedCheckBoxOnClick(self)
-    character_player_settings.is_locked = self:GetChecked()
-    character_target_settings.is_locked = self:GetChecked()
-    character_hunter_settings.is_locked = self:GetChecked()
-    character_castbar_settings.is_locked = self:GetChecked()
-    addon_data.player.frame:EnableMouse(not character_target_settings.is_locked)
-    addon_data.target.frame:EnableMouse(not character_target_settings.is_locked)
+    addon_data.settings.player.is_locked = self:GetChecked()
+    addon_data.settings.target.is_locked = self:GetChecked()
+    addon_data.settings.hunter.is_locked = self:GetChecked()
+    addon_data.settings.castbar.is_locked = self:GetChecked()
+    addon_data.player.frame:EnableMouse(not addon_data.settings.target.is_locked)
+    addon_data.target.frame:EnableMouse(not addon_data.settings.target.is_locked)
     if addon_data.player.class == "HUNTER" then
-        addon_data.hunter.frame:EnableMouse(not character_target_settings.is_locked)
-        addon_data.castbar.frame:EnableMouse(not character_target_settings.is_locked)
+        addon_data.hunter.frame:EnableMouse(not addon_data.settings.target.is_locked)
+        addon_data.castbar.frame:EnableMouse(not addon_data.settings.target.is_locked)
     end
     addon_data.core.UpdateAllVisualsOnSettingsChange()
 end
 
 function config.WelcomeCheckBoxOnClick(self)
-    character_core_settings.welcome_message = self:GetChecked()
+    addon_data.settings.core.welcome_message = self:GetChecked()
     addon_data.core.UpdateAllVisualsOnSettingsChange()
 end
 
 function config.CreateConfigPanel(parent_panel)
     config.config_frame = CreateFrame("Frame", addon_name .. "GlobalConfigPanel", parent_panel)
     local panel = config.config_frame
-    local settings = character_player_settings
     -- Title Text
     panel.title_text = config.TextFactory(panel, L"Global Bar Settings", 20)
     panel.title_text:SetPoint("TOPLEFT", 0, 0)

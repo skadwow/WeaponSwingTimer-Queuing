@@ -14,7 +14,8 @@ addon_data.target           = target
 local SimpleRound           = addon_data.utils.SimpleRound
 local IsQueuedSpell         = addon_data.core.IsQueuedSpell
 
-target.default_settings = {
+local settings              = {}
+target.default_settings     = {
     enabled = true,
     width = 300,
     height = 12,
@@ -56,21 +57,12 @@ target.has_offhand = false
 target.off_speed_changed = false
 
 function target.LoadSettings()
-    -- If the carried over settings dont exist then make them
-    if not character_target_settings then
-        character_target_settings = {}
-    end
-    -- If the carried over settings aren't set then set them to the defaults
-    for setting, value in pairs(target.default_settings) do
-        if character_target_settings[setting] == nil then
-            character_target_settings[setting] = value
-        end
-    end
+    settings = addon_data.settings.target
 end
 
 function target.RestoreDefaults()
     for setting, value in pairs(target.default_settings) do
-        character_target_settings[setting] = value
+        settings[setting] = value
     end
     target.UpdateVisualsOnSettingsChange()
     target.UpdateConfigPanelValues()
@@ -107,7 +99,7 @@ function target.OnInventoryChange()
 end
 
 function target.OnUpdate(elapsed)
-    if character_target_settings.enabled and UnitExists("target") then
+    if settings.enabled and UnitExists("target") then
         -- Update the main hand swing timer
         target.UpdateMainSwingTimer(elapsed)
         -- Update the off hand swing timer
@@ -216,7 +208,7 @@ function target.ZeroizeSwingTimers()
 end
 
 function target.UpdateMainSwingTimer(elapsed)
-    if character_target_settings.enabled and UnitExists("target") then
+    if settings.enabled and UnitExists("target") then
         if target.main_swing_timer > 0 then
             target.main_swing_timer = target.main_swing_timer - elapsed
             if target.main_swing_timer < 0 then
@@ -227,7 +219,7 @@ function target.UpdateMainSwingTimer(elapsed)
 end
 
 function target.UpdateOffSwingTimer(elapsed)
-    if character_target_settings.enabled and UnitExists("target") then
+    if settings.enabled and UnitExists("target") then
         if target.has_offhand then
             if target.off_swing_timer > 0 then
                 target.off_swing_timer = target.off_swing_timer - elapsed
@@ -285,7 +277,6 @@ end
 --[[===================================== VISUALS RELATED ======================================]]--
 --[[============================================================================================]]--
 function target.UpdateVisualsOnUpdate()
-    local settings = character_target_settings
     local frame = target.frame
     if settings.enabled and UnitExists("target") then
         frame:Show()
@@ -350,7 +341,7 @@ function target.UpdateVisualsOnUpdate()
             frame.off_right_text:Hide()
         end
         -- Update the frame's appearance based on settings
-        if target.has_offhand and character_target_settings.show_offhand then
+        if target.has_offhand and settings.show_offhand then
             frame:SetHeight((settings.height * 2) + 2)
         else
             frame:SetHeight(settings.height)
@@ -368,7 +359,6 @@ end
 
 function target.UpdateVisualsOnSettingsChange()
     local frame = target.frame
-    local settings = character_target_settings
     if settings.enabled then
         frame:Show()
         frame:ClearAllPoints()
@@ -459,14 +449,13 @@ function target.UpdateVisualsOnSettingsChange()
 end
 
 function target.OnFrameDragStart()
-    if not character_target_settings.is_locked then
+    if not settings.is_locked then
         target.frame:StartMoving()
     end
 end
 
 function target.OnFrameDragStop()
     local frame = target.frame
-    local settings = character_target_settings
     frame:StopMovingOrSizing()
     point, _, rel_point, x_offset, y_offset = frame:GetPoint()
     if x_offset < 20 and x_offset > -20 then
@@ -481,7 +470,6 @@ function target.OnFrameDragStop()
 end
 
 function target.InitializeVisuals()
-    local settings = character_target_settings
     -- Create the frame
     target.frame = CreateFrame("Frame", addon_name .. "TargetFrame", UIParent)
     local frame = target.frame
@@ -539,7 +527,6 @@ local config = addon_data.config
 
 function target.UpdateConfigPanelValues()
     local panel = target.config_frame
-    local settings = character_target_settings
     panel.enabled_checkbox:SetChecked(settings.enabled)
     panel.show_offhand_checkbox:SetChecked(settings.show_offhand)
     panel.show_border_checkbox:SetChecked(settings.show_border)
@@ -574,67 +561,67 @@ function target.UpdateConfigPanelValues()
 end
 
 function target.EnabledCheckBoxOnClick(self)
-    character_target_settings.enabled = self:GetChecked()
+    settings.enabled = self:GetChecked()
     target.UpdateVisualsOnSettingsChange()
 end
 
 function target.ShowOffHandCheckBoxOnClick(self)
-    character_target_settings.show_offhand = self:GetChecked()
+    settings.show_offhand = self:GetChecked()
     target.UpdateVisualsOnSettingsChange()
 end
 
 function target.ShowBorderCheckBoxOnClick(self)
-    character_target_settings.show_border = self:GetChecked()
+    settings.show_border = self:GetChecked()
     target.UpdateVisualsOnSettingsChange()
 end
 
 function target.ClassicBarsCheckBoxOnClick(self)
-    character_target_settings.classic_bars = self:GetChecked()
+    settings.classic_bars = self:GetChecked()
     target.UpdateVisualsOnSettingsChange()
 end
 
 function target.FillEmptyCheckBoxOnClick(self)
-    character_target_settings.fill_empty = self:GetChecked()
+    settings.fill_empty = self:GetChecked()
     target.UpdateVisualsOnSettingsChange()
 end
 
 function target.ShowLeftTextCheckBoxOnClick(self)
-    character_target_settings.show_left_text = self:GetChecked()
+    settings.show_left_text = self:GetChecked()
     target.UpdateVisualsOnSettingsChange()
 end
 
 function target.ShowRightTextCheckBoxOnClick(self)
-    character_target_settings.show_right_text = self:GetChecked()
+    settings.show_right_text = self:GetChecked()
     target.UpdateVisualsOnSettingsChange()
 end
 
 function target.WidthEditBoxOnEnter(self)
-    character_target_settings.width = tonumber(self:GetText())
+    settings.width = tonumber(self:GetText())
     target.UpdateVisualsOnSettingsChange()
 end
 
 function target.HeightEditBoxOnEnter(self)
-    character_target_settings.height = tonumber(self:GetText())
+    settings.height = tonumber(self:GetText())
     target.UpdateVisualsOnSettingsChange()
 end
 
 function target.FontSizeEditBoxOnEnter(self)
-    character_target_settings.fontsize = tonumber(self:GetText())
+    settings.fontsize = tonumber(self:GetText())
     target.UpdateVisualsOnSettingsChange()
 end
 
 function target.XOffsetEditBoxOnEnter(self)
-    character_target_settings.x_offset = tonumber(self:GetText())
+    settings.x_offset = tonumber(self:GetText())
     target.UpdateVisualsOnSettingsChange()
 end
 
 function target.YOffsetEditBoxOnEnter(self)
-    character_target_settings.y_offset = tonumber(self:GetText())
+    settings.y_offset = tonumber(self:GetText())
     target.UpdateVisualsOnSettingsChange()
 end
 
 function target.MainColorPickerOnClick()
-    local colorTable = character_target_settings
+    local colorTable = settings
     local r = "main_r"
     local g = "main_g"
     local b = "main_b"
@@ -648,7 +635,7 @@ function target.MainColorPickerOnClick()
 end
 
 function target.MainTextColorPickerOnClick()
-    local colorTable = character_target_settings
+    local colorTable = settings
     local r = "main_text_r"
     local g = "main_text_g"
     local b = "main_text_b"
@@ -662,7 +649,7 @@ function target.MainTextColorPickerOnClick()
 end
 
 function target.OffColorPickerOnClick()
-    local colorTable = character_target_settings
+    local colorTable = settings
     local r = "off_r"
     local g = "off_g"
     local b = "off_b"
@@ -676,7 +663,7 @@ function target.OffColorPickerOnClick()
 end
 
 function target.OffTextColorPickerOnClick()
-    local colorTable = character_target_settings
+    local colorTable = settings
     local r = "off_text_r"
     local g = "off_text_g"
     local b = "off_text_b"
@@ -690,24 +677,23 @@ function target.OffTextColorPickerOnClick()
 end
 
 function target.CombatAlphaOnValChange(self)
-    character_target_settings.in_combat_alpha = tonumber(self:GetValue())
+    settings.in_combat_alpha = tonumber(self:GetValue())
     target.UpdateVisualsOnSettingsChange()
 end
 
 function target.OOCAlphaOnValChange(self)
-    character_target_settings.ooc_alpha = tonumber(self:GetValue())
+    settings.ooc_alpha = tonumber(self:GetValue())
     target.UpdateVisualsOnSettingsChange()
 end
 
 function target.BackplaneAlphaOnValChange(self)
-    character_target_settings.backplane_alpha = tonumber(self:GetValue())
+    settings.backplane_alpha = tonumber(self:GetValue())
     target.UpdateVisualsOnSettingsChange()
 end
 
 function target.CreateConfigPanel(parent_panel)
     target.config_frame = CreateFrame("Frame", addon_name .. "TargetConfigPanel", parent_panel)
     local panel = target.config_frame
-    local settings = character_target_settings
     -- Title Text
     panel.title_text = config.TextFactory(panel, L"Target Swing Bar Settings", 20)
     panel.title_text:SetPoint("TOPLEFT", 10, -10)

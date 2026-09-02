@@ -101,8 +101,8 @@ local is_shifting               = false
 local shift_scale               = nil
 local shift_speed               = nil
 
-local settings                  = character_player_settings
-local DEFAULT_SETTINGS          = {
+local settings                  = {}
+player.default_settings         = {
     enabled = true,
     enable_onehanding = true,
     enable_dualwielding = true,
@@ -136,21 +136,11 @@ local DEFAULT_SETTINGS          = {
 }
 
 function player.LoadSettings()
-    -- If the carried over settings dont exist then make them
-    if not character_player_settings then
-        character_player_settings = {}
-    end
-    settings = character_player_settings
-    -- If the carried over settings aren't set then set them to the defaults
-    for setting, value in pairs(DEFAULT_SETTINGS) do
-        if settings[setting] == nil then
-            settings[setting] = value
-        end
-    end
+    settings = addon_data.settings.player
 end
 
 function player.RestoreDefaults()
-    for setting, value in pairs(DEFAULT_SETTINGS) do
+    for setting, value in pairs(player.default_settings) do
         settings[setting] = value
     end
     player.UpdateVisualsOnSettingsChange()

@@ -75,8 +75,8 @@ hunter.casting_auto = false
 hunter.range_cast_speed_modifer = 1
 hunter.has_moved = false
 
---- default settings to be loaded on initial load and reset to default
-hunter.default_settings = {
+local settings              = {}
+hunter.default_settings     = {
     enabled = true,
     width = 300,
     height = 12,
@@ -101,18 +101,9 @@ hunter.default_settings = {
 }
 
 function hunter.LoadSettings()
-    -- If the carried over settings dont exist then make them
-    if not character_hunter_settings then
-        character_hunter_settings = {}
-    end
-    -- If the carried over settings aren't set then set them to the defaults
-    for setting, value in pairs(hunter.default_settings) do
-        if character_hunter_settings[setting] == nil then
-            character_hunter_settings[setting] = value
-        end
-    end
-    if character_hunter_settings.enabled == nil then
-        character_hunter_settings.enabled = PLAYER_IS_RANGED
+    settings = addon_data.settings.hunter
+    if settings.enabled == nil then
+        settings.enabled = PLAYER_IS_RANGED
     end
     -- One-time tooltip initialize
     if not hunter.scan_tip then
@@ -123,7 +114,7 @@ end
 
 function hunter.RestoreDefaults()
     for setting, value in pairs(hunter.default_settings) do
-        character_hunter_settings[setting] = value
+        settings[setting] = value
     end
     hunter.UpdateVisualsOnSettingsChange()
     hunter.UpdateConfigPanelValues()
@@ -225,7 +216,7 @@ function hunter.UpdateAutoShotTimer(elapsed)
 end
 
 function hunter.OnUpdate(elapsed)
-    if character_hunter_settings.enabled then
+    if settings.enabled then
         -- Check to see if we have moved
         hunter.has_moved = (GetUnitSpeed("player") > 0)
 
@@ -344,7 +335,6 @@ end
 --- triggered when auto shot is toggled on and attempts to begin casting, but can't
 --- This causes 0.5 seconds of delay before it can try casting again
 function hunter.OnUnitSpellCastFailedQuiet(unit, spellID)
-    local settings = character_hunter_settings
     local curr_time = GetTime()
     if settings.show_autoshot_delay_timer and unit == "player" and hunter.is_spell_auto_shot(spellID) then
         if not hunter.casting and hunter.shooting 
@@ -359,7 +349,6 @@ end
 --[[============================================================================================]]--
 
 function hunter.UpdateVisualsOnUpdate()
-    local settings = character_hunter_settings
     local frame = hunter.frame
     local range_speed = hunter.range_speed
     local shot_timer = hunter.shot_timer
@@ -426,7 +415,6 @@ end
 function hunter.UpdateVisualsOnSettingsChange()
     if not PLAYER_IS_RANGED then return end
 
-    local settings = character_hunter_settings
     local frame = hunter.frame
     if settings.enabled then
         frame:EnableMouse(not settings.is_locked)
@@ -496,14 +484,13 @@ function hunter.UpdateVisualsOnSettingsChange()
 end
 
 function hunter.OnFrameDragStart()
-    if not character_hunter_settings.is_locked then
+    if not settings.is_locked then
         hunter.frame:StartMoving()
     end
 end
 
 function hunter.OnFrameDragStop()
     local frame = hunter.frame
-    local settings = character_hunter_settings
     frame:StopMovingOrSizing()
     local point, _, rel_point, x_offset, y_offset = frame:GetPoint()
     if x_offset < 20 and x_offset > -20 then
@@ -518,7 +505,6 @@ function hunter.OnFrameDragStop()
 end
 
 function hunter.InitializeVisuals()
-    local settings = character_hunter_settings
     -- Create the frame
     hunter.frame = CreateFrame("Frame", addon_name .. "HunterAutoshotFrame", UIParent)
     local frame = hunter.frame
@@ -558,7 +544,6 @@ local config = addon_data.config
 
 function hunter.UpdateConfigPanelValues()
     local panel = hunter.config_frame
-    local settings = character_hunter_settings
     panel.enabled_checkbox:SetChecked(settings.enabled)
     panel.show_multishot_clip_bar_checkbox:SetChecked(settings.show_multishot_clip_bar)
     panel.show_autoshot_delay_checkbox:SetChecked(settings.show_autoshot_delay_timer)
@@ -601,68 +586,68 @@ function hunter.UpdateConfigPanelValues()
 end
 
 function hunter.EnabledCheckBoxOnClick(self)
-    character_hunter_settings.enabled = self:GetChecked()
+    settings.enabled = self:GetChecked()
     hunter.UpdateVisualsOnSettingsChange()
 end
 
 function hunter.ShowMultiShotClipBarCheckBoxOnClick(self)
-    character_hunter_settings.show_multishot_clip_bar = self:GetChecked()
+    settings.show_multishot_clip_bar = self:GetChecked()
     hunter.UpdateVisualsOnSettingsChange()
 end
 
 function hunter.ShowAutoShotDelayCheckBoxOnClick(self)
-    character_hunter_settings.show_autoshot_delay_timer = self:GetChecked()
+    settings.show_autoshot_delay_timer = self:GetChecked()
     hunter.UpdateVisualsOnSettingsChange()
 end
 
 function hunter.ShowBorderCheckBoxOnClick(self)
-    character_hunter_settings.show_border = self:GetChecked()
+    settings.show_border = self:GetChecked()
     hunter.UpdateVisualsOnSettingsChange()
 end
 
 function hunter.ClassicBarsCheckBoxOnClick(self)
-    character_hunter_settings.classic_bars = self:GetChecked()
+    settings.classic_bars = self:GetChecked()
     hunter.UpdateVisualsOnSettingsChange()
 end
 
 function hunter.OneBarCheckBoxOnClick(self)
-    character_hunter_settings.one_bar = self:GetChecked()
+    settings.one_bar = self:GetChecked()
     hunter.UpdateVisualsOnSettingsChange()
     hunter.UpdateConfigPanelValues()
 end
 
 function hunter.ShowTextCheckBoxOnClick(self)
-    character_hunter_settings.show_text = self:GetChecked()
+    settings.show_text = self:GetChecked()
     hunter.UpdateVisualsOnSettingsChange()
 end
 
 function hunter.WidthEditBoxOnEnter(self)
-    character_hunter_settings.width = tonumber(self:GetText())
+    settings.width = tonumber(self:GetText())
     hunter.UpdateVisualsOnSettingsChange()
 end
 
 function hunter.HeightEditBoxOnEnter(self)
-    character_hunter_settings.height = tonumber(self:GetText())
+    settings.height = tonumber(self:GetText())
     hunter.UpdateVisualsOnSettingsChange()
 end
 
 function hunter.FontSizeEditBoxOnEnter(self)
-    character_hunter_settings.fontsize = tonumber(self:GetText())
+    settings.fontsize = tonumber(self:GetText())
     hunter.UpdateVisualsOnSettingsChange()
 end
 
 function hunter.XOffsetEditBoxOnEnter(self)
-    character_hunter_settings.x_offset = tonumber(self:GetText())
+    settings.x_offset = tonumber(self:GetText())
     hunter.UpdateVisualsOnSettingsChange()
 end
 
 function hunter.YOffsetEditBoxOnEnter(self)
-    character_hunter_settings.y_offset = tonumber(self:GetText())
+    settings.y_offset = tonumber(self:GetText())
     hunter.UpdateVisualsOnSettingsChange()
 end
 
 function hunter.CooldownColorPickerOnClick()
-    local colorTable = character_hunter_settings
+    local colorTable = settings
     local r = "cooldown_r"
     local g = "cooldown_g"
     local b = "cooldown_b"
@@ -676,7 +661,7 @@ function hunter.CooldownColorPickerOnClick()
 end
 
 function hunter.AutoShotCastColorPickerOnClick()
-    local colorTable = character_hunter_settings
+    local colorTable = settings
     local r = "auto_cast_r"
     local g = "auto_cast_g"
     local b = "auto_cast_b"
@@ -690,7 +675,7 @@ function hunter.AutoShotCastColorPickerOnClick()
 end
 
 function hunter.MultiClipColorPickerOnClick()
-    local colorTable = character_hunter_settings
+    local colorTable = settings
     local r = "clip_r"
     local g = "clip_g"
     local b = "clip_b"
@@ -704,17 +689,17 @@ function hunter.MultiClipColorPickerOnClick()
 end
 
 function hunter.CombatAlphaOnValChange(self)
-    character_hunter_settings.in_combat_alpha = tonumber(self:GetValue())
+    settings.in_combat_alpha = tonumber(self:GetValue())
     hunter.UpdateVisualsOnSettingsChange()
 end
 
 function hunter.OOCAlphaOnValChange(self)
-    character_hunter_settings.ooc_alpha = tonumber(self:GetValue())
+    settings.ooc_alpha = tonumber(self:GetValue())
     hunter.UpdateVisualsOnSettingsChange()
 end
 
 function hunter.BackplaneAlphaOnValChange(self)
-    character_hunter_settings.backplane_alpha = tonumber(self:GetValue())
+    settings.backplane_alpha = tonumber(self:GetValue())
     hunter.UpdateVisualsOnSettingsChange()
 end
 
@@ -722,7 +707,6 @@ end
 function hunter.CreateConfigPanel(parent_panel)
     hunter.config_frame = CreateFrame("Frame", addon_name .. "HunterConfigPanel", parent_panel)
     local panel = hunter.config_frame
-    local settings = character_hunter_settings
     -- Title Text
     panel.title_text = config.TextFactory(panel, L"Hunter & Wand Shot Bar Settings", 20)
     panel.title_text:SetPoint("TOPLEFT", 10 , -10)

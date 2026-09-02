@@ -9,10 +9,11 @@ local L = addon_data.localization.get
 --[[====================================================================================]]--
 
 --- define addon structure from the above local variable
-local warrior = {}
-addon_data.warrior = warrior
+local warrior               = {}
+addon_data.warrior          = warrior
 
-warrior.default_settings = {
+local settings              = {}
+warrior.default_settings    = {
     -- bar coloring
     coloring_enabled = true,
     color_mh = true,
@@ -36,21 +37,12 @@ warrior.default_settings = {
 }
 
 function warrior.LoadSettings()
-    -- If the carried over settings dont exist then make them
-    if not character_warrior_settings then
-        character_warrior_settings = {}
-    end
-    -- If the carried over settings aren't set then set them to the defaults
-    for setting, value in pairs(warrior.default_settings) do
-        if character_warrior_settings[setting] == nil then
-            character_warrior_settings[setting] = value
-        end
-    end
+    settings = addon_data.settings.warrior
 end
 
 function warrior.RestoreDefaults()
     for setting, value in pairs(warrior.default_settings) do
-        character_warrior_settings[setting] = value
+        settings[setting] = value
     end
     warrior.UpdateVisualsOnSettingsChange()
     warrior.UpdateConfigPanelValues()
@@ -72,8 +64,6 @@ local queuing = addon_data.queuing
 local player = addon_data.player
 
 local function UpdateColorPalettes()
-    local settings = character_warrior_settings
-
     if not settings.coloring_enabled then
         queuing.UnregisterAllSpells()
     else
@@ -148,8 +138,6 @@ local function UpdateColorPalettes()
 end
 
 local function UpdateSlamIndicators()
-    local settings = character_warrior_settings
-
     local frame = player.frame
     local frameWidth = frame:GetWidth()
     frame.slam_delay_bar:SetWidth(frameWidth * settings.slam_delay / player.main_weapon_speed)
@@ -180,7 +168,6 @@ end
 function warrior.UpdateVisualsOnSettingsChange()
     if player.class ~= "WARRIOR" then return end
 
-    local settings = character_player_settings
     local frame = player.frame
     if settings.classic_bars then
         frame.slam_delay_bar:SetTexture('Interface/AddOns/WeaponSwingTimer/Images/Bar')
@@ -240,7 +227,6 @@ end
 
 function warrior.UpdateConfigPanelValues()
     local panel = warrior.config_frame
-    local settings = character_warrior_settings
 
     panel.enabled_checkbox:SetChecked(settings.coloring_enabled)
     panel.color_mh_checkbox:SetChecked(settings.color_mh)
@@ -277,28 +263,28 @@ function warrior.UpdateConfigPanelValues()
 end
 
 function warrior.EnabledCheckBoxOnClick(self)
-    character_warrior_settings.coloring_enabled = self:GetChecked()
+    settings.coloring_enabled = self:GetChecked()
     warrior.UpdateVisualsOnSettingsChange()
 end
 
 function warrior.ColorMainHandCheckBoxOnClick(self)
-    character_warrior_settings.color_mh = self:GetChecked()
+    settings.color_mh = self:GetChecked()
     warrior.UpdateVisualsOnSettingsChange()
 end
 
 function warrior.ColorOffHandCheckBoxOnClick(self)
-    character_warrior_settings.color_oh = self:GetChecked()
+    settings.color_oh = self:GetChecked()
     warrior.UpdateVisualsOnSettingsChange()
 end
 
 function warrior.CleaveCheckBoxOnClick(self)
     local checked = self:GetChecked()
-    character_warrior_settings.cleave = checked
+    settings.cleave = checked
     displayCleave(checked)
 end
 
 function warrior.QueuedMainHandColorPickerOnClick()
-    local colorTable = character_warrior_settings
+    local colorTable = settings
     local r = "queued_mh_r"
     local g = "queued_mh_g"
     local b = "queued_mh_b"
@@ -312,7 +298,7 @@ function warrior.QueuedMainHandColorPickerOnClick()
 end
 
 function warrior.QueuedMainHandTextColorPickerOnClick()
-    local colorTable = character_warrior_settings
+    local colorTable = settings
     local r = "queued_mh_text_r"
     local g = "queued_mh_text_g"
     local b = "queued_mh_text_b"
@@ -326,7 +312,7 @@ function warrior.QueuedMainHandTextColorPickerOnClick()
 end
 
 function warrior.QueuedOffHandColorPickerOnClick()
-    local colorTable = character_warrior_settings
+    local colorTable = settings
     local r = "queued_oh_r"
     local g = "queued_oh_g"
     local b = "queued_oh_b"
@@ -340,7 +326,7 @@ function warrior.QueuedOffHandColorPickerOnClick()
 end
 
 function warrior.QueuedOffHandTextColorPickerOnClick()
-    local colorTable = character_warrior_settings
+    local colorTable = settings
     local r = "queued_oh_text_r"
     local g = "queued_oh_text_g"
     local b = "queued_oh_text_b"
@@ -354,7 +340,7 @@ function warrior.QueuedOffHandTextColorPickerOnClick()
 end
 
 function warrior.CleaveMainHandColorPickerOnClick()
-    local colorTable = character_warrior_settings
+    local colorTable = settings
     local r = "cleave_mh_r"
     local g = "cleave_mh_g"
     local b = "cleave_mh_b"
@@ -368,7 +354,7 @@ function warrior.CleaveMainHandColorPickerOnClick()
 end
 
 function warrior.CleaveMainHandTextColorPickerOnClick()
-    local colorTable = character_warrior_settings
+    local colorTable = settings
     local r = "cleave_mh_text_r"
     local g = "cleave_mh_text_g"
     local b = "cleave_mh_text_b"
@@ -382,7 +368,7 @@ function warrior.CleaveMainHandTextColorPickerOnClick()
 end
 
 function warrior.CleaveOffHandColorPickerOnClick()
-    local colorTable = character_warrior_settings
+    local colorTable = settings
     local r = "cleave_oh_r"
     local g = "cleave_oh_g"
     local b = "cleave_oh_b"
@@ -396,7 +382,7 @@ function warrior.CleaveOffHandColorPickerOnClick()
 end
 
 function warrior.CleaveOffHandTextColorPickerOnClick()
-    local colorTable = character_warrior_settings
+    local colorTable = settings
     local r = "cleave_oh_text_r"
     local g = "cleave_oh_text_g"
     local b = "cleave_oh_text_b"
@@ -410,22 +396,22 @@ function warrior.CleaveOffHandTextColorPickerOnClick()
 end
 
 function warrior.EnableSlamDelayCheckBoxOnClick(self)
-    character_warrior_settings.slam_delay_enabled = self:GetChecked()
+    settings.slam_delay_enabled = self:GetChecked()
     warrior.UpdateVisualsOnSettingsChange()
 end
 
 function warrior.EnableSlamDelayDuelWieldingCheckBoxOnClick(self)
-    character_warrior_settings.slam_delay_one_handing = self:GetChecked()
+    settings.slam_delay_one_handing = self:GetChecked()
     warrior.UpdateVisualsOnSettingsChange()
 end
 
 function warrior.EnableSlamGcdSparkCheckBoxOnClick(self)
-    character_warrior_settings.slam_gcd_spark = self:GetChecked()
+    settings.slam_gcd_spark = self:GetChecked()
     warrior.UpdateVisualsOnSettingsChange()
 end
 
 function warrior.SlamDelayColorPickerOnClick()
-    local colorTable = character_warrior_settings
+    local colorTable = settings
     local r = "slam_delay_r"
     local g = "slam_delay_g"
     local b = "slam_delay_b"
@@ -439,14 +425,13 @@ function warrior.SlamDelayColorPickerOnClick()
 end
 
 function warrior.SlamDelayOnValChange(self)
-    character_warrior_settings.slam_delay = tonumber(self:GetValue())
+    settings.slam_delay = tonumber(self:GetValue())
     warrior.UpdateVisualsOnSettingsChange()
 end
 
 function warrior.CreateConfigPanel(parent_panel)
     warrior.config_frame = CreateFrame("Frame", addon_name .. "ConfigPanel", parent_panel)
     local panel = warrior.config_frame
-    local settings = character_warrior_settings
 
     -- Title Text
     panel.title_text = config.TextFactory(panel, L"Warrior Queuing Settings", 20)

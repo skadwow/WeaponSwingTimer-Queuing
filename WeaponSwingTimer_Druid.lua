@@ -11,6 +11,7 @@ local L = addon_data.localization.get
 local druid                 = {}
 addon_data.druid            = druid
 
+local settings              = {}
 druid.default_settings      = {
     -- bar coloring
     coloring_enabled = true,
@@ -19,21 +20,12 @@ druid.default_settings      = {
 }
 
 function druid.LoadSettings()
-    -- If the carried over settings dont exist then make them
-    if not character_druid_settings then
-        character_druid_settings = {}
-    end
-    -- If the carried over settings aren't set then set them to the defaults
-    for setting, value in pairs(druid.default_settings) do
-        if character_druid_settings[setting] == nil then
-            character_druid_settings[setting] = value
-        end
-    end
+    settings = addon_data.settings.druid
 end
 
 function druid.RestoreDefaults()
     for setting, value in pairs(druid.default_settings) do
-        character_druid_settings[setting] = value
+        settings[setting] = value
     end
     druid.UpdateVisualsOnSettingsChange()
     druid.UpdateConfigPanelValues()
@@ -44,8 +36,6 @@ end
 --[[============================================================================================]]--
 
 local function UpdateColorPalettes()
-    local settings = character_druid_settings
-
     if not settings.coloring_enabled then
         addon_data.queuing.UnregisterAllSpells()
     else
@@ -87,7 +77,6 @@ local config = addon_data.config
 
 function druid.UpdateConfigPanelValues()
     local panel = druid.config_frame
-    local settings = character_druid_settings
 
     panel.enabled_checkbox:SetChecked(settings.coloring_enabled)
 
@@ -98,12 +87,12 @@ function druid.UpdateConfigPanelValues()
 end
 
 function druid.EnabledCheckBoxOnClick(self)
-    character_druid_settings.coloring_enabled = self:GetChecked()
+    settings.coloring_enabled = self:GetChecked()
     druid.UpdateVisualsOnSettingsChange()
 end
 
 function druid.MaulColorPickerOnClick()
-    local colorTable = character_druid_settings
+    local colorTable = settings
     local r = "maul_r"
     local g = "maul_g"
     local b = "maul_b"
@@ -117,7 +106,7 @@ function druid.MaulColorPickerOnClick()
 end
 
 function druid.MaulTextColorPickerOnClick()
-    local colorTable = character_druid_settings
+    local colorTable = settings
     local r = "maul_text_r"
     local g = "maul_text_g"
     local b = "maul_text_b"
@@ -133,7 +122,6 @@ end
 function druid.CreateConfigPanel(parent_panel)
     druid.config_frame = CreateFrame("Frame", addon_name .. "ConfigPanel", parent_panel)
     local panel = druid.config_frame
-    local settings = character_druid_settings
 
     -- Title Text
     panel.title_text = config.TextFactory(panel, L"Druid Queuing Settings", 20)

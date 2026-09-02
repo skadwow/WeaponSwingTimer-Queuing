@@ -60,7 +60,7 @@ local function ColorQueuedBars()
 end
 
 local function UncolorQueuedBars()
-    local settings = character_player_settings
+    local settings = addon_data.settings.player
 
     local frame = addon_data.player.frame
 
