@@ -11,8 +11,10 @@ local L = addon_data.localization.get
 local profiles              = {}
 addon_data.profiles         = profiles
 
+local DEFAULT               = L"default"
+
 local DEFAULT_PROFILES      = {
-    [L"default"] = {
+    [DEFAULT] = {
         core    = addon_data.core.default_settings,
         player  = addon_data.player.default_settings,
         target  = addon_data.target.default_settings,
@@ -25,7 +27,7 @@ local DEFAULT_PROFILES      = {
 
 local settings              = {}
 profiles.default_settings   = {
-    profile = L"default"
+    profile = DEFAULT
 }
 
 function profiles.LoadProfiles()
@@ -33,18 +35,18 @@ function profiles.LoadProfiles()
         WST_Profiles = {}
     end
 
-    if not WST_Profiles[L"default"] then
-        WST_Profiles[L"default"] = {}
+    if not WST_Profiles[DEFAULT] then
+        WST_Profiles[DEFAULT] = {}
     end
 
-    for page, info in pairs(DEFAULT_PROFILES[L"default"]) do
-        if WST_Profiles[L"default"][page] == nil then
-            WST_Profiles[L"default"][page] = info
+    for page, info in pairs(DEFAULT_PROFILES[DEFAULT]) do
+        if WST_Profiles[DEFAULT][page] == nil then
+            WST_Profiles[DEFAULT][page] = info
         end
 
         for setting, value in pairs(info) do
-            if WST_Profiles[L"default"][page][setting] == nil then
-                WST_Profiles[L"default"][page][setting] = value
+            if WST_Profiles[DEFAULT][page][setting] == nil then
+                WST_Profiles[DEFAULT][page][setting] = value
             end
         end
     end
@@ -130,6 +132,12 @@ end
 --[[================================== FUNCTIONALITY ===================================]]--
 --[[====================================================================================]]--
 
+local function reloadSettings()
+    addon_data.core.LoadAllSettings()
+    addon_data.core.UpdateAllConfigPanelValues()
+    addon_data.core.UpdateAllVisualsOnSettingsChange()
+end
+
 function profiles.SetProfile(profile)
     if WST_Profiles[profile] == nil then
         error("WST profile "..profile.." does not exist.")
@@ -137,15 +145,12 @@ function profiles.SetProfile(profile)
 
     addon_data.settings = WST_Profiles[profile]
     WST_Character.profile = profile
-
-    addon_data.core.LoadAllSettings()
-    addon_data.core.UpdateAllConfigPanelValues()
-    addon_data.core.UpdateAllVisualsOnSettingsChange()
+    reloadSettings()
 end
 
 function profiles.CreateProfile(profile)
     if not WST_Profiles[profile] == nil then
-        error("WST profile "..profile.." already exists.")
+        error(L"WST profile "..profile..L" already exists.")
     end
 
     WST_Profiles[profile] = CopyTable(addon_data.settings)
@@ -153,9 +158,12 @@ function profiles.CreateProfile(profile)
 end
 
 function profiles.RenameProfile(profile, newName)
-    if profile == L"default" then return end
+    if profile == DEFAULT then return end
     if WST_Profiles[profile] == nil then
-        error("WST profile "..profile.." does not exist.")
+        error(L"WST profile "..profile..L" does not exist.")
+    end
+    if WST_Profiles[newName] ~= nil then
+        error(L"WST profile "..profile..L" already exists.")
     end
 
     WST_Profiles[newName] = WST_Profiles[profile]
@@ -165,16 +173,45 @@ function profiles.RenameProfile(profile, newName)
     end
 end
 
-function profiles.DeleteProfile(profile)
-    if profile == L"default" then return end
+function profiles.ResetProfile(profile)
+    if profile == DEFAULT then return end
     if WST_Profiles[profile] == nil then
-        error("WST profile "..profile.." does not exist.")
+        error(L"WST profile "..profile..L" does not exist.")
+    end
+
+    WST_Profiles[profile] = CopyTable(DEFAULT_PROFILES[DEFAULT])
+    reloadSettings()
+end
+
+function profiles.DeleteProfile(profile)
+    if profile == DEFAULT then return end
+    if WST_Profiles[profile] == nil then
+        error(L"WST profile "..profile..L" does not exist.")
     end
 
     WST_Profiles[profile] = nil
     if WST_Character.profile == profile then
-        profiles.SetProfile(L"default")
+        profiles.SetProfile(DEFAULT)
     end
+end
+
+local function isUniqueProfileName(name)
+    if name ~= nil and name ~= "" and WST_Profiles[name] == nil then
+        return true
+    else
+        return false
+    end
+end
+
+local function getUniqueProfileName()
+    local i = 1
+    for _, _ in pairs(WST_Profiles) do
+        i = i + 1
+    end
+    while WST_Profiles["Profile "..i] do
+        i = i + 1
+    end
+    return "Profile "..i
 end
 
 --[[====================================================================================]]--
@@ -188,7 +225,7 @@ function profiles.UpdateConfigPanelValues()
 
     local profile = WST_Character.profile
     UIDropDownMenu_SetText(panel.profiles_dropdown, profile)
-    if profile == L"default" then
+    if profile == DEFAULT then
         panel.rename_button:Disable()
         panel.delete_button:Disable()
     else
@@ -202,53 +239,81 @@ StaticPopupDialogs["WST_PROFILE_RENAME"] = {
     button1 = ACCEPT,
     button2 = CANCEL,
     OnShow = function(self, data)
-        local i = 1
-        for _, _ in pairs(WST_Profiles) do
-            i = i + 1
-        end
-        self.EditBox:SetText("Profile " .. i)
+        self.EditBox:SetText(getUniqueProfileName())
+        self.EditBox:SetScript("OnEnterPressed", function()
+            self:GetButton1():Click()
+        end)
+        self.EditBox:SetScript("OnEscapePressed", function()
+            self:GetButton2():Click()
+        end)
     end,
     OnAccept = function(self, data, data2)
         profiles.RenameProfile(WST_Character.profile, self.EditBox:GetText())
     end,
     EditBoxOnTextChanged = function(self, data)
         local text = self:GetText()
-        if not text or text == "" or WST_Profiles[text] then
-            self:GetParent().ButtonContainer.Button1:Disable()
-        else
+        if isUniqueProfileName(text) then
             self:GetParent().ButtonContainer.Button1:Enable()
+        else
+            self:GetParent().ButtonContainer.Button1:Disable()
         end
     end,
     hasEditBox = true,
-    hideOnEscape = true,
+    escapeHides = true,
+    cancels = true,
+    enterClicksFirstButton = true,
+}
+
+StaticPopupDialogs["WST_PROFILE_RESET"] = {
+    text = L"Are you sure you want to reset this profile to default settings?",
+    button1 = YES,
+    button2 = NO,
+    OnAccept = function(self, data, data2)
+        profiles.ResetProfile(UIDropDownMenu_GetText(profiles.config_frame.profiles_dropdown))
+    end,
+    escapeHides = true,
+    cancels = true,
+    enterClicksFirstButton = true,
+}
+
+StaticPopupDialogs["WST_PROFILE_DELETE"] = {
+    text = L"Are you sure you want to delete this profile?",
+    button1 = YES,
+    button2 = NO,
+    OnAccept = function(self, data, data2)
+        profiles.DeleteProfile(UIDropDownMenu_GetText(profiles.config_frame.profiles_dropdown))
+    end,
+    escapeHides = true,
     cancels = true,
     enterClicksFirstButton = true,
 }
 
 StaticPopupDialogs["WST_PROFILE_CREATE"] = {
-    text = L"Enter a profile name:",
+    text = L"Enter a new profile name:",
     button1 = ACCEPT,
     button2 = CANCEL,
     OnShow = function(self, data)
-        local i = 1
-        for _, _ in pairs(WST_Profiles) do
-            i = i + 1
-        end
-        self.EditBox:SetText("Profile " .. i)
+        self.EditBox:SetText(getUniqueProfileName())
+        self.EditBox:SetScript("OnEnterPressed", function()
+            self:GetButton1():Click()
+        end)
+        self.EditBox:SetScript("OnEscapePressed", function()
+            self:GetButton2():Click()
+        end)
     end,
     OnAccept = function(self, data, data2)
         profiles.CreateProfile(self.EditBox:GetText())
     end,
     EditBoxOnTextChanged = function(self, data)
         local text = self:GetText()
-        if not text or text == "" or WST_Profiles[text] then
-            self:GetParent().ButtonContainer.Button1:Disable()
-        else
+        if isUniqueProfileName(text) then
             self:GetParent().ButtonContainer.Button1:Enable()
+        else
+            self:GetParent().ButtonContainer.Button1:Disable()
         end
     end,
     hasEditBox = true,
-    hideOnEscape = true,
+    escapeHides = true,
     cancels = true,
     enterClicksFirstButton = true,
 }
@@ -257,8 +322,12 @@ local function renameButtonOnClick()
     StaticPopup_Show("WST_PROFILE_RENAME")
 end
 
+local function resetButtonOnClick()
+    StaticPopup_Show("WST_PROFILE_RESET")
+end
+
 local function deleteButtonOnClick()
-    profiles.DeleteProfile(UIDropDownMenu_GetText(profiles.config_frame.profiles_dropdown))
+    StaticPopup_Show("WST_PROFILE_DELETE")
 end
 
 local function createButtonOnClick()
@@ -294,23 +363,30 @@ function profiles.CreateConfigPanel(parent_panel)
     end
 
     panel.rename_button = CreateFrame("Button", addon_name .. "RenameProfileButton", panel, "UIPanelButtonTemplate")
-    panel.rename_button:SetPoint("TOPLEFT", 260, -32)
+    panel.rename_button:SetPoint("TOPLEFT", 260, -16)
     panel.rename_button:SetText(L"Rename Profile")
     panel.rename_button:SetWidth(110)
     panel.rename_button:SetHeight(30)
     panel.rename_button:SetScript("OnClick", renameButtonOnClick)
 
+    panel.reset_button = CreateFrame("Button", addon_name .. "ResetProfileButton", panel, "UIPanelButtonTemplate")
+    panel.reset_button:SetPoint("TOPLEFT", 260, -48)
+    panel.reset_button:SetText(L"Reset Profile")
+    panel.reset_button:SetWidth(110)
+    panel.reset_button:SetHeight(30)
+    panel.reset_button:SetScript("OnClick", resetButtonOnClick)
+
     panel.delete_button = CreateFrame("Button", addon_name .. "DeleteProfileButton", panel, "UIPanelButtonTemplate")
-    panel.delete_button:SetPoint("TOPLEFT", 260, -64)
+    panel.delete_button:SetPoint("TOPLEFT", 260, -80)
     panel.delete_button:SetText(L"Delete Profile")
     panel.delete_button:SetWidth(110)
     panel.delete_button:SetHeight(30)
     panel.delete_button:SetScript("OnClick", deleteButtonOnClick)
 
     panel.create_button = CreateFrame("Button", addon_name .. "CreateProfileButton", panel, "UIPanelButtonTemplate")
-    panel.create_button:SetPoint("TOPLEFT", 96, -80)
-    panel.create_button:SetText(L"Create New Profile")
-    panel.create_button:SetWidth(140)
+    panel.create_button:SetPoint("TOPLEFT", 126, -80)
+    panel.create_button:SetText(L"Clone Profile")
+    panel.create_button:SetWidth(110)
     panel.create_button:SetHeight(30)
     panel.create_button:SetScript("OnClick", createButtonOnClick)
 
