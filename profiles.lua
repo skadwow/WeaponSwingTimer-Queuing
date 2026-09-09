@@ -174,7 +174,6 @@ function profiles.RenameProfile(profile, newName)
 end
 
 function profiles.ResetProfile(profile)
-    if profile == DEFAULT then return end
     if WST_Profiles[profile] == nil then
         error(L"WST profile "..profile..L" does not exist.")
     end
