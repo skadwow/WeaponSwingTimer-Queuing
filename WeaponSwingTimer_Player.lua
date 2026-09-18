@@ -552,6 +552,7 @@ local RANGED   = 2
 function player.OnPlayerSwing(swingDuration, swingType)
     if swingType == MAINHAND then
         player.main_weapon_speed = swingDuration
+        speed_scale = player.main_weapon_speed / base_main_speed
         player.ResetMainSwingTimer()
     elseif swingType == OFFHAND then
         player.off_weapon_speed = swingDuration
