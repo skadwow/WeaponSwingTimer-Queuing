@@ -160,7 +160,11 @@ function frame:OnAddonLoaded()
     self:UnregisterEvent("ADDON_LOADED")
     -- Attach the rest of the events and scripts to the core frame
     self:SetScript("OnUpdate", CoreFrame_OnUpdate)
-    self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+    if addon_data.utils.IsForeverWow() then
+        self:RegisterEvent("PLAYER_SWING")
+    else
+        self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+    end
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
     self:RegisterEvent("PLAYER_REGEN_ENABLED")
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
@@ -297,6 +301,10 @@ else
             addon_data.queuing.OnUnitSpellCastFailedQuiet(unitTarget, spellID)
         end
     end
+end
+
+function frame:PLAYER_SWING(swingDuration, swingType)
+    addon_data.player.OnPlayerSwing(swingDuration, swingType)
 end
 
 function frame:PLAYER_REGEN_DISABLED()

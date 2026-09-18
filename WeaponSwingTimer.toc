@@ -1,4 +1,4 @@
-## Interface: 11509, 20506
+## Interface: 11509, 16001, 20506
 ## Title: WeaponSwingTimer
 ## Title-deDE: WeaponSwingTimer (Deutsch)
 ## Title-esES: WeaponSwingTimer (Español)
@@ -34,7 +34,7 @@
 ## Notes-zhTW: 跟踪近戰武器的揮動時間獵人自動射擊和魔杖射擊。
 ## IconTexture: Interface\AddOns\WeaponSwingTimer\Images\wst_logo_plain
 ## Author: LeftHandGlove, WatchYourSixx, Skad
-## Version: 2.5.1
+## Version: 2.6.0
 ## DefaultState: enabled
 ## OptionalDeps: ColorPickerPlus
 ## SavedVariables: WST_Profiles

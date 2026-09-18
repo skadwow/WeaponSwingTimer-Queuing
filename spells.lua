@@ -58,6 +58,56 @@ if addon_data.utils.IsClassicWow() then
     SPELL_INFO[8820] = {name = L"Slam", rank = 2, castTime = 1.5, cooldown = nil}
     SPELL_INFO[11604] = {name = L"Slam", rank = 3, castTime = 1.5, cooldown = nil}
     SPELL_INFO[11605] = {name = L"Slam", rank = 4, castTime = 1.5, cooldown = nil}
+    SPELL_INFO[20647] = {name = L"Execute", rank = nil, castTime = nil, cooldown = nil}
+    -- Druid
+    SPELL_INFO[6807] = {name = L"Maul", rank = 1, castTime = nil, cooldown = nil}
+    SPELL_INFO[6808] = {name = L"Maul", rank = 2, castTime = nil, cooldown = nil}
+    SPELL_INFO[6809] = {name = L"Maul", rank = 3, castTime = nil, cooldown = nil}
+    SPELL_INFO[8972] = {name = L"Maul", rank = 4, castTime = nil, cooldown = nil}
+    SPELL_INFO[9745] = {name = L"Maul", rank = 5, castTime = nil, cooldown = nil}
+    SPELL_INFO[9880] = {name = L"Maul", rank = 6, castTime = nil, cooldown = nil}
+    SPELL_INFO[9881] = {name = L"Maul", rank = 7, castTime = nil, cooldown = nil}
+elseif addon_data.utils.IsForeverWow() then
+    -- Hunter
+    SPELL_INFO[1111111111111] = {name = L"Trueshot Aura", rank = 1, castTime = nil, cooldown = nil}
+    SPELL_INFO[1299348] = {name = L"Trueshot Aura", rank = 2, castTime = nil, cooldown = nil}
+    SPELL_INFO[19506] = {name = L"Trueshot Aura", rank = 3, castTime = nil, cooldown = nil}
+    SPELL_INFO[20905] = {name = L"Trueshot Aura", rank = 4, castTime = nil, cooldown = nil}
+    SPELL_INFO[20906] = {name = L"Trueshot Aura", rank = 5, castTime = nil, cooldown = nil}
+    SPELL_INFO[2643] =  {name = L"Multi-Shot", rank = nil, castTime = 0.5, cooldown = 6}
+    SPELL_INFO[19434] = {name = L"Aimed Shot", rank = 1, castTime = 2.5, cooldown = 6}
+    SPELL_INFO[20900] = {name = L"Aimed Shot", rank = 2, castTime = 2.5, cooldown = 6}
+    SPELL_INFO[20901] = {name = L"Aimed Shot", rank = 3, castTime = 2.5, cooldown = 6}
+    SPELL_INFO[20902] = {name = L"Aimed Shot", rank = 4, castTime = 2.5, cooldown = 6}
+    SPELL_INFO[20903] = {name = L"Aimed Shot", rank = 5, castTime = 2.5, cooldown = 6}
+    SPELL_INFO[20904] = {name = L"Aimed Shot", rank = 6, castTime = 2.5, cooldown = 6}
+    SPELL_INFO[2973] = {name = L"Raptor Strike", rank = 1, castTime = nil, cooldown = 6}
+    SPELL_INFO[14260] = {name = L"Raptor Strike", rank = 2, castTime = nil, cooldown = 6}
+    SPELL_INFO[14261] = {name = L"Raptor Strike", rank = 3, castTime = nil, cooldown = 6}
+    SPELL_INFO[14262] = {name = L"Raptor Strike", rank = 4, castTime = nil, cooldown = 6}
+    SPELL_INFO[14263] = {name = L"Raptor Strike", rank = 5, castTime = nil, cooldown = 6}
+    SPELL_INFO[14264] = {name = L"Raptor Strike", rank = 6, castTime = nil, cooldown = 6}
+    SPELL_INFO[14265] = {name = L"Raptor Strike", rank = 7, castTime = nil, cooldown = 6}
+    SPELL_INFO[14266] = {name = L"Raptor Strike", rank = 8, castTime = nil, cooldown = 6}
+    -- Warrior
+    SPELL_INFO[78] = {name = L"Heroic Strike", rank = 1, castTime = nil, cooldown = nil}
+    SPELL_INFO[284] = {name = L"Heroic Strike", rank = 2, castTime = nil, cooldown = nil}
+    SPELL_INFO[285] = {name = L"Heroic Strike", rank = 3, castTime = nil, cooldown = nil}
+    SPELL_INFO[1608] = {name = L"Heroic Strike", rank = 4, castTime = nil, cooldown = nil}
+    SPELL_INFO[11564] = {name = L"Heroic Strike", rank = 5, castTime = nil, cooldown = nil}
+    SPELL_INFO[11565] =  {name = L"Heroic Strike", rank = 6, castTime = nil, cooldown = nil}
+    SPELL_INFO[11566] = {name = L"Heroic Strike", rank = 7, castTime = nil, cooldown = nil}
+    SPELL_INFO[11567] = {name = L"Heroic Strike", rank = 8, castTime = nil, cooldown = nil}
+    SPELL_INFO[845] = {name = L"Cleave", rank = 1, castTime = nil, cooldown = nil}
+    SPELL_INFO[7369] = {name = L"Cleave", rank = 2, castTime = nil, cooldown = nil}
+    SPELL_INFO[11608] = {name = L"Cleave", rank = 3, castTime = nil, cooldown = nil}
+    SPELL_INFO[11609] = {name = L"Cleave", rank = 4, castTime = nil, cooldown = nil}
+    SPELL_INFO[20569] = {name = L"Cleave", rank = 5, castTime = nil, cooldown = nil}
+    SPELL_INFO[1240193] = {name = L"Slam", rank = 1, castTime = 1.5, cooldown = nil}
+    SPELL_INFO[1464] = {name = L"Slam", rank = 2, castTime = 1.5, cooldown = nil}
+    SPELL_INFO[8820] = {name = L"Slam", rank = 3, castTime = 1.5, cooldown = nil}
+    SPELL_INFO[11604] = {name = L"Slam", rank = 4, castTime = 1.5, cooldown = nil}
+    SPELL_INFO[11605] = {name = L"Slam", rank = 5, castTime = 1.5, cooldown = nil}
     -- Druid
     SPELL_INFO[6807] = {name = L"Maul", rank = 1, castTime = nil, cooldown = nil}
     SPELL_INFO[6808] = {name = L"Maul", rank = 2, castTime = nil, cooldown = nil}
@@ -119,6 +169,7 @@ elseif addon_data.utils.IsTbcWow() then
     SPELL_INFO[11605] = {name = L"Slam", rank = 4, castTime = 1.5, cooldown = nil}
     SPELL_INFO[25241] = {name = L"Slam", rank = 5, castTime = 1.5, cooldown = nil}
     SPELL_INFO[25242] = {name = L"Slam", rank = 6, castTime = 1.5, cooldown = nil}
+    SPELL_INFO[20647] = {name = L"Execute", rank = nil, castTime = nil, cooldown = nil}
     -- Druid
     SPELL_INFO[6807] = {name = L"Maul", rank = 1, castTime = nil, cooldown = nil}
     SPELL_INFO[6808] = {name = L"Maul", rank = 2, castTime = nil, cooldown = nil}
@@ -193,6 +244,7 @@ elseif addon_data.utils.IsWrathWow() then
     SPELL_INFO[25242] = {name = L"Slam", rank = 6, castTime = 1.5, cooldown = nil}
     SPELL_INFO[47474] = {name = L"Slam", rank = 7, castTime = 1.5, cooldown = nil}
     SPELL_INFO[47475] = {name = L"Slam", rank = 8, castTime = 1.5, cooldown = nil}
+    SPELL_INFO[20647] = {name = L"Execute", rank = nil, castTime = nil, cooldown = nil}
     -- Druid
     SPELL_INFO[6807] = {name = L"Maul", rank = 1, castTime = nil, cooldown = nil}
     SPELL_INFO[6808] = {name = L"Maul", rank = 2, castTime = nil, cooldown = nil}

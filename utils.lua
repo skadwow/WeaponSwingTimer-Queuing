@@ -28,7 +28,11 @@ function utils.SimpleRound(num, step)
 end
 
 function utils.IsClassicWow()
-    return INTERFACE_VERSION < 20000
+    return INTERFACE_VERSION < 11600
+end
+
+function utils.IsForeverWow()
+    return INTERFACE_VERSION < 20000 and INTERFACE_VERSION >= 11600
 end
 
 function utils.IsTbcWow()
@@ -37,4 +41,48 @@ end
 
 function utils.IsWrathWow()
     return INTERFACE_VERSION < 40000 and INTERFACE_VERSION >= 30000
+end
+
+
+local GetItemInfo = C_Item and C_Item.GetItemInfo or GetItemInfo
+
+local tooltip_name = addon_name .. "Tooltip"
+local tooltip = CreateFrame("GameTooltip", tooltip_name, nil, "GameTooltipTemplate")
+tooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
+
+local font_string_base = tooltip_name .. "TextRight"
+local speed_pattern = SPEED .. " (%d%.%d%d)"
+
+local cache = {}
+
+function utils.GetWeaponSpeed(slot)
+    -- Default speed
+    local speed = 1
+
+    local weapon_id = GetInventoryItemID("player", slot)
+    if cache[weapon_id] then
+        return cache[weapon_id]
+    elseif not weapon_id then
+        return speed
+    end
+
+    tooltip:ClearLines()
+    tooltip:SetItemByID(weapon_id)
+    if not GetItemInfo(weapon_id) then
+        return speed
+    end
+    for i = 1, tooltip:NumLines() do
+        local fontString = _G[font_string_base .. i]
+        local text = fontString:GetText()
+        if text then
+            local match = text:match(speed_pattern)
+            if match then
+                speed = match
+                break
+            end
+        end
+    end
+
+    cache[weapon_id] = speed
+    return speed
 end

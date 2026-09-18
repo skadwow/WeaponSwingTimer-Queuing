@@ -39,17 +39,22 @@ player.frame                    = nil
 
 -- Values pertaining to the mainhand swing timer
 player.main_swing_timer         = 0.00001
-player.main_weapon_speed        = 2
+local base_main_speed           = addon_data.utils.GetWeaponSpeed(INVSLOT_MAINHAND)
+player.main_weapon_speed        = base_main_speed
 local prev_main_weapon_speed    = nil
 local main_weapon_id            = GetInventoryItemID("player", 16)
 local main_speed_changed        = false
 
 -- Values pertaining to the offhand swing timer
 player.off_swing_timer          = 0.00001
-player.off_weapon_speed         = 2
+local base_off_speed            = addon_data.utils.GetWeaponSpeed(INVSLOT_OFFHAND)
+player.off_weapon_speed         = base_off_speed
 local prev_off_weapon_speed     = nil
 local off_weapon_id             = GetInventoryItemID("player", 17)
 local off_speed_changed         = false
+
+-- Most recently measured attack speed scale
+local speed_scale               = not issecretvalue(UnitAttackSpeed("player")) and UnitAttackSpeed("player") / base_main_speed or 1
 
 -- Ranged weapon id for checking if the ranged weapon has been changed
 local ranged_weapon_id          = GetInventoryItemID("player", 18)
@@ -462,6 +467,8 @@ local AURA_EVENTS = {
     ["SPELL_AURA_REMOVED"] = true
 }
 
+local EXECUTE = addon_data.spells.GetSpellIDs(L"Execute")
+
 function player.OnCombatLogUnfiltered(combatInfo)
     local sourceGUID = combatInfo[4]
     local destGUID = combatInfo[8]
@@ -487,7 +494,11 @@ function player.OnCombatLogUnfiltered(combatInfo)
             addon_data.utils.DebugPrint(combatInfo[1], subevent, combatInfo[13])
             local spellID = combatInfo[12]
             local ts = GetTimePreciseSec()
-            if IsQueuedSpell(spellID) and ts - prev_queued_swing > REQUEUING_TIME then
+            if spellID == EXECUTE then
+                if extra_attacks:exists() then
+                    extra_attacks:startChain()
+                end
+            elseif IsQueuedSpell(spellID) and ts - prev_queued_swing > REQUEUING_TIME then
                 prev_queued_swing = ts
                 swingHandler(false)
             end
@@ -531,6 +542,20 @@ function player.OnCombatLogUnfiltered(combatInfo)
                 end
             end
         end
+    end
+end
+
+local MAINHAND = 0
+local OFFHAND  = 1
+local RANGED   = 2
+
+function player.OnPlayerSwing(swingDuration, swingType)
+    if swingType == MAINHAND then
+        player.main_weapon_speed = swingDuration
+        player.ResetMainSwingTimer()
+    elseif swingType == OFFHAND then
+        player.off_weapon_speed = swingDuration
+        player.ResetOffSwingTimer()
     end
 end
 
@@ -739,26 +764,45 @@ function player.UpdateOffSwingTimer(elapsed)
 end
 
 function player.UpdateMainWeaponSpeed()
-    prev_main_weapon_speed = player.main_weapon_speed
-    player.main_weapon_speed, _ = UnitAttackSpeed("player")
     if C_Item.DoesItemExist(MAINHAND_SLOT) then
+        base_main_speed = addon_data.utils.GetWeaponSpeed(INVSLOT_MAINHAND)
         player.has_twohand = C_Item.GetItemInventoryType(MAINHAND_SLOT) == Enum.InventoryType.Index2HweaponType
     end
-    main_speed_changed = player.main_weapon_speed ~= prev_main_weapon_speed
+
+    local attackSpeed, _ = UnitAttackSpeed("player")
+    if not issecretvalue(attackSpeed) then
+        prev_main_weapon_speed = player.main_weapon_speed
+        player.main_weapon_speed = attackSpeed
+        main_speed_changed = player.main_weapon_speed ~= prev_main_weapon_speed
+        speed_scale = attackSpeed / base_main_speed
+    else
+        prev_main_weapon_speed = player.main_weapon_speed
+        player.main_weapon_speed = speed_scale * base_main_speed
+        main_speed_changed = player.main_weapon_speed ~= prev_main_weapon_speed
+    end
 end
 
 function player.UpdateOffWeaponSpeed()
-    prev_off_weapon_speed = player.off_weapon_speed or 2
-    _, player.off_weapon_speed = UnitAttackSpeed("player")
     if C_Item.DoesItemExist(OFFHAND_SLOT) then
+        base_off_speed = addon_data.utils.GetWeaponSpeed(INVSLOT_MAINHAND)
         local itemType = C_Item.GetItemInventoryType(OFFHAND_SLOT)
         has_offhand = itemType == Enum.InventoryType.IndexWeaponType or 
-                                        itemType == Enum.InventoryType.IndexWeaponoffhandType
+                      itemType == Enum.InventoryType.IndexWeaponoffhandType
         has_shield = itemType == Enum.InventoryType.IndexShieldType
     else
         has_offhand = false
     end
-    off_speed_changed = player.off_weapon_speed ~= prev_off_weapon_speed
+
+    local _, offhandAttackSpeed = UnitAttackSpeed("player")
+    if not issecretvalue(offhandAttackSpeed) then
+        prev_off_weapon_speed = player.off_weapon_speed or 2
+        player.off_weapon_speed = offhandAttackSpeed
+        off_speed_changed = player.off_weapon_speed ~= prev_off_weapon_speed
+    else
+        prev_off_weapon_speed = player.off_weapon_speed
+        player.off_weapon_speed = speed_scale * base_off_speed
+        off_speed_changed = player.off_weapon_speed ~= prev_off_weapon_speed
+    end
 end
 
 function WST_GetSwingTimers()
