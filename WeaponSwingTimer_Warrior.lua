@@ -36,6 +36,11 @@ warrior.default_settings    = {
     slam_gcd_spark = true,
 }
 
+local IsSpellKnown          = C_SpellBook and C_SpellBook.IsSpellKnown or IsSpellKnown
+
+local SLAM_IDS              = addon_data.spells.GetSpellIDs(L"Slam")
+local isSlamKnown           = false
+
 function warrior.LoadSettings()
     settings = addon_data.settings.warrior
 end
@@ -54,6 +59,21 @@ end
 
 function warrior.OnUpdate(elapsed)
     warrior.UpdateVisualsOnUpdate()
+end
+
+local function CheckIfSlamKnown()
+    for spellID, _ in pairs(SLAM_IDS) do
+        if IsSpellKnown(spellID) then
+            isSlamKnown = true
+            return
+        end
+    end
+    isSlamKnown = false
+end
+CheckIfSlamKnown()
+
+function warrior.OnSpellsChanged()
+    CheckIfSlamKnown()
 end
 
 --[[================================================================================]]--
@@ -138,6 +158,8 @@ local function UpdateColorPalettes()
 end
 
 local function UpdateSlamIndicators()
+    if not isSlamKnown then return end
+
     local frame = player.frame
     local frameWidth = frame:GetWidth()
     frame.slam_delay_bar:SetWidth(frameWidth * settings.slam_delay / player.main_weapon_speed)
@@ -183,12 +205,14 @@ function warrior.InitializeVisuals()
     frame.slam_delay_bar = frame:CreateTexture(nil, "ARTWORK", nil, 1)
     frame.slam_delay_bar:SetPoint("TOPRIGHT")
     frame.slam_delay_bar:SetPoint("BOTTOMRIGHT")
+    frame.slam_delay_bar:Hide()
 
     frame.slam_gcd_spark = frame:CreateTexture(nil, "OVERLAY")
     frame.slam_gcd_spark:SetPoint("TOP")
     frame.slam_gcd_spark:SetPoint("BOTTOM")
     frame.slam_gcd_spark:SetWidth(16)
     frame.slam_gcd_spark:SetTexture("Interface/AddOns/WeaponSwingTimer/Images/Spark")
+    frame.slam_gcd_spark:Hide()
 
     warrior.UpdateVisualsOnSettingsChange()
 end
@@ -597,6 +621,10 @@ function warrior.CreateConfigPanel(parent_panel)
         0.010,
         warrior.SlamDelayOnValChange)
     panel.slam_delay_slider:SetPoint("TOPLEFT", 405, -290)
+
+    panel.slam_required_text = config.TextFactory(panel, L"Slam indicators are not displayed if slam is not learned", 10)
+    panel.slam_required_text:SetPoint("TOPLEFT", 20, -360)
+    panel.slam_required_text:SetTextColor(1, 1, 1, 1)
 
     -- Return the final panel
     warrior.UpdateConfigPanelValues()

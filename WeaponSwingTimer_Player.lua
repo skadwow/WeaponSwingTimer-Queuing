@@ -545,18 +545,20 @@ function player.OnCombatLogUnfiltered(combatInfo)
     end
 end
 
-local MAINHAND = 0
-local OFFHAND  = 1
-local RANGED   = 2
+if addon_data.utils.IsForeverWow() then
+    local MAINHAND = Enum.PlayerSwingType.MainHand
+    local OFFHAND  = Enum.PlayerSwingType.OffHand
+    local RANGED   = Enum.PlayerSwingType.Ranged
 
-function player.OnPlayerSwing(swingDuration, swingType)
-    if swingType == MAINHAND then
-        player.main_weapon_speed = swingDuration
-        speed_scale = player.main_weapon_speed / base_main_speed
-        player.ResetMainSwingTimer()
-    elseif swingType == OFFHAND then
-        player.off_weapon_speed = swingDuration
-        player.ResetOffSwingTimer()
+    function player.OnPlayerSwing(swingDuration, swingType)
+        if swingType == MAINHAND then
+            player.main_weapon_speed = swingDuration
+            speed_scale = player.main_weapon_speed / base_main_speed
+            player.ResetMainSwingTimer()
+        elseif swingType == OFFHAND then
+            player.off_weapon_speed = swingDuration
+            player.ResetOffSwingTimer()
+        end
     end
 end
 

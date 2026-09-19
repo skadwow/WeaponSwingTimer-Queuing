@@ -892,9 +892,9 @@ if addon_data.utils.IsForeverWow() then
         panel.title_text:SetPoint("TOPLEFT", 10, -10)
         panel.title_text:SetTextColor(1, 0.82, 0, 1)
 
-        panel.title_text = config.TextFactory(panel, L"Target swing timer temporarily disabled in WoW: Forever", 14)
-        panel.title_text:SetPoint("TOPLEFT", 20, -40)
-        panel.title_text:SetTextColor(1, 1, 1, 1)
+        panel.disabled_text = config.TextFactory(panel, L"Target swing timer temporarily disabled in WoW: Forever", 14)
+        panel.disabled_text:SetPoint("TOPLEFT", 20, -40)
+        panel.disabled_text:SetTextColor(1, 1, 1, 1)
 
         return panel
     end

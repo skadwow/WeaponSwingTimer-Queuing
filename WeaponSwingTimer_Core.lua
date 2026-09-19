@@ -182,6 +182,7 @@ function frame:OnAddonLoaded()
     self:RegisterEvent("UNIT_SPELLCAST_SENT")
     self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
     self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+    self:RegisterEvent("SPELLS_CHANGED")
     -- Load the settings for the core and all timers
     addon_data.profiles.LoadProfiles()
     core.LoadAllSettings()
@@ -303,10 +304,6 @@ else
     end
 end
 
-function frame:PLAYER_SWING(swingDuration, swingType)
-    addon_data.player.OnPlayerSwing(swingDuration, swingType)
-end
-
 function frame:PLAYER_REGEN_DISABLED()
     core.in_combat = true
 end
@@ -315,11 +312,20 @@ function frame:PLAYER_REGEN_ENABLED()
     core.in_combat = false
 end
 
+function frame:PLAYER_SWING(swingDuration, swingType)
+    addon_data.player.OnPlayerSwing(swingDuration, swingType)
+    addon_data.queuing.OnPlayerSwing(swingType)
+end
+
 function frame:PLAYER_TARGET_CHANGED()
     addon_data.utils.DebugPrint("PLAYER_TARGET_CHANGED")
     addon_data.player.OnPlayerTargetChanged()
     addon_data.queuing.OnPlayerTargetChanged()
     addon_data.target.OnPlayerTargetChanged()
+end
+
+function frame:SPELLS_CHANGED()
+    addon_data.warrior.OnSpellsChanged()
 end
 
 function frame:START_AUTOREPEAT_SPELL()

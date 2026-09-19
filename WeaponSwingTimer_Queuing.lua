@@ -171,6 +171,17 @@ function queuing.OnCombatLogUnfiltered(combatInfo)
     end
 end
 
+if addon_data.utils.IsForeverWow() then
+    local MAINHAND = Enum.PlayerSwingType.MainHand
+
+    function queuing.OnPlayerSwing(swingType)
+        if swingType == MAINHAND then
+            WST_Queued = nil
+            UncolorQueuedBars()
+        end
+    end
+end
+
 ---@param unit UnitToken
 ---@param spellID SpellID
 function queuing.OnUnitSpellCastInterrupted(unit, spellID)
