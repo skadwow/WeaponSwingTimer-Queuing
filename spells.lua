@@ -332,3 +332,24 @@ spells.GetSpellInfo = (C_Spell and C_Spell.GetSpellInfo) and C_Spell.GetSpellInf
 end
 
 spells.IsCurrentSpell = (C_Spell and C_Spell.IsCurrentSpell) and C_Spell.IsCurrentSpell or IsCurrentSpell
+
+local PLAYER_CLASS              = select(2, UnitClass("player"))
+local QUEUED_SPELLS         = {
+    ["DEATHKNIGHT"] = {},
+    ["DRUID"]       = spells.GetSpellIDs(L"Maul"),
+    ["HUNTER"]      = spells.GetSpellIDs(L"Raptor Strike"),
+    ["MAGE"]        = {},
+    ["PALADIN"]     = {},
+    ["PRIEST"]      = {},
+    ["ROGUE"]       = {},
+    ["SHAMAN"]      = {},
+    ["WARLOCK"]     = {},
+    ["WARRIOR"]     = spells.GetSpellIDs(L"Heroic Strike", L"Cleave"),
+}
+
+---@param spellID SpellID
+---@param class? string
+---@return boolean
+function spells.IsQueuedSpell(spellID, class)
+    return QUEUED_SPELLS[class or PLAYER_CLASS][spellID] and true or false
+end

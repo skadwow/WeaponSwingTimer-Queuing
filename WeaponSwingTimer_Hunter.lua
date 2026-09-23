@@ -11,6 +11,8 @@ local L = addon_data.localization.get
 local hunter                = {}
 addon_data.hunter           = hunter
 
+local player                = addon_data.player
+
 local GetSpellLines         = addon_data.spells.GetSpellLines
 local GetSpellIDs           = addon_data.spells.GetSpellIDs
 local GetRangedBaseSpeed    = addon_data.GetRangedBaseSpeed
@@ -52,9 +54,9 @@ function hunter.is_spell_shoot(spellID)
     return SHOOT_IDS[spellID] or false
 end
 
-local PLAYER_GUID           = addon_data.player.guid
-local PLAYER_CLASS          = addon_data.player.class
-local PLAYER_IS_RANGED      = addon_data.player.is_ranged
+local PLAYER_GUID           = player.guid
+local PLAYER_CLASS          = player.class
+local PLAYER_IS_RANGED      = player.is_ranged
 
 --- Initializing variables for calculations and function calls
 hunter.shooting = false
@@ -73,7 +75,6 @@ hunter.spell_GCD_Time = 0
 hunter.casting = false
 hunter.casting_auto = false
 hunter.range_cast_speed_modifer = 1
-hunter.has_moved = false
 
 local settings              = {}
 hunter.default_settings     = {
@@ -154,6 +155,31 @@ function hunter.UpdateRangeCastSpeedModifier()
     end
 end
 
+if addon_data.utils.IsForeverWow() then
+    hunter.UpdateRangeCastSpeedModifier = function() end
+
+    function hunter.OnPlayerSwing(swingDuration)
+        hunter.FeignFullReset = false
+        hunter.last_shot_time = GetTime()
+        hunter.ResetShotTimer()
+        hunter.casting_auto = false
+
+        if hunter.base_speed == 1 then
+            hunter.base_speed = GetRangedBaseSpeed()
+        else
+            hunter.range_cast_speed_modifer = swingDuration / hunter.base_speed
+        end
+
+        if swingDuration ~= hunter.range_speed then
+            if not hunter.auto_shot_ready then
+                hunter.shot_timer = hunter.shot_timer * (swingDuration / hunter.range_speed)
+            end
+            hunter.range_speed = swingDuration
+            hunter.range_auto_speed_modified = hunter.range_cast_speed_modifer
+        end
+    end
+end
+
 --- Update timer for auto shot based on various conditions
 function hunter.ResetShotTimer()
     -- The timer is reset to either the auto cast time or the difference between the time since the last shot and the current time depending on which is larger
@@ -194,7 +220,7 @@ function hunter.UpdateAutoShotTimer(elapsed)
     end
 
     -- If the player moved then the timer resets
-    if hunter.has_moved or hunter.casting then
+    if player.is_moving or hunter.casting then
         if hunter.shot_timer <= hunter.auto_cast_time then
             hunter.ResetShotTimer()
         end
@@ -217,11 +243,8 @@ end
 
 function hunter.OnUpdate(elapsed)
     if settings.enabled then
-        -- Check to see if we have moved
-        hunter.has_moved = (GetUnitSpeed("player") > 0)
-
         -- Check for feign death movement that causes swing reset
-        if hunter.FeignStatus and hunter.has_moved then
+        if hunter.FeignStatus and player.is_moving then
             hunter.FeignDeath()
             hunter.FeignStatus = false
         end
@@ -301,6 +324,8 @@ function hunter.OnUnitSpellCastSucceeded(unit, spellID)
                 hunter.ResetShotTimer()
                 hunter.shot_timer = hunter.auto_cast_time
             elseif hunter.is_spell_auto_shot(spellID) or hunter.is_spell_shoot(spellID) then
+                if addon_data.utils.IsForeverWow() then return end
+
                 hunter.FeignFullReset = false
                 hunter.last_shot_time = GetTime()
                 hunter.ResetShotTimer()

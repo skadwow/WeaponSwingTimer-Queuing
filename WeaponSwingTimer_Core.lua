@@ -11,7 +11,19 @@ local L = addon_data.localization.get
 local core                  = {}
 addon_data.core             = core
 
-local GetSpellIDs           = addon_data.spells.GetSpellIDs
+local castbar               = addon_data.castbar
+local config                = addon_data.config
+local druid                 = addon_data.druid
+local hunter                = addon_data.hunter
+local player                = addon_data.player
+local profiles              = addon_data.profiles
+local queuing               = addon_data.queuing
+local spells                = addon_data.spells
+local target                = addon_data.target
+local utils                 = addon_data.utils
+local warrior               = addon_data.warrior
+
+local GetSpellIDs           = spells.GetSpellIDs
 
 local frame                 = CreateFrame("Frame", addon_name .. "CoreFrame", UIParent)
 core.core_frame             = frame
@@ -62,97 +74,90 @@ end
 frame:RegisterEvent("ADDON_LOADED")
 
 function core.LoadAllSettings()
-    addon_data.profiles.LoadSettings()
+    profiles.LoadSettings()
 
-    addon_data.core.LoadSettings()
-    addon_data.player.LoadSettings()
-    addon_data.target.LoadSettings()
-    addon_data.warrior.LoadSettings()
-    addon_data.druid.LoadSettings()
-    addon_data.hunter.LoadSettings()
-    addon_data.castbar.LoadSettings()
+    core.LoadSettings()
+    player.LoadSettings()
+    target.LoadSettings()
+    warrior.LoadSettings()
+    druid.LoadSettings()
+    hunter.LoadSettings()
+    castbar.LoadSettings()
 end
 
 function core.RestoreAllDefaults()
     core.RestoreDefaults()
-    addon_data.player.RestoreDefaults()
-    addon_data.target.RestoreDefaults()
-    addon_data.warrior.RestoreDefaults()
-    addon_data.druid.RestoreDefaults()
-    addon_data.hunter.RestoreDefaults()
-    addon_data.castbar.RestoreDefaults()
-    addon_data.profiles.RestoreDefaults()
+    player.RestoreDefaults()
+    target.RestoreDefaults()
+    warrior.RestoreDefaults()
+    druid.RestoreDefaults()
+    hunter.RestoreDefaults()
+    castbar.RestoreDefaults()
+    profiles.RestoreDefaults()
 end
 
 local function InitializeAllVisuals()
-    addon_data.player.InitializeVisuals()
-    addon_data.target.InitializeVisuals()
+    player.InitializeVisuals()
+    target.InitializeVisuals()
     if PLAYER_CLASS == "WARRIOR" then
-        addon_data.warrior.InitializeVisuals()
+        warrior.InitializeVisuals()
     elseif PLAYER_CLASS == "DRUID" then
-        addon_data.druid.InitializeVisuals()
+        druid.InitializeVisuals()
     elseif PLAYER_IS_RANGED then
-        addon_data.hunter.InitializeVisuals()
-        addon_data.castbar.InitializeVisuals()
+        hunter.InitializeVisuals()
+        castbar.InitializeVisuals()
     end
-    addon_data.config.InitializeVisuals()
+    config.InitializeVisuals()
 end
 
 function core.UpdateAllConfigPanelValues()
-    addon_data.profiles.UpdateConfigPanelValues()
-    addon_data.player.UpdateConfigPanelValues()
-    addon_data.target.UpdateConfigPanelValues()
-    addon_data.warrior.UpdateConfigPanelValues()
-    addon_data.druid.UpdateConfigPanelValues()
-    addon_data.hunter.UpdateConfigPanelValues()
-    addon_data.castbar.UpdateConfigPanelValues()
+    profiles.UpdateConfigPanelValues()
+    player.UpdateConfigPanelValues()
+    target.UpdateConfigPanelValues()
+    warrior.UpdateConfigPanelValues()
+    druid.UpdateConfigPanelValues()
+    hunter.UpdateConfigPanelValues()
+    castbar.UpdateConfigPanelValues()
 end
 
 function core.UpdateAllVisualsOnSettingsChange()
-    addon_data.player.UpdateVisualsOnSettingsChange()
-    addon_data.target.UpdateVisualsOnSettingsChange()
-    addon_data.warrior.UpdateVisualsOnSettingsChange()
-    addon_data.druid.UpdateVisualsOnSettingsChange()
-    addon_data.hunter.UpdateVisualsOnSettingsChange()
-    addon_data.castbar.UpdateVisualsOnSettingsChange()
+    player.UpdateVisualsOnSettingsChange()
+    target.UpdateVisualsOnSettingsChange()
+    warrior.UpdateVisualsOnSettingsChange()
+    druid.UpdateVisualsOnSettingsChange()
+    hunter.UpdateVisualsOnSettingsChange()
+    castbar.UpdateVisualsOnSettingsChange()
 end
 
 local noop = function() end
 local UPDATE_FUNCS = {
     ["WARRIOR"] = function(elapsed)
-        addon_data.warrior.OnUpdate(elapsed)
+        warrior.OnUpdate(elapsed)
     end,
     ["HUNTER"] = function(elapsed)
-        addon_data.hunter.OnUpdate(elapsed)
-        addon_data.castbar.OnUpdate(elapsed)
+        hunter.OnUpdate(elapsed)
+        castbar.OnUpdate(elapsed)
     end,
     ["MAGE"] = function(elapsed)
-        addon_data.hunter.OnUpdate(elapsed)
-        addon_data.castbar.OnUpdate(elapsed)
+        hunter.OnUpdate(elapsed)
+        castbar.OnUpdate(elapsed)
     end,
     ["PRIEST"] = function(elapsed)
-        addon_data.hunter.OnUpdate(elapsed)
-        addon_data.castbar.OnUpdate(elapsed)
+        hunter.OnUpdate(elapsed)
+        castbar.OnUpdate(elapsed)
     end,
     ["WARLOCK"] = function(elapsed)
-        addon_data.hunter.OnUpdate(elapsed)
-        addon_data.castbar.OnUpdate(elapsed)
+        hunter.OnUpdate(elapsed)
+        castbar.OnUpdate(elapsed)
     end,
 }
 
 local classFunc = UPDATE_FUNCS[PLAYER_CLASS] or noop
 
 local function CoreFrame_OnUpdate(self, elapsed)
-    addon_data.player.OnUpdate(elapsed)
-    addon_data.target.OnUpdate(elapsed)
+    player.OnUpdate(elapsed)
+    target.OnUpdate(elapsed)
     classFunc(elapsed)
-end
-
----@param spellID SpellID
----@param class? string
----@return boolean
-function core.IsQueuedSpell(spellID, class)
-    return QUEUED_SPELLS[class or PLAYER_CLASS][spellID] and true or false
 end
 
 function frame:OnAddonLoaded()
@@ -160,19 +165,23 @@ function frame:OnAddonLoaded()
     self:UnregisterEvent("ADDON_LOADED")
     -- Attach the rest of the events and scripts to the core frame
     self:SetScript("OnUpdate", CoreFrame_OnUpdate)
-    if addon_data.utils.IsForeverWow() then
+    if utils.IsForeverWow() then
         self:RegisterEvent("PLAYER_SWING")
     else
         self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     end
+    self:RegisterEvent("PLAYER_LOGIN")
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
     self:RegisterEvent("PLAYER_REGEN_ENABLED")
+    self:RegisterEvent("PLAYER_STARTED_MOVING")
+    self:RegisterEvent("PLAYER_STOPPED_MOVING")
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
     if PLAYER_IS_RANGED then
         self:RegisterEvent("START_AUTOREPEAT_SPELL")
         self:RegisterEvent("STOP_AUTOREPEAT_SPELL")
     end
-    self:RegisterEvent("PLAYER_LOGIN")
+    self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+    self:RegisterEvent("SPELLS_CHANGED")
     self:RegisterEvent("UI_ERROR_MESSAGE")
     self:RegisterEvent("UNIT_ATTACK_SPEED")
     self:RegisterEvent("UNIT_INVENTORY_CHANGED")
@@ -181,18 +190,16 @@ function frame:OnAddonLoaded()
     self:RegisterEvent("UNIT_SPELLCAST_FAILED_QUIET")
     self:RegisterEvent("UNIT_SPELLCAST_SENT")
     self:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-    self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
-    self:RegisterEvent("SPELLS_CHANGED")
     -- Load the settings for the core and all timers
-    addon_data.profiles.LoadProfiles()
+    profiles.LoadProfiles()
     core.LoadAllSettings()
     InitializeAllVisuals()
     -- Any other misc operations that happen at the start
-    addon_data.player.ZeroizeSwingTimers()
-    addon_data.target.ZeroizeSwingTimers()
+    player.ZeroizeSwingTimers()
+    target.ZeroizeSwingTimers()
 
     if settings.welcome_message then
-        addon_data.utils.PrintMsg(LOAD_MESSAGE)
+        utils.PrintMsg(LOAD_MESSAGE)
     end
 end
 
@@ -205,103 +212,107 @@ if PLAYER_IS_RANGED then
     function frame:COMBAT_LOG_EVENT_UNFILTERED()
         local combatInfo = {C_CombatLog.GetCurrentEventInfo()}
 
-        addon_data.queuing.OnCombatLogUnfiltered(combatInfo)
-        addon_data.player.OnCombatLogUnfiltered(combatInfo)
-        addon_data.target.OnCombatLogUnfiltered(combatInfo)
-        addon_data.hunter.OnCombatLogUnfiltered(combatInfo)
-        addon_data.castbar.OnCombatLogUnfiltered(combatInfo)
+        queuing.OnCombatLogUnfiltered(combatInfo)
+        player.OnCombatLogUnfiltered(combatInfo)
+        target.OnCombatLogUnfiltered(combatInfo)
+        hunter.OnCombatLogUnfiltered(combatInfo)
+        castbar.OnCombatLogUnfiltered(combatInfo)
     end
 
     function frame:UNIT_INVENTORY_CHANGED(unitTarget)
         if unitTarget == "player" then
-            addon_data.player.OnInventoryChange()
-            addon_data.hunter.OnInventoryChange()
+            player.OnInventoryChange()
+            hunter.OnInventoryChange()
         elseif unitTarget == "target" then
-            addon_data.target.OnInventoryChange()
+            target.OnInventoryChange()
         end
     end
 
     function frame:UNIT_SPELLCAST_INTERRUPTED(unitTarget, _, spellID)
         if unitTarget == "player" then
-            addon_data.utils.DebugPrint("UNIT_SPELLCAST_INTERRUPTED", spellID)
-            addon_data.player.OnUnitSpellCastInterrupted(unitTarget, spellID)
-            addon_data.queuing.OnUnitSpellCastInterrupted(unitTarget, spellID)
-            addon_data.hunter.OnUnitSpellCastInterrupted(unitTarget, spellID)
-            addon_data.castbar.OnUnitSpellCastInterrupted(unitTarget, spellID)
+            utils.DebugPrint("UNIT_SPELLCAST_INTERRUPTED", spellID)
+            player.OnUnitSpellCastInterrupted(unitTarget, spellID)
+            queuing.OnUnitSpellCastInterrupted(unitTarget, spellID)
+            hunter.OnUnitSpellCastInterrupted(unitTarget, spellID)
+            castbar.OnUnitSpellCastInterrupted(unitTarget, spellID)
         end
     end
 
     function frame:UNIT_SPELLCAST_SUCCEEDED(unitTarget, _, spellID)
         if unitTarget == "player" then
-            addon_data.utils.DebugPrint("UNIT_SPELLCAST_SUCCEEDED", spellID)
-            addon_data.player.OnUnitSpellCastSucceeded(unitTarget, spellID)
-            addon_data.queuing.OnUnitSpellCastSucceeded(unitTarget, spellID)
-            addon_data.hunter.OnUnitSpellCastSucceeded(unitTarget, spellID)
-            addon_data.castbar.OnUnitSpellCastSucceeded(unitTarget, spellID)
+            utils.DebugPrint("UNIT_SPELLCAST_SUCCEEDED", spellID)
+            player.OnUnitSpellCastSucceeded(unitTarget, spellID)
+            queuing.OnUnitSpellCastSucceeded(unitTarget, spellID)
+            hunter.OnUnitSpellCastSucceeded(unitTarget, spellID)
+            castbar.OnUnitSpellCastSucceeded(unitTarget, spellID)
         end
     end
 
     function frame:UNIT_SPELLCAST_FAILED(unitTarget, _, spellID)
         if unitTarget == "player" then
-            addon_data.player.OnUnitSpellCastFailed(unitTarget, spellID)
-            addon_data.queuing.OnUnitSpellCastFailed(unitTarget, spellID)
-            addon_data.castbar.OnUnitSpellCastFailed(unitTarget, spellID)
+            player.OnUnitSpellCastFailed(unitTarget, spellID)
+            queuing.OnUnitSpellCastFailed(unitTarget, spellID)
+            castbar.OnUnitSpellCastFailed(unitTarget, spellID)
         end
     end
 
     function frame:UNIT_SPELLCAST_FAILED_QUIET(unitTarget, _, spellID)
         if unitTarget == "player" then
-            addon_data.player.OnUnitSpellCastFailedQuiet(unitTarget, spellID)
-            addon_data.queuing.OnUnitSpellCastFailedQuiet(unitTarget, spellID)
-            addon_data.hunter.OnUnitSpellCastFailedQuiet(unitTarget, spellID)
+            player.OnUnitSpellCastFailedQuiet(unitTarget, spellID)
+            queuing.OnUnitSpellCastFailedQuiet(unitTarget, spellID)
+            hunter.OnUnitSpellCastFailedQuiet(unitTarget, spellID)
         end
     end
 else
     function frame:COMBAT_LOG_EVENT_UNFILTERED()
         local combatInfo = {C_CombatLog.GetCurrentEventInfo()}
 
-        addon_data.queuing.OnCombatLogUnfiltered(combatInfo)
-        addon_data.player.OnCombatLogUnfiltered(combatInfo)
-        addon_data.target.OnCombatLogUnfiltered(combatInfo)
+        queuing.OnCombatLogUnfiltered(combatInfo)
+        player.OnCombatLogUnfiltered(combatInfo)
+        target.OnCombatLogUnfiltered(combatInfo)
     end
 
     function frame:UNIT_INVENTORY_CHANGED(unitTarget)
         if unitTarget == "player" then
-            addon_data.player.OnInventoryChange()
+            player.OnInventoryChange()
         elseif unitTarget == "target" then
-            addon_data.target.OnInventoryChange()
+            target.OnInventoryChange()
         end
     end
 
     function frame:UNIT_SPELLCAST_INTERRUPTED(unitTarget, _, spellID)
         if unitTarget == "player" then
-            addon_data.utils.DebugPrint("UNIT_SPELLCAST_INTERRUPTED", spellID)
-            addon_data.player.OnUnitSpellCastInterrupted(unitTarget, spellID)
-            addon_data.queuing.OnUnitSpellCastInterrupted(unitTarget, spellID)
+            utils.DebugPrint("UNIT_SPELLCAST_INTERRUPTED", spellID)
+            player.OnUnitSpellCastInterrupted(unitTarget, spellID)
+            queuing.OnUnitSpellCastInterrupted(unitTarget, spellID)
         end
     end
 
     function frame:UNIT_SPELLCAST_SUCCEEDED(unitTarget, _, spellID)
         if unitTarget == "player" then
-            addon_data.utils.DebugPrint("UNIT_SPELLCAST_SUCCEEDED", spellID)
-            addon_data.player.OnUnitSpellCastSucceeded(unitTarget, spellID)
-            addon_data.queuing.OnUnitSpellCastSucceeded(unitTarget, spellID)
+            utils.DebugPrint("UNIT_SPELLCAST_SUCCEEDED", spellID)
+            player.OnUnitSpellCastSucceeded(unitTarget, spellID)
+            queuing.OnUnitSpellCastSucceeded(unitTarget, spellID)
         end
     end
 
     function frame:UNIT_SPELLCAST_FAILED(unitTarget, _, spellID)
         if unitTarget == "player" then
-            addon_data.player.OnUnitSpellCastFailed(unitTarget, spellID)
-            addon_data.queuing.OnUnitSpellCastFailed(unitTarget, spellID)
+            player.OnUnitSpellCastFailed(unitTarget, spellID)
+            queuing.OnUnitSpellCastFailed(unitTarget, spellID)
         end
     end
 
     function frame:UNIT_SPELLCAST_FAILED_QUIET(unitTarget, _, spellID)
         if unitTarget == "player" then
-            addon_data.player.OnUnitSpellCastFailedQuiet(unitTarget, spellID)
-            addon_data.queuing.OnUnitSpellCastFailedQuiet(unitTarget, spellID)
+            player.OnUnitSpellCastFailedQuiet(unitTarget, spellID)
+            queuing.OnUnitSpellCastFailedQuiet(unitTarget, spellID)
         end
     end
+end
+
+function frame:PLAYER_LOGIN()
+    player.OnPlayerLogin()
 end
 
 function frame:PLAYER_REGEN_DISABLED()
@@ -312,36 +323,52 @@ function frame:PLAYER_REGEN_ENABLED()
     core.in_combat = false
 end
 
-function frame:PLAYER_SWING(swingDuration, swingType)
-    addon_data.player.OnPlayerSwing(swingDuration, swingType)
-    addon_data.queuing.OnPlayerSwing(swingType)
+function frame:PLAYER_STARTED_MOVING()
+    player.is_moving = true
+end
+
+function frame:PLAYER_STOPPED_MOVING()
+    player.is_moving = false
+end
+
+if addon_data.utils.IsForeverWow() then
+    local MAINHAND = Enum.PlayerSwingType.MainHand
+    local OFFHAND  = Enum.PlayerSwingType.OffHand
+    local RANGED   = Enum.PlayerSwingType.Ranged
+
+    function frame:PLAYER_SWING(swingDuration, swingType)
+        if swingType == MAINHAND then
+            player.OnPlayerSwingMainHand(swingDuration)
+            queuing.OnPlayerSwing()
+        elseif swingType == OFFHAND then
+            player.OnPlayerSwingOffHand(swingDuration)
+        elseif swingType == RANGED then
+            hunter.OnPlayerSwing(swingDuration)
+        end
+    end
 end
 
 function frame:PLAYER_TARGET_CHANGED()
-    addon_data.utils.DebugPrint("PLAYER_TARGET_CHANGED")
-    addon_data.player.OnPlayerTargetChanged()
-    addon_data.queuing.OnPlayerTargetChanged()
-    addon_data.target.OnPlayerTargetChanged()
+    utils.DebugPrint("PLAYER_TARGET_CHANGED")
+    player.OnPlayerTargetChanged()
+    queuing.OnPlayerTargetChanged()
+    target.OnPlayerTargetChanged()
 end
 
 function frame:SPELLS_CHANGED()
-    addon_data.warrior.OnSpellsChanged()
+    warrior.OnSpellsChanged()
 end
 
 function frame:START_AUTOREPEAT_SPELL()
-    addon_data.hunter.OnStartAutorepeatSpell()
+    hunter.OnStartAutorepeatSpell()
 end
 
 function frame:STOP_AUTOREPEAT_SPELL()
-    addon_data.hunter.OnStopAutorepeatSpell()
+    hunter.OnStopAutorepeatSpell()
 end
 
 function frame:SPELL_UPDATE_COOLDOWN(spellID)
-    addon_data.player.OnSpellUpdateCooldown(spellID)
-end
-
-function frame:PLAYER_LOGIN()
-    addon_data.player.OnPlayerLogin()
+    player.OnSpellUpdateCooldown(spellID)
 end
 
 local SWING_ERROR_MESSAGES = {
@@ -351,22 +378,22 @@ local SWING_ERROR_MESSAGES = {
 
 function frame:UI_ERROR_MESSAGE(_, message)
     if SWING_ERROR_MESSAGES[message] then
-        addon_data.player.OnUiErrorMessage()
+        player.OnUiErrorMessage()
     end
 end
 
 function frame:UNIT_ATTACK_SPEED(unitTarget)
     if unitTarget == "player" then
-        addon_data.player.OnAttackSpeedChanged()
+        player.OnAttackSpeedChanged()
     elseif unitTarget == "target" then
-        addon_data.target.OnAttackSpeedChanged()
+        target.OnAttackSpeedChanged()
     end
 end
 
 function frame:UNIT_SPELLCAST_SENT(unitTarget, _, _, spellID)
     if unitTarget == "player" then
-        addon_data.utils.DebugPrint("UNIT_SPELLCAST_SENT", spellID)
-        addon_data.queuing.OnUnitSpellCastSent(unitTarget, spellID)
+        utils.DebugPrint("UNIT_SPELLCAST_SENT", spellID)
+        queuing.OnUnitSpellCastSent(unitTarget, spellID)
     end;
 end
 
@@ -382,5 +409,5 @@ SLASH_WEAPONSWINGTIMER_CONFIG1 = "/WeaponSwingTimer"
 SLASH_WEAPONSWINGTIMER_CONFIG2 = "/weaponswingtimer"
 SLASH_WEAPONSWINGTIMER_CONFIG3 = "/wst"
 SlashCmdList["WEAPONSWINGTIMER_CONFIG"] = function(option)
-    Settings.OpenToCategory(addon_data.config.category:GetID())
+    Settings.OpenToCategory(config.category:GetID())
 end

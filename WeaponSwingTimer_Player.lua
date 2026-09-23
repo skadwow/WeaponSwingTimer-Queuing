@@ -16,12 +16,12 @@ local OFFHAND_SLOT          = ItemLocation:CreateFromEquipmentSlot(INVSLOT_OFFHA
 
 local GetSpellInfo          = addon_data.spells.GetSpellInfo
 local IsCurrentSpell        = addon_data.spells.IsCurrentSpell
+local IsQueuedSpell         = addon_data.spells.IsQueuedSpell
 local IsSpeedAura           = addon_data.auras.IsSpeedAura
 local IsShapeshiftAura      = addon_data.auras.IsShapeshiftAura
 local IsSwingResetItemSpell = addon_data.items.IsSwingResetItemSpell
 local IsExplosiveSpell      = addon_data.items.IsExplosiveSpell
 local SimpleRound           = addon_data.utils.SimpleRound
-local IsQueuedSpell         = addon_data.core.IsQueuedSpell
 local GetTimePreciseSec     = GetTimePreciseSec
 
 -- Constants used for identifying the player
@@ -280,12 +280,14 @@ function player.OnInventoryChange()
     -- Check for a main hand weapon change
     if main_weapon_id ~= new_main_guid then
         main_weapon_id = new_main_guid
+        base_main_speed = addon_data.utils.GetWeaponSpeed(INVSLOT_MAINHAND)
         player.UpdateMainWeaponSpeed()
         resetTimers = true
     end
     -- Check for an off hand weapon change
     if off_weapon_id ~= new_off_guid then
         off_weapon_id = new_off_guid
+        base_off_speed = addon_data.utils.GetWeaponSpeed(INVSLOT_OFFHAND)
         player.UpdateOffWeaponSpeed()
         resetTimers = true
     end
@@ -546,19 +548,15 @@ function player.OnCombatLogUnfiltered(combatInfo)
 end
 
 if addon_data.utils.IsForeverWow() then
-    local MAINHAND = Enum.PlayerSwingType.MainHand
-    local OFFHAND  = Enum.PlayerSwingType.OffHand
-    local RANGED   = Enum.PlayerSwingType.Ranged
+    function player.OnPlayerSwingMainHand(swingDuration)
+        player.main_weapon_speed = swingDuration
+        speed_scale = player.main_weapon_speed / base_main_speed
+        player.ResetMainSwingTimer()
+    end
 
-    function player.OnPlayerSwing(swingDuration, swingType)
-        if swingType == MAINHAND then
-            player.main_weapon_speed = swingDuration
-            speed_scale = player.main_weapon_speed / base_main_speed
-            player.ResetMainSwingTimer()
-        elseif swingType == OFFHAND then
-            player.off_weapon_speed = swingDuration
-            player.ResetOffSwingTimer()
-        end
+    function player.OnPlayerSwingOffHand(swingDuration)
+        player.off_weapon_speed = swingDuration
+        player.ResetOffSwingTimer()
     end
 end
 
@@ -768,8 +766,9 @@ end
 
 function player.UpdateMainWeaponSpeed()
     if C_Item.DoesItemExist(MAINHAND_SLOT) then
-        base_main_speed = addon_data.utils.GetWeaponSpeed(INVSLOT_MAINHAND)
         player.has_twohand = C_Item.GetItemInventoryType(MAINHAND_SLOT) == Enum.InventoryType.Index2HweaponType
+    else
+        player.has_twohand = false
     end
 
     local attackSpeed, _ = UnitAttackSpeed("player")
@@ -787,13 +786,13 @@ end
 
 function player.UpdateOffWeaponSpeed()
     if C_Item.DoesItemExist(OFFHAND_SLOT) then
-        base_off_speed = addon_data.utils.GetWeaponSpeed(INVSLOT_MAINHAND)
         local itemType = C_Item.GetItemInventoryType(OFFHAND_SLOT)
         has_offhand = itemType == Enum.InventoryType.IndexWeaponType or 
                       itemType == Enum.InventoryType.IndexWeaponoffhandType
         has_shield = itemType == Enum.InventoryType.IndexShieldType
     else
         has_offhand = false
+        has_shield = false
     end
 
     local _, offhandAttackSpeed = UnitAttackSpeed("player")

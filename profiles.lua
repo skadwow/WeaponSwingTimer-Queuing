@@ -13,8 +13,15 @@ addon_data.profiles         = profiles
 
 local DEFAULT               = L"default"
 
-local DEFAULT_PROFILES      = {
-    [DEFAULT] = {
+local DEFAULT_PROFILES      = {}
+
+local settings              = {}
+profiles.default_settings   = {
+    profile = DEFAULT
+}
+
+function profiles.CreateDefaultProfile()
+    DEFAULT_PROFILES[DEFAULT] = {
         core    = addon_data.core.default_settings,
         player  = addon_data.player.default_settings,
         target  = addon_data.target.default_settings,
@@ -22,15 +29,14 @@ local DEFAULT_PROFILES      = {
         druid   = addon_data.druid.default_settings,
         hunter  = addon_data.hunter.default_settings,
         castbar = addon_data.castbar.default_settings,
-    },
-}
-
-local settings              = {}
-profiles.default_settings   = {
-    profile = DEFAULT
-}
+    }
+end
 
 function profiles.LoadProfiles()
+    if not DEFAULT_PROFILES[DEFAULT] then
+        profiles.CreateDefaultProfile()
+    end
+
     if not WST_Profiles then
         WST_Profiles = {}
     end

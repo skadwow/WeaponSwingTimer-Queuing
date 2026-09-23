@@ -12,7 +12,7 @@ local target                = {}
 addon_data.target           = target
 
 local SimpleRound           = addon_data.utils.SimpleRound
-local IsQueuedSpell         = addon_data.core.IsQueuedSpell
+local IsQueuedSpell         = addon_data.spells.IsQueuedSpell
 
 local settings              = {}
 target.default_settings     = {

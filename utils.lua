@@ -57,7 +57,7 @@ local cache = {}
 
 function utils.GetWeaponSpeed(slot)
     -- Default speed
-    local speed = 1
+    local speed = 2
 
     local weapon_id = GetInventoryItemID("player", slot)
     if cache[weapon_id] then
