@@ -56,7 +56,7 @@ end
 
 local PLAYER_GUID           = player.guid
 local PLAYER_CLASS          = player.class
-local PLAYER_IS_RANGED      = player.is_ranged
+local PLAYER_IS_RANGED      = player.isRanged
 
 --- Initializing variables for calculations and function calls
 hunter.shooting = false
@@ -220,7 +220,7 @@ function hunter.UpdateAutoShotTimer(elapsed)
     end
 
     -- If the player moved then the timer resets
-    if player.is_moving or hunter.casting then
+    if player.isMoving or hunter.casting then
         if hunter.shot_timer <= hunter.auto_cast_time then
             hunter.ResetShotTimer()
         end
@@ -244,7 +244,7 @@ end
 function hunter.OnUpdate(elapsed)
     if settings.enabled then
         -- Check for feign death movement that causes swing reset
-        if hunter.FeignStatus and player.is_moving then
+        if hunter.FeignStatus and player.isMoving then
             hunter.FeignDeath()
             hunter.FeignStatus = false
         end
@@ -382,7 +382,7 @@ function hunter.UpdateVisualsOnUpdate()
 
     if settings.enabled then
         frame.shot_bar_text:SetText(tostring(SimpleRound(shot_timer, 0.1)))
-        if addon_data.core.in_combat or hunter.shooting or hunter.casting_shot then
+        if player.inCombat or hunter.shooting or hunter.casting_shot then
             frame:SetAlpha(settings.in_combat_alpha)
         else
             frame:SetAlpha(settings.ooc_alpha)

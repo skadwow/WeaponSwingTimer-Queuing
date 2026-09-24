@@ -32,8 +32,10 @@ local PLAYER_CLASS              = select(2, UnitClass("player"))
 local PLAYER_GUID               = UnitGUID("player")
 player.class                    = PLAYER_CLASS
 player.guid                     = PLAYER_GUID
-player.is_ranged                = PLAYER_CLASS == "HUNTER" or PLAYER_CLASS == "MAGE" or PLAYER_CLASS == "PRIEST" or PLAYER_CLASS == "WARLOCK"
-player.is_druid                 = PLAYER_CLASS == "DRUID"
+player.isRanged                 = PLAYER_CLASS == "HUNTER" or PLAYER_CLASS == "MAGE" or PLAYER_CLASS == "PRIEST" or PLAYER_CLASS == "WARLOCK"
+player.isDruid                  = PLAYER_CLASS == "DRUID"
+player.inCombat                 = false
+player.isMoving                 = false
 
 -- Frame displaying player's swing timer
 player.frame                    = nil
@@ -465,6 +467,36 @@ else
     end
 end
 
+local parryHandler = function()
+    error("parryHandler stub called; validate wow version checking functions")
+end
+
+-- parry haste calculations:
+-- if swing is below 20%, do nothing.
+-- if swing is above 20%, reduce by 40% of main_weapon_speed
+-- if new swing is below 20%, set to 20% (parry cannot reduce swing timer below 20%)
+if addon_data.utils.IsForeverWow() then
+    parryHandler = function()
+        local min_swing_time = player.main_weapon_speed * 0.2
+        if player.main_swing_timer > min_swing_time then
+            player.main_swing_timer = max(player.main_swing_timer - (player.main_weapon_speed * 0.4), min_swing_time)
+        end
+    end
+else
+    parryHandler = function()
+        local min_swing_time = player.main_weapon_speed * 0.2
+        if player.main_swing_timer > min_swing_time then
+            local ts = GetTimePreciseSec()
+            player.main_swing_timer = max(player.main_swing_timer - (player.main_weapon_speed * 0.4), min_swing_time)
+            if prev_speed_ts < prev_aura_ts then
+                prev_parry_ts = ts
+            else
+                prev_mh_swing_ts = ts - (player.main_weapon_speed - player.main_swing_timer)
+            end
+        end
+    end
+end
+
 local AURA_EVENTS = {
     ["SPELL_AURA_APPLIED"] = true,
     ["SPELL_AURA_REMOVED"] = true
@@ -522,28 +554,14 @@ function player.OnCombatLogUnfiltered(combatInfo)
             if IsSpeedAura(spellID) then
                 prev_aura_ts = GetTimePreciseSec()
             end
-            if player.is_druid and IsShapeshiftAura(spellID) then
+            if player.isDruid and IsShapeshiftAura(spellID) then
                 is_shifting = true
             end
             return
         end
 
         if missType == "PARRY" then
-            -- parry haste calculations:
-            -- if swing is below 20%, do nothing.
-            -- if swing is above 20%, reduce by 40% of main_weapon_speed
-            -- if new swing is below 20%, set to 20% (parry cannot reduce swing timer below 20%)
-            local min_swing_time = player.main_weapon_speed * 0.2
-
-            if player.main_swing_timer > min_swing_time then
-                local ts = GetTimePreciseSec()
-                player.main_swing_timer = max(player.main_swing_timer - (player.main_weapon_speed * 0.4), min_swing_time)
-                if prev_speed_ts < prev_aura_ts then
-                    prev_parry_ts = ts
-                else
-                    prev_mh_swing_ts = ts - (player.main_weapon_speed - player.main_swing_timer)
-                end
-            end
+            parryHandler()
         end
     end
 end
@@ -558,6 +576,10 @@ if addon_data.utils.IsForeverWow() then
     function player.OnPlayerSwingOffHand(swingDuration)
         player.off_weapon_speed = swingDuration
         player.ResetOffSwingTimer()
+    end
+
+    function player.OnPlayerParry()
+        parryHandler()
     end
 end
 
@@ -913,7 +935,7 @@ function player.UpdateVisualsOnUpdate()
             frame:SetHeight(settings.height)
         end
         -- Update the alpha
-        if addon_data.core.in_combat then
+        if player.inCombat then
             frame:SetAlpha(settings.in_combat_alpha)
         else
             frame:SetAlpha(settings.ooc_alpha)

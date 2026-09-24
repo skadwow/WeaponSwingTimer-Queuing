@@ -32,24 +32,9 @@ local VERSION = C_AddOns.GetAddOnMetadata(addon_name, "Version")
 local LOAD_MESSAGE = L"Thank you for installing WeaponSwingTimer Version" .. " " .. VERSION .. 
                     " " .. L"by Skad! Use |cFFFFC300/wst|r for more options."
 
-core.in_combat = false
-
 ---@type ClassFile
-local PLAYER_CLASS          = select(2, UnitClass("player"))
-local PLAYER_IS_RANGED      = PLAYER_CLASS == "HUNTER" or PLAYER_CLASS == "MAGE" or PLAYER_CLASS == "PRIEST" or PLAYER_CLASS == "WARLOCK"
-
-local QUEUED_SPELLS         = {
-    ["DEATHKNIGHT"] = {},
-    ["DRUID"]       = GetSpellIDs(L"Maul"),
-    ["HUNTER"]      = GetSpellIDs(L"Raptor Strike"),
-    ["MAGE"]        = {},
-    ["PALADIN"]     = {},
-    ["PRIEST"]      = {},
-    ["ROGUE"]       = {},
-    ["SHAMAN"]      = {},
-    ["WARLOCK"]     = {},
-    ["WARRIOR"]     = GetSpellIDs(L"Heroic Strike", L"Cleave"),
-}
+local PLAYER_CLASS          = player.class
+local PLAYER_IS_RANGED      = player.isRanged
 
 local settings              = {}
 core.default_settings       = {
@@ -167,12 +152,12 @@ function frame:OnAddonLoaded()
     self:SetScript("OnUpdate", CoreFrame_OnUpdate)
     if utils.IsForeverWow() then
         self:RegisterEvent("PLAYER_SWING")
+        self:RegisterEvent("UNIT_COMBAT")
     else
         self:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     end
+    self:RegisterEvent("PLAYER_IN_COMBAT_CHANGED")
     self:RegisterEvent("PLAYER_LOGIN")
-    self:RegisterEvent("PLAYER_REGEN_DISABLED")
-    self:RegisterEvent("PLAYER_REGEN_ENABLED")
     self:RegisterEvent("PLAYER_STARTED_MOVING")
     self:RegisterEvent("PLAYER_STOPPED_MOVING")
     self:RegisterEvent("PLAYER_TARGET_CHANGED")
@@ -315,20 +300,16 @@ function frame:PLAYER_LOGIN()
     player.OnPlayerLogin()
 end
 
-function frame:PLAYER_REGEN_DISABLED()
-    core.in_combat = true
-end
-
-function frame:PLAYER_REGEN_ENABLED()
-    core.in_combat = false
+function frame:PLAYER_IN_COMBAT_CHANGED(inCombat)
+    player.inCombat = inCombat
 end
 
 function frame:PLAYER_STARTED_MOVING()
-    player.is_moving = true
+    player.isMoving = true
 end
 
 function frame:PLAYER_STOPPED_MOVING()
-    player.is_moving = false
+    player.isMoving = false
 end
 
 if addon_data.utils.IsForeverWow() then
@@ -344,6 +325,12 @@ if addon_data.utils.IsForeverWow() then
             player.OnPlayerSwingOffHand(swingDuration)
         elseif swingType == RANGED then
             hunter.OnPlayerSwing(swingDuration)
+        end
+    end
+
+    function frame:UNIT_COMBAT(unitTarget, event)
+        if unitTarget == "player" and event == "PARRY" then
+            player.OnPlayerParry()
         end
     end
 end

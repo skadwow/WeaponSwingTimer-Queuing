@@ -347,7 +347,7 @@ function target.UpdateVisualsOnUpdate()
             frame:SetHeight(settings.height)
         end
         -- Update the alpha
-        if addon_data.core.in_combat then
+        if addon_data.player.inCombat then
             frame:SetAlpha(settings.in_combat_alpha)
         else
             frame:SetAlpha(settings.ooc_alpha)

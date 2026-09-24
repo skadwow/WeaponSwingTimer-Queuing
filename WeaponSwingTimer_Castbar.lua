@@ -52,7 +52,7 @@ end
 
 local PLAYER_GUID           = addon_data.player.guid
 local PLAYER_CLASS          = addon_data.player.class
-local PLAYER_IS_RANGED      = addon_data.player.is_ranged
+local PLAYER_IS_RANGED      = addon_data.player.isRanged
 
 local PUSHBACK_EVENTS       = {
     ["SWING_DAMAGE"]            = true,
@@ -310,7 +310,7 @@ end
 function castbar.UpdateVisualsOnUpdate()
     local frame = castbar.frame
 
-    if addon_data.core.in_combat or castbar.casting_shot then
+    if addon_data.player.inCombat or castbar.casting_shot then
         if castbar.casting_shot then
 
             local time_left = math.max(SimpleRound(castbar.cast_time - castbar.cast_timer, 0.1), 0)
