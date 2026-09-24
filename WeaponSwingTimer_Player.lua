@@ -17,6 +17,7 @@ local OFFHAND_SLOT          = ItemLocation:CreateFromEquipmentSlot(INVSLOT_OFFHA
 local GetSpellInfo          = addon_data.spells.GetSpellInfo
 local IsCurrentSpell        = addon_data.spells.IsCurrentSpell
 local IsQueuedSpell         = addon_data.spells.IsQueuedSpell
+local IsSwingResetSpell     = addon_data.spells.IsSwingResetSpell
 local IsSpeedAura           = addon_data.auras.IsSpeedAura
 local IsShapeshiftAura      = addon_data.auras.IsShapeshiftAura
 local IsSwingResetItemSpell = addon_data.items.IsSwingResetItemSpell
@@ -610,10 +611,12 @@ end
 
 local RESET_SPELL_CLASSES = {
     ["WARRIOR"] = true,
+    ["DRUID"] = true,
 }
 
 local function isResetSpell(spellID)
     if IsSwingResetItemSpell(spellID) then return true end
+    if IsSwingResetSpell(spellID) then return true end
 
     return false
 end
