@@ -27,6 +27,7 @@ function profiles.CreateDefaultProfile()
         target  = addon_data.target.default_settings,
         warrior = addon_data.warrior.default_settings,
         druid   = addon_data.druid.default_settings,
+        paladin = addon_data.paladin.default_settings,
         hunter  = addon_data.hunter.default_settings,
         castbar = addon_data.castbar.default_settings,
     }

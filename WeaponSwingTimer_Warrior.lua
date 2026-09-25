@@ -12,6 +12,9 @@ local L = addon_data.localization.get
 local warrior               = {}
 addon_data.warrior          = warrior
 
+local queuing               = addon_data.queuing
+local player                = addon_data.player
+
 local settings              = {}
 warrior.default_settings    = {
     -- bar coloring
@@ -36,7 +39,7 @@ warrior.default_settings    = {
     slam_gcd_spark = true,
 }
 
-local IsSpellKnown          = C_SpellBook and C_SpellBook.IsSpellKnown or IsSpellKnown
+local IsSpellKnown          = addon_data.spells.IsSpellKnown
 
 local SLAM_IDS              = addon_data.spells.GetSpellIDs(L"Slam")
 local isSlamKnown           = false
@@ -57,8 +60,45 @@ end
 --[[================================== EVENT HANDLING ===================================]]--
 --[[=====================================================================================]]--
 
-function warrior.OnUpdate(elapsed)
-    warrior.UpdateVisualsOnUpdate()
+local function UpdateSlamDisplay()
+    if not isSlamKnown then return end
+
+    local frame = player.frame
+    if player.has_twohand or settings.slam_delay_one_handing then
+        frame.slam_delay_bar:SetShown(settings.slam_delay_enabled and settings.slam_delay > 0)
+        frame.slam_gcd_spark:SetShown(settings.slam_gcd_spark)
+    else
+        frame.slam_delay_bar:Hide()
+        frame.slam_gcd_spark:Hide()
+    end
+end
+
+local function UpdateIndicators()
+    local frame = player.frame
+
+    local frameWidth = frame:GetWidth()
+    local secondWidth = frameWidth / player.main_weapon_speed
+
+    frame.slam_delay_bar:SetWidth(settings.slam_delay * secondWidth)
+    if addon_data.settings.player.fill_empty then
+        frame.slam_delay_bar:ClearPoint("LEFT")
+        frame.slam_delay_bar:SetPoint("RIGHT")
+        frame.slam_gcd_spark:ClearPoint("LEFT")
+        frame.slam_gcd_spark:SetPoint("RIGHT", -1.5 * secondWidth + 8, 0)
+    else
+        frame.slam_delay_bar:ClearPoint("RIGHT")
+        frame.slam_delay_bar:SetPoint("LEFT")
+        frame.slam_gcd_spark:ClearPoint("RIGHT")
+        frame.slam_gcd_spark:SetPoint("LEFT", 1.5 * secondWidth - 8, 0)
+    end
+end
+
+function warrior.OnAttackSpeedChanged()
+    UpdateIndicators()
+end
+
+function warrior.OnBarChanged()
+    UpdateIndicators()
 end
 
 local function CheckIfSlamKnown()
@@ -69,6 +109,7 @@ local function CheckIfSlamKnown()
         end
     end
     isSlamKnown = false
+    UpdateSlamDisplay()
 end
 CheckIfSlamKnown()
 
@@ -76,12 +117,18 @@ function warrior.OnSpellsChanged()
     CheckIfSlamKnown()
 end
 
+function warrior.OnPlayerLogin()
+    UpdateSlamDisplay()
+    UpdateIndicators()
+end
+
+function warrior.OnInventoryChange()
+    UpdateSlamDisplay()
+end
+
 --[[================================================================================]]--
 --[[=================================== VISUALS ====================================]]--
 --[[================================================================================]]--
-
-local queuing = addon_data.queuing
-local player = addon_data.player
 
 local function UpdateColorPalettes()
     if not settings.coloring_enabled then
@@ -157,36 +204,6 @@ local function UpdateColorPalettes()
     end
 end
 
-local function UpdateSlamIndicators()
-    if not isSlamKnown then return end
-
-    local frame = player.frame
-    local frameWidth = frame:GetWidth()
-    frame.slam_delay_bar:SetWidth(frameWidth * settings.slam_delay / player.main_weapon_speed)
-    frame.slam_delay_bar:SetVertexColor(settings.slam_delay_r, settings.slam_delay_g, settings.slam_delay_b, settings.slam_delay_a)
-    frame.slam_gcd_spark:SetPoint("RIGHT", frameWidth * -1.5 / player.main_weapon_speed + 8, 0)
-    frame.slam_gcd_spark:SetVertexColor(settings.slam_delay_r, settings.slam_delay_g, settings.slam_delay_b, settings.slam_delay_a)
-    if player.has_twohand or settings.slam_delay_one_handing then
-        if settings.slam_delay_enabled and settings.slam_delay > 0 then
-            frame.slam_delay_bar:Show()
-        else
-            frame.slam_delay_bar:Hide()
-        end
-        if settings.slam_gcd_spark then
-            frame.slam_gcd_spark:Show()
-        else
-            frame.slam_gcd_spark:Hide()
-        end
-    else
-        frame.slam_delay_bar:Hide()
-        frame.slam_gcd_spark:Hide()
-    end
-end
-
-function warrior.UpdateVisualsOnUpdate()
-    UpdateSlamIndicators()
-end
-
 function warrior.UpdateVisualsOnSettingsChange()
     if player.class ~= "WARRIOR" then return end
 
@@ -196,15 +213,18 @@ function warrior.UpdateVisualsOnSettingsChange()
     else
         frame.slam_delay_bar:SetTexture('Interface/AddOns/WeaponSwingTimer/Images/Background')
     end
+    frame.slam_delay_bar:SetVertexColor(settings.slam_delay_r, settings.slam_delay_g, settings.slam_delay_b, settings.slam_delay_a)
+    frame.slam_gcd_spark:SetVertexColor(settings.slam_delay_r, settings.slam_delay_g, settings.slam_delay_b, settings.slam_delay_a)
     UpdateColorPalettes()
-    UpdateSlamIndicators()
+    UpdateSlamDisplay()
+    UpdateIndicators()
 end
 
 function warrior.InitializeVisuals()
     local frame = player.frame
     frame.slam_delay_bar = frame:CreateTexture(nil, "ARTWORK", nil, 1)
-    frame.slam_delay_bar:SetPoint("TOPRIGHT")
-    frame.slam_delay_bar:SetPoint("BOTTOMRIGHT")
+    frame.slam_delay_bar:SetPoint("TOP")
+    frame.slam_delay_bar:SetPoint("BOTTOM")
     frame.slam_delay_bar:Hide()
 
     frame.slam_gcd_spark = frame:CreateTexture(nil, "OVERLAY")

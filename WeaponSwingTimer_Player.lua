@@ -23,6 +23,7 @@ local IsShapeshiftAura      = addon_data.auras.IsShapeshiftAura
 local IsSwingResetItemSpell = addon_data.items.IsSwingResetItemSpell
 local IsExplosiveSpell      = addon_data.items.IsExplosiveSpell
 local SimpleRound           = addon_data.utils.SimpleRound
+local GetWeaponSpeed        = addon_data.utils.GetWeaponSpeed
 local GetTimePreciseSec     = GetTimePreciseSec
 
 -- Constants used for identifying the player
@@ -42,7 +43,7 @@ player.frame                    = nil
 
 -- Values pertaining to the mainhand swing timer
 player.main_swing_timer         = 0.00001
-local base_main_speed           = addon_data.utils.GetWeaponSpeed(INVSLOT_MAINHAND)
+local base_main_speed           = GetWeaponSpeed(INVSLOT_MAINHAND)
 player.main_weapon_speed        = base_main_speed
 local prev_main_weapon_speed    = nil
 local main_weapon_id            = GetInventoryItemID("player", 16)
@@ -50,7 +51,7 @@ local main_speed_changed        = false
 
 -- Values pertaining to the offhand swing timer
 player.off_swing_timer          = 0.00001
-local base_off_speed            = addon_data.utils.GetWeaponSpeed(INVSLOT_OFFHAND)
+local base_off_speed            = GetWeaponSpeed(INVSLOT_OFFHAND)
 player.off_weapon_speed         = base_off_speed
 local prev_off_weapon_speed     = nil
 local off_weapon_id             = GetInventoryItemID("player", 17)
@@ -109,6 +110,24 @@ local is_shifting               = false
 local shift_scale               = nil
 local shift_speed               = nil
 
+-- Values pertaining to UI sizing for quicker access
+---@type Texture
+local main_bar
+---@type Texture
+local main_spark
+---@type FontString
+local main_right_text
+---@type Texture
+local off_bar
+---@type Texture
+local off_spark
+---@type FontString
+local off_right_text
+
+local bar_width                 = 300
+local main_second_width         = bar_width / player.main_weapon_speed
+local off_second_width          = bar_width / player.off_weapon_speed
+
 local settings                  = {}
 player.default_settings         = {
     enabled = true,
@@ -137,9 +156,6 @@ player.default_settings         = {
     main_text_r = 1.0, main_text_g = 1.0, main_text_b = 1.0, main_text_a = 1.0,
     off_r = 0.1, off_g = 0.1, off_b = 0.9, off_a = 1.0,
     off_text_r = 1.0, off_text_g = 1.0, off_text_b = 1.0, off_text_a = 1.0,
-    pala_show_blood = false,
-    pala_show_command = false,
-    pala_offset = 6,
     advanced_speed_scaling = true,
     swing_error_pushback = false,
 }
@@ -174,6 +190,7 @@ end
 function player.OnPlayerLogin()
     player.UpdateMainWeaponSpeed()
     player.UpdateOffWeaponSpeed()
+    player.UpdateOffHandDisplay()
 end
 
 local function scaleAttackSpeed()
@@ -265,9 +282,11 @@ function player.OnAttackSpeedChanged()
         if not shift_scale then
             shift_scale = new_spd_mh / prev_main_weapon_speed
             player.main_weapon_speed = prev_main_weapon_speed
+            main_second_width = bar_width / player.main_weapon_speed
             return
         else
             player.main_weapon_speed = new_spd_mh / shift_scale
+            main_second_width = bar_width / player.main_weapon_speed
             main_speed_changed = player.main_weapon_speed ~= prev_main_weapon_speed
         end
     end
@@ -284,15 +303,16 @@ function player.OnInventoryChange()
     -- Check for a main hand weapon change
     if main_weapon_id ~= new_main_guid then
         main_weapon_id = new_main_guid
-        base_main_speed = addon_data.utils.GetWeaponSpeed(INVSLOT_MAINHAND)
+        base_main_speed = GetWeaponSpeed(INVSLOT_MAINHAND)
         player.UpdateMainWeaponSpeed()
         resetTimers = true
     end
     -- Check for an off hand weapon change
     if off_weapon_id ~= new_off_guid then
         off_weapon_id = new_off_guid
-        base_off_speed = addon_data.utils.GetWeaponSpeed(INVSLOT_OFFHAND)
+        base_off_speed = GetWeaponSpeed(INVSLOT_OFFHAND)
         player.UpdateOffWeaponSpeed()
+        player.UpdateOffHandDisplay()
         resetTimers = true
     end
     -- Check for a ranged weapon change
@@ -568,10 +588,28 @@ function player.OnCombatLogUnfiltered(combatInfo)
     end
 end
 
+local function setMainWeaponSpeed(attackSpeed)
+    prev_main_weapon_speed = player.main_weapon_speed
+    player.main_weapon_speed = attackSpeed
+    main_speed_changed = attackSpeed ~= prev_main_weapon_speed
+    speed_scale = attackSpeed / base_main_speed
+
+    main_second_width = bar_width / attackSpeed
+end
+
+local function setOffWeaponSpeed(attackSpeed)
+    prev_off_weapon_speed = player.off_weapon_speed
+    player.off_weapon_speed = attackSpeed
+    off_speed_changed = attackSpeed ~= prev_off_weapon_speed
+
+    if attackSpeed then
+        off_second_width = bar_width / attackSpeed
+    end
+end
+
 if addon_data.utils.IsForeverWow() then
     function player.OnPlayerSwingMainHand(swingDuration)
-        player.main_weapon_speed = swingDuration
-        speed_scale = player.main_weapon_speed / base_main_speed
+        setMainWeaponSpeed(swingDuration)
         player.ResetMainSwingTimer()
     end
 
@@ -723,6 +761,11 @@ function player.LimitOffSwingTimer()
     end
 end
 
+function player.OnInCombatChanged(inCombat)
+    player.inCombat = inCombat
+    player.frame:SetAlpha(inCombat and settings.in_combat_alpha or settings.ooc_alpha)
+end
+
 function player.OnPlayerTargetChanged()
     extra_attacks:clear()
     player.LimitOffSwingTimer()
@@ -742,7 +785,9 @@ end
 function player.UpdateMainSwingTimer(elapsed)
     if settings.enabled then
         local overflow = elapsed - player.main_swing_timer
+        local progress = false
         if player.main_swing_timer > 0 then
+            progress = true
             player.main_swing_timer = player.main_swing_timer - elapsed
             if player.main_swing_timer < 0 then
                 player.main_swing_timer = 0
@@ -754,6 +799,7 @@ function player.UpdateMainSwingTimer(elapsed)
                 mh_overflow = mh_overflow + overflow
                 if swing_error_flag and mh_overflow > SWING_ERROR_THRESHOLD then
                     local ts = GetTimePreciseSec()
+                    progress = true
                     player.main_swing_timer = max(SWING_ERROR_PUSHBACK - mh_overflow, 0)
                     prev_mh_swing_ts = ts - (player.main_weapon_speed - player.main_swing_timer)
                     mh_overflow = 0
@@ -763,6 +809,17 @@ function player.UpdateMainSwingTimer(elapsed)
                 spell_overflow_duration = spell_overflow_duration + overflow
             end
         end
+
+        if progress then
+            local swingTimer = player.main_swing_timer
+            if settings.fill_empty then
+                main_bar:SetWidth(bar_width - swingTimer * main_second_width)
+            else
+                main_bar:SetWidth(swingTimer * main_second_width + 0.001)
+            end
+            main_spark:SetShown(settings.classic_bars and player.main_swing_timer > 0)
+            main_right_text:SetText(SimpleRound(swingTimer, 0.1))
+        end
     end
 end
 
@@ -770,7 +827,9 @@ function player.UpdateOffSwingTimer(elapsed)
     if settings.enabled then
         if has_offhand then
             local overflow = elapsed - player.off_swing_timer
-            if player.off_swing_timer > 0 then
+            local progress = false
+            if player.off_swing_timer > (is_attacking and 0 or OFFHAND_IDLE_LIMIT * player.off_weapon_speed) then
+                progress = true
                 player.off_swing_timer = player.off_swing_timer - elapsed
                 if player.off_swing_timer < 0 then
                     player.off_swing_timer = 0
@@ -782,10 +841,22 @@ function player.UpdateOffSwingTimer(elapsed)
                 oh_overflow = oh_overflow + overflow
                 if swing_error_flag and oh_overflow > SWING_ERROR_THRESHOLD then
                     local ts = GetTimePreciseSec()
+                    progress = true
                     player.off_swing_timer = max(SWING_ERROR_PUSHBACK - oh_overflow, 0)
                     prev_oh_swing_ts = ts - (player.off_weapon_speed - player.off_swing_timer)
                     oh_overflow = 0
                 end
+            end
+
+            if progress then
+                local swingTimer = player.off_swing_timer
+                if settings.fill_empty then
+                    off_bar:SetWidth(bar_width - swingTimer * off_second_width)
+                else
+                    off_bar:SetWidth(swingTimer * off_second_width + 0.001)
+                end
+                off_spark:SetShown(settings.combined_bar or settings.classic_bars and player.off_swing_timer > 0)
+                off_right_text:SetText(SimpleRound(swingTimer, 0.1))
             end
         end
     end
@@ -800,21 +871,16 @@ function player.UpdateMainWeaponSpeed()
 
     local attackSpeed, _ = UnitAttackSpeed("player")
     if not issecretvalue(attackSpeed) then
-        prev_main_weapon_speed = player.main_weapon_speed
-        player.main_weapon_speed = attackSpeed
-        main_speed_changed = player.main_weapon_speed ~= prev_main_weapon_speed
-        speed_scale = attackSpeed / base_main_speed
+        setMainWeaponSpeed(attackSpeed)
     else
-        prev_main_weapon_speed = player.main_weapon_speed
-        player.main_weapon_speed = speed_scale * base_main_speed
-        main_speed_changed = player.main_weapon_speed ~= prev_main_weapon_speed
+        setMainWeaponSpeed(speed_scale * base_main_speed)
     end
 end
 
 function player.UpdateOffWeaponSpeed()
     if C_Item.DoesItemExist(OFFHAND_SLOT) then
         local itemType = C_Item.GetItemInventoryType(OFFHAND_SLOT)
-        has_offhand = itemType == Enum.InventoryType.IndexWeaponType or 
+        has_offhand = itemType == Enum.InventoryType.IndexWeaponType or
                       itemType == Enum.InventoryType.IndexWeaponoffhandType
         has_shield = itemType == Enum.InventoryType.IndexShieldType
     else
@@ -824,13 +890,9 @@ function player.UpdateOffWeaponSpeed()
 
     local _, offhandAttackSpeed = UnitAttackSpeed("player")
     if not issecretvalue(offhandAttackSpeed) then
-        prev_off_weapon_speed = player.off_weapon_speed or 2
-        player.off_weapon_speed = offhandAttackSpeed
-        off_speed_changed = player.off_weapon_speed ~= prev_off_weapon_speed
+        setOffWeaponSpeed(offhandAttackSpeed)
     else
-        prev_off_weapon_speed = player.off_weapon_speed
-        player.off_weapon_speed = speed_scale * base_off_speed
-        off_speed_changed = player.off_weapon_speed ~= prev_off_weapon_speed
+        setOffWeaponSpeed(speed_scale * base_off_speed)
     end
 end
 
@@ -842,6 +904,22 @@ end
 --[[===================================== VISUALS RELATED ======================================]]--
 --[[============================================================================================]]--
 
+function player.UpdateOffHandDisplay()
+    local frame = player.frame
+    if has_offhand and settings.show_offhand and not settings.combined_bar then
+        frame:SetHeight(settings.height * 2 + 2)
+        frame.off_bar:Show()
+        frame.off_left_text:SetShown(settings.show_left_text)
+        frame.off_right_text:SetShown(settings.show_right_text)
+    else
+        frame:SetHeight(settings.height)
+        frame.off_bar:Hide()
+        frame.off_spark:Hide()
+        frame.off_left_text:Hide()
+        frame.off_right_text:Hide()
+    end
+end
+
 function player.UpdateVisualsOnUpdate()
     local frame = player.frame
     if settings.enabled and (
@@ -851,95 +929,6 @@ function player.UpdateVisualsOnUpdate()
     ) then
         if not frame:IsShown() then
             player.UpdateVisualsOnSettingsChange()
-        end
-        local main_speed = player.main_weapon_speed
-        local main_timer = player.main_swing_timer
-        -- FIXME: Handle divide by 0 error
-        if main_speed == 0 then
-            main_speed = 2
-        end
-        -- Update the main bars width
-        local main_width = math.min(settings.width - (settings.width * (main_timer / main_speed)), settings.width)
-        local pala_blood_width, pala_command_width = 0, 0
-        if PLAYER_CLASS == "PALADIN" -- paladin
-        then
-            pala_blood_width = math.floor(math.min(settings.width - (settings.width * ( 0.4 / main_speed)), settings.width)+0.5) -- 0.4s for seal twist
-            local castTime = GetSpellInfo(19750).castTime
-            if (not castTime) or (castTime > 1500) then
-                castTime = 1500
-            end
-            pala_command_width = math.floor(math.min(settings.width - (settings.width * ((castTime / 1000 ) / main_speed)), settings.width)+0.5)
-        else
-            frame.pala_blood_marker:Hide()
-            frame.pala_command_marker:Hide()
-        end
-        if not settings.fill_empty then
-            main_width = settings.width - main_width + 0.001
-            pala_blood_width = settings.width - pala_blood_width + 0.001
-            pala_command_width = settings.width - pala_command_width + 0.001
-        end
-        frame.main_bar:SetWidth(main_width)
-        frame.main_spark:SetPoint("TOPLEFT", main_width - 8, 0)
-        if main_width == settings.width or not settings.classic_bars or main_width == 0.001 then
-            frame.main_spark:Hide()
-        else
-            frame.main_spark:Show()
-        end
-        frame.pala_blood_marker:SetPoint("TOPLEFT", pala_blood_width, settings.pala_offset)
-        frame.pala_command_marker:SetPoint("TOPLEFT", pala_command_width, settings.pala_offset)
-        -- Update the main bars text
-        frame.main_left_text:SetText(L"Main-Hand")
-        frame.main_right_text:SetText(tostring(SimpleRound(main_timer, 0.1)))
-        -- Update the off hand bar
-        if has_offhand and settings.show_offhand then
-            local off_speed = player.off_weapon_speed
-            local off_timer = player.off_swing_timer
-            -- FIXME: Handle divide by 0 error
-            if off_speed == 0 then
-                off_speed = 2
-            end
-            -- Update the off-hand bar's width
-            local off_width = math.min(settings.width - (settings.width * (off_timer / off_speed)), settings.width)
-            if not settings.fill_empty then
-                off_width = settings.width - off_width + 0.001
-            end
-            frame.off_bar:Show()
-            frame.off_bar:SetWidth(off_width)
-            frame.off_spark:SetPoint("BOTTOMLEFT", off_width - 8, 0)
-            if not settings.classic_bars or off_width == settings.width or off_width == 0.001  then
-                frame.off_spark:Hide()
-            else
-                frame.off_spark:Show()
-            end
-            -- Update the off-hand bar's text
-            frame.off_left_text:SetShown(settings.show_left_text)
-            frame.off_left_text:SetText(L"Off-Hand")
-            frame.off_right_text:SetShown(settings.show_right_text)
-            frame.off_right_text:SetText(tostring(SimpleRound(off_timer, 0.1)))
-
-            if settings.combined_bar then
-                frame.off_bar:Hide()
-                frame.off_spark:Show()
-                frame.off_left_text:Hide()
-                frame.off_right_text:Hide()
-            end
-        else
-            frame.off_bar:Hide()
-            frame.off_spark:Hide()
-            frame.off_left_text:Hide()
-            frame.off_right_text:Hide()
-        end
-        -- Update the frame's appearance based on settings
-        if has_offhand and settings.show_offhand and not settings.combined_bar then
-            frame:SetHeight((settings.height * 2) + 2)
-        else
-            frame:SetHeight(settings.height)
-        end
-        -- Update the alpha
-        if player.inCombat then
-            frame:SetAlpha(settings.in_combat_alpha)
-        else
-            frame:SetAlpha(settings.ooc_alpha)
         end
     else
         frame:Hide()
@@ -957,20 +946,33 @@ function player.UpdateVisualsOnSettingsChange()
         frame:ClearAllPoints()
         frame:SetPoint(settings.point, UIParent, settings.rel_point, settings.x_offset, settings.y_offset)
         frame:SetWidth(settings.width)
+        bar_width = settings.width
+        main_second_width = bar_width / player.main_weapon_speed
+        if player.off_weapon_speed then
+            off_second_width = bar_width / player.off_weapon_speed
+        end
+        frame:SetAlpha(player.inCombat and settings.in_combat_alpha or settings.ooc_alpha)
+        if has_offhand and settings.show_offhand and not settings.combined_bar then
+            frame:SetHeight((settings.height * 2) + 2)
+        else
+            frame:SetHeight(settings.height)
+        end
+
         if settings.show_border then
             frame.backplane:SetBackdrop({
-                bgFile = "Interface/AddOns/WeaponSwingTimer/Images/Background", 
-                edgeFile = "Interface/AddOns/WeaponSwingTimer/Images/Border", 
-                tile = true, tileSize = 16, edgeSize = 12, 
+                bgFile = "Interface/AddOns/WeaponSwingTimer/Images/Background",
+                edgeFile = "Interface/AddOns/WeaponSwingTimer/Images/Border",
+                tile = true, tileSize = 16, edgeSize = 12,
                 insets = { left = 8, right = 8, top = 8, bottom = 8}})
         else
             frame.backplane:SetBackdrop({
-                bgFile = "Interface/AddOns/WeaponSwingTimer/Images/Background", 
-                edgeFile = nil, 
-                tile = true, tileSize = 16, edgeSize = 16, 
+                bgFile = "Interface/AddOns/WeaponSwingTimer/Images/Background",
+                edgeFile = nil,
+                tile = true, tileSize = 16, edgeSize = 16,
                 insets = { left = 8, right = 8, top = 8, bottom = 8}})
         end
         frame.backplane:SetBackdropColor(0,0,0,settings.backplane_alpha)
+
         frame.main_bar:SetPoint("TOPLEFT", 0, 0)
         frame.main_bar:SetHeight(settings.height)
         if settings.classic_bars then
@@ -980,27 +982,16 @@ function player.UpdateVisualsOnSettingsChange()
         end
         frame.main_bar:SetVertexColor(settings.main_r, settings.main_g, settings.main_b, settings.main_a)
         frame.main_spark:SetSize(16, settings.height)
-        if (settings.pala_show_blood)
-        then
-            frame.pala_blood_marker:SetSize(1, settings.height+2*settings.pala_offset)
-            frame.pala_blood_marker:Show()
-        else
-            frame.pala_blood_marker:Hide()
-        end
-        if (settings.pala_show_command)
-        then
-            frame.pala_command_marker:SetSize(1, settings.height+2*settings.pala_offset)
-            frame.pala_command_marker:Show()
-        else
-            frame.pala_command_marker:Hide()
-        end
+
         frame.main_left_text:SetPoint("TOPLEFT", 2, -(settings.height / 2) + (settings.fontsize / 2))
         frame.main_left_text:SetTextColor(settings.main_text_r, settings.main_text_g, settings.main_text_b, settings.main_text_a)
         frame.main_left_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
-
         frame.main_right_text:SetPoint("TOPRIGHT", -5, -(settings.height / 2) + (settings.fontsize / 2))
         frame.main_right_text:SetTextColor(settings.main_text_r, settings.main_text_g, settings.main_text_b, settings.main_text_a)
         frame.main_right_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
+
+        frame.main_left_text:SetShown(settings.show_left_text)
+        frame.main_right_text:SetShown(settings.show_right_text)
 
         frame.off_bar:SetPoint("BOTTOMLEFT", 0, 0)
         frame.off_bar:SetHeight(settings.height)
@@ -1014,40 +1005,30 @@ function player.UpdateVisualsOnSettingsChange()
         frame.off_left_text:SetPoint("BOTTOMLEFT", 2, (settings.height / 2) - (settings.fontsize / 2))
         frame.off_left_text:SetTextColor(settings.off_text_r, settings.off_text_g, settings.off_text_b, settings.off_text_a)
         frame.off_left_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
-
         frame.off_right_text:SetPoint("BOTTOMRIGHT", -5, (settings.height / 2) - (settings.fontsize / 2))
         frame.off_right_text:SetTextColor(settings.off_text_r, settings.off_text_g, settings.off_text_b, settings.off_text_a)
         frame.off_right_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
-        if settings.show_left_text then
-            frame.main_left_text:Show()
-            frame.off_left_text:Show()
+
+        if settings.fill_empty then
+            main_bar:SetWidth(bar_width - player.main_swing_timer * main_second_width)
+            off_bar:SetWidth(bar_width - player.off_swing_timer * off_second_width)
         else
-            frame.main_left_text:Hide()
-            frame.off_left_text:Hide()
+            main_bar:SetWidth(player.main_swing_timer * main_second_width + 0.001)
+            off_bar:SetWidth(player.off_swing_timer * off_second_width + 0.001)
         end
-        if settings.show_right_text then
-            frame.main_right_text:Show()
-            frame.off_right_text:Show()
-        else
-            frame.main_right_text:Hide()
-            frame.off_right_text:Hide()
-        end
-        if settings.show_offhand and has_offhand then
+
+        if has_offhand and settings.show_offhand and not settings.combined_bar then
             frame.off_bar:Show()
-            if settings.show_left_text then
-                frame.off_left_text:Show()
-            else
-                frame.off_left_text:Hide()
-            end
-            if settings.show_right_text then
-                frame.off_right_text:Show()
-            else
-                frame.off_right_text:Hide()
-            end
+            frame.off_left_text:SetShown(settings.show_left_text)
+            frame.off_right_text:SetShown(settings.show_right_text)
         else
             frame.off_bar:Hide()
             frame.off_left_text:Hide()
             frame.off_right_text:Hide()
+        end
+
+        if (not settings.swing_error_pushback) then
+            swing_error_flag = false
         end
     else
         frame:Hide()
@@ -1083,6 +1064,7 @@ function player.InitializeVisuals()
     frame:RegisterForDrag("LeftButton")
     frame:SetScript("OnDragStart", player.OnFrameDragStart)
     frame:SetScript("OnDragStop", player.OnFrameDragStop)
+
     -- Create the backplane and border
     frame.backplane = CreateFrame("Frame", addon_name .. "PlayerBackdropFrame", frame, "BackdropTemplate")
     frame.backplane:SetPoint("TOPLEFT", -9, 9)
@@ -1090,39 +1072,44 @@ function player.InitializeVisuals()
     frame.backplane:SetFrameStrata("BACKGROUND")
     -- Create the main hand bar
     frame.main_bar = frame:CreateTexture(nil,"ARTWORK")
+    main_bar = frame.main_bar
     -- Create the main spark
     frame.main_spark = frame:CreateTexture(nil,"OVERLAY")
+    main_spark = frame.main_spark
     frame.main_spark:SetTexture('Interface/AddOns/WeaponSwingTimer/Images/Spark')
+    frame.main_spark:SetPoint("RIGHT", frame.main_bar, 8, 0)
     -- Create the main hand bar left text
     frame.main_left_text = frame:CreateFontString(nil, "OVERLAY")
     frame.main_left_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
+    frame.main_left_text:SetText(L"Main-Hand")
     frame.main_left_text:SetJustifyV("MIDDLE")
     frame.main_left_text:SetJustifyH("LEFT")
     -- Create the main hand bar right text
     frame.main_right_text = frame:CreateFontString(nil, "OVERLAY")
+    main_right_text = frame.main_right_text
     frame.main_right_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
     frame.main_right_text:SetJustifyV("MIDDLE")
     frame.main_right_text:SetJustifyH("RIGHT")
     -- Create the off hand bar
     frame.off_bar = frame:CreateTexture(nil,"ARTWORK")
+    off_bar = frame.off_bar
     -- Create the off spark
     frame.off_spark = frame:CreateTexture(nil,"OVERLAY")
+    off_spark = frame.off_spark
     frame.off_spark:SetTexture('Interface/AddOns/WeaponSwingTimer/Images/Spark')
+    frame.off_spark:SetPoint("RIGHT", frame.off_bar, 8, 0)
     -- Create the off hand bar left text
     frame.off_left_text = frame:CreateFontString(nil, "OVERLAY")
     frame.off_left_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
+    frame.off_left_text:SetText(L"Off-Hand")
     frame.off_left_text:SetJustifyV("MIDDLE")
     frame.off_left_text:SetJustifyH("LEFT")
     -- Create the off hand bar right text
     frame.off_right_text = frame:CreateFontString(nil, "OVERLAY")
+    off_right_text = frame.off_right_text
     frame.off_right_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
     frame.off_right_text:SetJustifyV("MIDDLE")
     frame.off_right_text:SetJustifyH("RIGHT")
-    -- Paladin sparks
-    frame.pala_blood_marker = frame:CreateTexture(nil,"BORDER")
-    frame.pala_blood_marker:SetColorTexture(1, 0.996, 0.722, 1.0)
-    frame.pala_command_marker = frame:CreateTexture(nil,"BORDER")
-    frame.pala_command_marker:SetColorTexture(1.0, 0.0, 0.0, 0.8)
     -- Show it off
     player.UpdateVisualsOnSettingsChange()
     player.UpdateVisualsOnUpdate()
@@ -1150,8 +1137,6 @@ function player.UpdateConfigPanelValues()
     panel.fill_empty_checkbox:SetChecked(settings.fill_empty)
     panel.show_left_text_checkbox:SetChecked(settings.show_left_text)
     panel.show_right_text_checkbox:SetChecked(settings.show_right_text)
-    panel.show_paladin_blood_checkbox:SetChecked(settings.pala_show_blood)
-    panel.show_paladin_command_checkbox:SetChecked(settings.pala_show_command)
     panel.width_editbox:SetText(tostring(settings.width))
     panel.width_editbox:SetCursorPosition(0)
     panel.height_editbox:SetText(tostring(settings.height))
@@ -1176,8 +1161,6 @@ function player.UpdateConfigPanelValues()
     panel.ooc_alpha_slider.editbox:SetCursorPosition(0)
     panel.backplane_alpha_slider:SetValue(settings.backplane_alpha)
     panel.backplane_alpha_slider.editbox:SetCursorPosition(0)
-    panel.pala_offset_slider:SetValue(settings.pala_offset)
-    panel.pala_offset_slider.editbox:SetCursorPosition(0)
     panel.advanced_speed_scaling:SetChecked(settings.advanced_speed_scaling)
     panel.swing_error_pushback:SetChecked(settings.swing_error_pushback)
 end
@@ -1225,6 +1208,11 @@ end
 function player.FillEmptyCheckBoxOnClick(self)
     settings.fill_empty = self:GetChecked()
     player.UpdateVisualsOnSettingsChange()
+    if PLAYER_CLASS == "WARRIOR" then
+        addon_data.warrior.OnBarChanged()
+    elseif PLAYER_CLASS == "PALADIN" then
+        addon_data.paladin.OnBarChanged()
+    end
 end
 
 function player.ShowLeftTextCheckBoxOnClick(self)
@@ -1237,19 +1225,14 @@ function player.ShowRightTextCheckBoxOnClick(self)
     player.UpdateVisualsOnSettingsChange()
 end
 
-function player.ShowPaladinBloodCheckBoxOnClick(self)
-    settings.pala_show_blood = self:GetChecked()
-    player.UpdateVisualsOnSettingsChange()
-end
-
-function player.ShowPaladinCommandCheckBoxOnClick(self)
-    settings.pala_show_command = self:GetChecked()
-    player.UpdateVisualsOnSettingsChange()
-end
-
 function player.WidthEditBoxOnEnter(self)
     settings.width = tonumber(self:GetText())
     player.UpdateVisualsOnSettingsChange()
+    if PLAYER_CLASS == "WARRIOR" then
+        addon_data.warrior.OnBarChanged()
+    elseif PLAYER_CLASS == "PALADIN" then
+        addon_data.paladin.OnBarChanged()
+    end
 end
 
 function player.HeightEditBoxOnEnter(self)
@@ -1343,11 +1326,6 @@ function player.BackplaneAlphaOnValChange(self)
     player.UpdateVisualsOnSettingsChange()
 end
 
-function player.PaladinOffsetOnValChange(self)
-    settings.pala_offset = tonumber(self:GetValue())
-    player.UpdateVisualsOnSettingsChange()
-end
-
 function player.AdvancedSpeedScalingOnClick(self)
     settings.advanced_speed_scaling = self:GetChecked()
     player.UpdateVisualsOnSettingsChange()
@@ -1431,7 +1409,7 @@ function player.CreateConfigPanel(parent_panel)
         "PlayerCombinedBarCheckbox",
         panel,
         L"Combined Main/Off bar",
-        L"Combined the Main-Hand and Off-Hand swing timers into one bar, with the Off-Hand only displayed using a spark.",
+        L"Combine the Main-Hand and Off-Hand swing timers into one bar, with the Off-Hand only displayed using a spark.",
         player.CombinedBarCheckBoxOnClick)
     panel.combined_bar_checkbox:SetPoint("TOPLEFT", 10, -170)
     -- Fill/Empty Checkbox
@@ -1458,22 +1436,6 @@ function player.CreateConfigPanel(parent_panel)
         L"Enables the player's right side text.",
         player.ShowRightTextCheckBoxOnClick)
     panel.show_right_text_checkbox:SetPoint("TOPLEFT", 10, -230)
-    -- Show Paladin Seal Twist Checkbox
-    panel.show_paladin_blood_checkbox = config.CheckBoxFactory(
-        "PlayerShowPaladingBloodCheckBox",
-        panel,
-        L"Show Paladin Twist",
-        L"Show 0.4s marker before swing to help with seal twisting. Apply seal after this.",
-        player.ShowPaladinBloodCheckBoxOnClick)
-    panel.show_paladin_blood_checkbox:SetPoint("TOPLEFT", 10, -250)
-    -- Show Paladin Seal Twist Checkbox GCD
-    panel.show_paladin_command_checkbox = config.CheckBoxFactory(
-        "PlayerShowPaladinCommandCheckBox",
-        panel,
-        L"Show Paladin GCD",
-        L"Show GCD marker before swing to help with seal twisting. Apply first seal before this.",
-        player.ShowPaladinCommandCheckBoxOnClick)
-    panel.show_paladin_command_checkbox:SetPoint("TOPLEFT", 10, -270)
     -- Width EditBox
     panel.width_editbox = config.EditBoxFactory(
         "PlayerWidthEditBox",
@@ -1581,16 +1543,6 @@ function player.CreateConfigPanel(parent_panel)
         0.05,
         player.BackplaneAlphaOnValChange)
     panel.backplane_alpha_slider:SetPoint("TOPLEFT", 405, -160)
-    -- Backplane Alpha Slider
-    panel.pala_offset_slider = config.SliderFactory(
-        "PlayerPalaOffsetSlider",
-        panel,
-        L"Paladin Marker offset",
-        0,
-        30,
-        1,
-        player.PaladinOffsetOnValChange)
-    panel.pala_offset_slider:SetPoint("TOPLEFT", 405, -210)
     -- Advanced Speed Scaling Checkbox
     panel.advanced_speed_scaling = config.CheckBoxFactory(
         "PlayerAdvancedSpeedScalingCheckBox",

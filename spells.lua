@@ -560,7 +560,8 @@ spells.GetSpellInfo = (C_Spell and C_Spell.GetSpellInfo) and C_Spell.GetSpellInf
     }
 end
 
-spells.IsCurrentSpell = (C_Spell and C_Spell.IsCurrentSpell) and C_Spell.IsCurrentSpell or IsCurrentSpell
+spells.IsCurrentSpell   = C_Spell and C_Spell.IsCurrentSpell or IsCurrentSpell
+spells.IsSpellKnown     = C_SpellBook and C_SpellBook.IsSpellKnown or IsSpellKnown
 
 local PLAYER_CLASS              = select(2, UnitClass("player"))
 

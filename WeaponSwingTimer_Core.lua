@@ -15,15 +15,13 @@ local castbar               = addon_data.castbar
 local config                = addon_data.config
 local druid                 = addon_data.druid
 local hunter                = addon_data.hunter
+local paladin               = addon_data.paladin
 local player                = addon_data.player
 local profiles              = addon_data.profiles
 local queuing               = addon_data.queuing
-local spells                = addon_data.spells
 local target                = addon_data.target
 local utils                 = addon_data.utils
 local warrior               = addon_data.warrior
-
-local GetSpellIDs           = spells.GetSpellIDs
 
 local frame                 = CreateFrame("Frame", addon_name .. "CoreFrame", UIParent)
 core.core_frame             = frame
@@ -66,6 +64,7 @@ function core.LoadAllSettings()
     target.LoadSettings()
     warrior.LoadSettings()
     druid.LoadSettings()
+    paladin.LoadSettings()
     hunter.LoadSettings()
     castbar.LoadSettings()
 end
@@ -76,6 +75,7 @@ function core.RestoreAllDefaults()
     target.RestoreDefaults()
     warrior.RestoreDefaults()
     druid.RestoreDefaults()
+    paladin.RestoreDefaults()
     hunter.RestoreDefaults()
     castbar.RestoreDefaults()
     profiles.RestoreDefaults()
@@ -88,6 +88,8 @@ local function InitializeAllVisuals()
         warrior.InitializeVisuals()
     elseif PLAYER_CLASS == "DRUID" then
         druid.InitializeVisuals()
+    elseif PLAYER_CLASS == "PALADIN" then
+        paladin.InitializeVisuals()
     elseif PLAYER_IS_RANGED then
         hunter.InitializeVisuals()
         castbar.InitializeVisuals()
@@ -101,6 +103,7 @@ function core.UpdateAllConfigPanelValues()
     target.UpdateConfigPanelValues()
     warrior.UpdateConfigPanelValues()
     druid.UpdateConfigPanelValues()
+    paladin.UpdateConfigPanelValues()
     hunter.UpdateConfigPanelValues()
     castbar.UpdateConfigPanelValues()
 end
@@ -110,15 +113,13 @@ function core.UpdateAllVisualsOnSettingsChange()
     target.UpdateVisualsOnSettingsChange()
     warrior.UpdateVisualsOnSettingsChange()
     druid.UpdateVisualsOnSettingsChange()
+    paladin.UpdateVisualsOnSettingsChange()
     hunter.UpdateVisualsOnSettingsChange()
     castbar.UpdateVisualsOnSettingsChange()
 end
 
 local noop = function() end
 local UPDATE_FUNCS = {
-    ["WARRIOR"] = function(elapsed)
-        warrior.OnUpdate(elapsed)
-    end,
     ["HUNTER"] = function(elapsed)
         hunter.OnUpdate(elapsed)
         castbar.OnUpdate(elapsed)
@@ -146,7 +147,9 @@ local function CoreFrame_OnUpdate(self, elapsed)
 end
 
 function frame:OnAddonLoaded()
+    --DEBUG = true
     --C_AddOns.LoadAddOn("Blizzard_EventTrace")
+
     self:UnregisterEvent("ADDON_LOADED")
     -- Attach the rest of the events and scripts to the core frame
     self:SetScript("OnUpdate", CoreFrame_OnUpdate)
@@ -207,6 +210,9 @@ if PLAYER_IS_RANGED then
     function frame:UNIT_INVENTORY_CHANGED(unitTarget)
         if unitTarget == "player" then
             player.OnInventoryChange()
+            if PLAYER_CLASS == "WARRIOR" then
+                warrior.OnInventoryChange()
+            end
             hunter.OnInventoryChange()
         elseif unitTarget == "target" then
             target.OnInventoryChange()
@@ -260,6 +266,9 @@ else
     function frame:UNIT_INVENTORY_CHANGED(unitTarget)
         if unitTarget == "player" then
             player.OnInventoryChange()
+            if PLAYER_CLASS == "WARRIOR" then
+                warrior.OnInventoryChange()
+            end
         elseif unitTarget == "target" then
             target.OnInventoryChange()
         end
@@ -298,10 +307,15 @@ end
 
 function frame:PLAYER_LOGIN()
     player.OnPlayerLogin()
+    if PLAYER_CLASS == "WARRIOR" then
+        warrior.OnPlayerLogin()
+    elseif PLAYER_CLASS == "PALADIN" then
+        paladin.OnPlayerLogin()
+    end
 end
 
 function frame:PLAYER_IN_COMBAT_CHANGED(inCombat)
-    player.inCombat = inCombat
+    player.OnInCombatChanged(inCombat)
 end
 
 function frame:PLAYER_STARTED_MOVING()
@@ -343,7 +357,9 @@ function frame:PLAYER_TARGET_CHANGED()
 end
 
 function frame:SPELLS_CHANGED()
-    warrior.OnSpellsChanged()
+    if PLAYER_CLASS == "WARRIOR" then
+        warrior.OnSpellsChanged()
+    end
 end
 
 function frame:START_AUTOREPEAT_SPELL()
@@ -372,6 +388,11 @@ end
 function frame:UNIT_ATTACK_SPEED(unitTarget)
     if unitTarget == "player" then
         player.OnAttackSpeedChanged()
+        if PLAYER_CLASS == "WARRIOR" then
+            warrior.OnAttackSpeedChanged()
+        elseif PLAYER_CLASS == "PALADIN" then
+            paladin.OnAttackSpeedChanged()
+        end
     elseif unitTarget == "target" then
         target.OnAttackSpeedChanged()
     end

@@ -43,7 +43,7 @@ function config.InitializeVisuals()
     panel.config_melee_panel.player_panel:SetPoint("TOPLEFT", 0, 0)
     panel.config_melee_panel.player_panel:SetSize(1, 1)
     panel.config_melee_panel.target_panel = addon_data.target.CreateConfigPanel(panel.config_melee_panel)
-    panel.config_melee_panel.target_panel:SetPoint("TOPLEFT", 0, -320)
+    panel.config_melee_panel.target_panel:SetPoint("TOPLEFT", 0, -310)
     panel.config_melee_panel.target_panel:SetSize(1, 1)
     panel.config_melee_panel.name = L"Melee Settings"
     panel.config_melee_panel.parent = panel.name
@@ -85,6 +85,17 @@ function config.InitializeVisuals()
     panel.config_druid_panel.parent = panel.name
     panel.config_druid_panel.default = config.OnDefault
     Settings.RegisterCanvasLayoutSubcategory(category, panel.config_druid_panel, panel.config_druid_panel.name)
+
+    -- Add the paladin panel
+    panel.config_paladin_panel = CreateFrame("Frame", nil, panel)
+    panel.config_paladin_panel:SetSize(1, 1)
+    panel.config_paladin_panel.paladin_panel = addon_data.paladin.CreateConfigPanel(panel.config_paladin_panel)
+    panel.config_paladin_panel.paladin_panel:SetPoint("TOPLEFT", 0, 0)
+    panel.config_paladin_panel.paladin_panel:SetSize(1, 1)
+    panel.config_paladin_panel.name = L"Paladin Settings"
+    panel.config_paladin_panel.parent = panel.name
+    panel.config_paladin_panel.default = config.OnDefault
+    Settings.RegisterCanvasLayoutSubcategory(category, panel.config_paladin_panel, panel.config_paladin_panel.name)
 
     -- Add the profiles panel
     panel.config_profiles_panel = CreateFrame("Frame", nil, panel)
