@@ -131,6 +131,7 @@ player.default_settings         = {
     show_offhand = true,
     show_border = false,
     classic_bars = true,
+    combined_bar = false,
     fill_empty = true,
     main_r = 0.1, main_g = 0.1, main_b = 0.9, main_a = 1.0,
     main_text_r = 1.0, main_text_g = 1.0, main_text_b = 1.0, main_text_a = 1.0,
@@ -478,7 +479,8 @@ end
 if addon_data.utils.IsForeverWow() then
     parryHandler = function()
         local min_swing_time = player.main_weapon_speed * 0.2
-        if player.main_swing_timer > min_swing_time then
+        local ts = GetTimePreciseSec()
+        if player.main_swing_timer > min_swing_time and ts - prev_mh_swing_ts > 0.5 then
             player.main_swing_timer = max(player.main_swing_timer - (player.main_weapon_speed * 0.4), min_swing_time)
         end
     end
@@ -890,17 +892,6 @@ function player.UpdateVisualsOnUpdate()
         frame.main_right_text:SetText(tostring(SimpleRound(main_timer, 0.1)))
         -- Update the off hand bar
         if has_offhand and settings.show_offhand then
-            frame.off_bar:Show()
-            if settings.show_left_text then
-                frame.off_left_text:Show()
-            else
-                frame.off_left_text:Hide()
-            end
-            if settings.show_right_text then
-                frame.off_right_text:Show()
-            else
-                frame.off_right_text:Hide()
-            end
             local off_speed = player.off_weapon_speed
             local off_timer = player.off_swing_timer
             -- FIXME: Handle divide by 0 error
@@ -912,16 +903,26 @@ function player.UpdateVisualsOnUpdate()
             if not settings.fill_empty then
                 off_width = settings.width - off_width + 0.001
             end
+            frame.off_bar:Show()
             frame.off_bar:SetWidth(off_width)
             frame.off_spark:SetPoint("BOTTOMLEFT", off_width - 8, 0)
-            if off_width == settings.width or not settings.classic_bars or off_width == 0.001  then
+            if not settings.classic_bars or off_width == settings.width or off_width == 0.001  then
                 frame.off_spark:Hide()
             else
                 frame.off_spark:Show()
             end
             -- Update the off-hand bar's text
+            frame.off_left_text:SetShown(settings.show_left_text)
             frame.off_left_text:SetText(L"Off-Hand")
+            frame.off_right_text:SetShown(settings.show_right_text)
             frame.off_right_text:SetText(tostring(SimpleRound(off_timer, 0.1)))
+
+            if settings.combined_bar then
+                frame.off_bar:Hide()
+                frame.off_spark:Show()
+                frame.off_left_text:Hide()
+                frame.off_right_text:Hide()
+            end
         else
             frame.off_bar:Hide()
             frame.off_spark:Hide()
@@ -929,7 +930,7 @@ function player.UpdateVisualsOnUpdate()
             frame.off_right_text:Hide()
         end
         -- Update the frame's appearance based on settings
-        if has_offhand and settings.show_offhand then
+        if has_offhand and settings.show_offhand and not settings.combined_bar then
             frame:SetHeight((settings.height * 2) + 2)
         else
             frame:SetHeight(settings.height)
@@ -1145,6 +1146,7 @@ function player.UpdateConfigPanelValues()
     panel.show_offhand_checkbox:SetChecked(settings.show_offhand)
     panel.show_border_checkbox:SetChecked(settings.show_border)
     panel.classic_bars_checkbox:SetChecked(settings.classic_bars)
+    panel.combined_bar_checkbox:SetChecked(settings.combined_bar)
     panel.fill_empty_checkbox:SetChecked(settings.fill_empty)
     panel.show_left_text_checkbox:SetChecked(settings.show_left_text)
     panel.show_right_text_checkbox:SetChecked(settings.show_right_text)
@@ -1212,6 +1214,11 @@ end
 
 function player.ClassicBarsCheckBoxOnClick(self)
     settings.classic_bars = self:GetChecked()
+    player.UpdateVisualsOnSettingsChange()
+end
+
+function player.CombinedBarCheckBoxOnClick(self)
+    settings.combined_bar = self:GetChecked()
     player.UpdateVisualsOnSettingsChange()
 end
 
@@ -1419,6 +1426,14 @@ function player.CreateConfigPanel(parent_panel)
         L"Enables the classic texture for the player's bars.",
         player.ClassicBarsCheckBoxOnClick)
     panel.classic_bars_checkbox:SetPoint("TOPLEFT", 10, -150)
+    -- Combined Main/Off Bar Checkbox
+    panel.combined_bar_checkbox = config.CheckBoxFactory(
+        "PlayerCombinedBarCheckbox",
+        panel,
+        L"Combined Main/Off bar",
+        L"Combined the Main-Hand and Off-Hand swing timers into one bar, with the Off-Hand only displayed using a spark.",
+        player.CombinedBarCheckBoxOnClick)
+    panel.combined_bar_checkbox:SetPoint("TOPLEFT", 10, -170)
     -- Fill/Empty Checkbox
     panel.fill_empty_checkbox = config.CheckBoxFactory(
         "PlayerFillEmptyCheckBox",
@@ -1426,7 +1441,7 @@ function player.CreateConfigPanel(parent_panel)
         L"Fill / Empty",
         L"Determines if the bar is full or empty when a swing is ready.",
         player.FillEmptyCheckBoxOnClick)
-    panel.fill_empty_checkbox:SetPoint("TOPLEFT", 10, -170)
+    panel.fill_empty_checkbox:SetPoint("TOPLEFT", 10, -190)
     -- Show Left Text Checkbox
     panel.show_left_text_checkbox = config.CheckBoxFactory(
         "PlayerShowLeftTextCheckBox",
@@ -1434,7 +1449,7 @@ function player.CreateConfigPanel(parent_panel)
         L"Show Left Text",
         L"Enables the player's left side text.",
         player.ShowLeftTextCheckBoxOnClick)
-    panel.show_left_text_checkbox:SetPoint("TOPLEFT", 10, -190)
+    panel.show_left_text_checkbox:SetPoint("TOPLEFT", 10, -210)
     -- Show Right Text Checkbox
     panel.show_right_text_checkbox = config.CheckBoxFactory(
         "PlayerShowRightTextCheckBox",
@@ -1442,7 +1457,7 @@ function player.CreateConfigPanel(parent_panel)
         L"Show Right Text",
         L"Enables the player's right side text.",
         player.ShowRightTextCheckBoxOnClick)
-    panel.show_right_text_checkbox:SetPoint("TOPLEFT", 10, -210)
+    panel.show_right_text_checkbox:SetPoint("TOPLEFT", 10, -230)
     -- Show Paladin Seal Twist Checkbox
     panel.show_paladin_blood_checkbox = config.CheckBoxFactory(
         "PlayerShowPaladingBloodCheckBox",
@@ -1450,7 +1465,7 @@ function player.CreateConfigPanel(parent_panel)
         L"Show Paladin Twist",
         L"Show 0.4s marker before swing to help with seal twisting. Apply seal after this.",
         player.ShowPaladinBloodCheckBoxOnClick)
-    panel.show_paladin_blood_checkbox:SetPoint("TOPLEFT", 10, -230)
+    panel.show_paladin_blood_checkbox:SetPoint("TOPLEFT", 10, -250)
     -- Show Paladin Seal Twist Checkbox GCD
     panel.show_paladin_command_checkbox = config.CheckBoxFactory(
         "PlayerShowPaladinCommandCheckBox",
@@ -1458,7 +1473,7 @@ function player.CreateConfigPanel(parent_panel)
         L"Show Paladin GCD",
         L"Show GCD marker before swing to help with seal twisting. Apply first seal before this.",
         player.ShowPaladinCommandCheckBoxOnClick)
-    panel.show_paladin_command_checkbox:SetPoint("TOPLEFT", 10, -250)
+    panel.show_paladin_command_checkbox:SetPoint("TOPLEFT", 10, -270)
     -- Width EditBox
     panel.width_editbox = config.EditBoxFactory(
         "PlayerWidthEditBox",

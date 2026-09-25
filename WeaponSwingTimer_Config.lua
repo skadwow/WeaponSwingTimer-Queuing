@@ -43,7 +43,7 @@ function config.InitializeVisuals()
     panel.config_melee_panel.player_panel:SetPoint("TOPLEFT", 0, 0)
     panel.config_melee_panel.player_panel:SetSize(1, 1)
     panel.config_melee_panel.target_panel = addon_data.target.CreateConfigPanel(panel.config_melee_panel)
-    panel.config_melee_panel.target_panel:SetPoint("TOPLEFT", 0, -300)
+    panel.config_melee_panel.target_panel:SetPoint("TOPLEFT", 0, -320)
     panel.config_melee_panel.target_panel:SetSize(1, 1)
     panel.config_melee_panel.name = L"Melee Settings"
     panel.config_melee_panel.parent = panel.name
