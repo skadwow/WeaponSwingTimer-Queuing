@@ -474,7 +474,7 @@ function hunter.UpdateVisualsOnSettingsChange()
         end
         frame.shot_bar_text:SetPoint("BOTTOMRIGHT", -5, (settings.height / 2) - (settings.fontsize / 2))
         frame.shot_bar_text:SetTextColor(1.0, 1.0, 1.0, 1.0)
-        frame.shot_bar_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
+        frame.shot_bar_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
 
         frame.shot_bar:SetHeight(settings.height)
         if settings.classic_bars then
@@ -548,7 +548,7 @@ function hunter.InitializeVisuals()
     frame.shot_bar = frame:CreateTexture(nil,"ARTWORK")
     -- Create the shot bar text
     frame.shot_bar_text = frame:CreateFontString(nil,"OVERLAY")
-    frame.shot_bar_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
+    frame.shot_bar_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
     frame.shot_bar_text:SetJustifyV("MIDDLE")
     frame.shot_bar_text:SetJustifyH("CENTER")
     -- Create the multishot clip bar

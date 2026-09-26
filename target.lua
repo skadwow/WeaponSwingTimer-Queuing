@@ -389,11 +389,11 @@ function target.UpdateVisualsOnSettingsChange()
         frame.main_spark:SetSize(16, settings.height)
         frame.main_left_text:SetPoint("TOPLEFT", 2, -(settings.height / 2) + (settings.fontsize / 2))
         frame.main_left_text:SetTextColor(settings.main_text_r, settings.main_text_g, settings.main_text_b, settings.main_text_a)
-        frame.main_left_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
+        frame.main_left_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
 
         frame.main_right_text:SetPoint("TOPRIGHT", -5, -(settings.height / 2) + (settings.fontsize / 2))
         frame.main_right_text:SetTextColor(settings.main_text_r, settings.main_text_g, settings.main_text_b, settings.main_text_a)
-        frame.main_right_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
+        frame.main_right_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
 
         frame.off_bar:SetPoint("BOTTOMLEFT", 0, 0)
         frame.off_bar:SetHeight(settings.height)
@@ -406,11 +406,11 @@ function target.UpdateVisualsOnSettingsChange()
         frame.off_spark:SetSize(16, settings.height)
         frame.off_left_text:SetPoint("BOTTOMLEFT", 2, (settings.height / 2) - (settings.fontsize / 2))
         frame.off_left_text:SetTextColor(settings.off_text_r, settings.off_text_g, settings.off_text_b, settings.off_text_a)
-        frame.off_left_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
+        frame.off_left_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
 
         frame.off_right_text:SetPoint("BOTTOMRIGHT", -5, (settings.height / 2) - (settings.fontsize / 2))
         frame.off_right_text:SetTextColor(settings.off_text_r, settings.off_text_g, settings.off_text_b, settings.off_text_a)
-        frame.off_right_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
+        frame.off_right_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
 
         if settings.show_left_text then
             frame.main_left_text:Show()
@@ -490,12 +490,12 @@ function target.InitializeVisuals()
     frame.main_spark:SetTexture('Interface/AddOns/WeaponSwingTimer/Images/Spark')
     -- Create the main hand bar left text
     frame.main_left_text = frame:CreateFontString(nil, "OVERLAY")
-    frame.main_left_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
+    frame.main_left_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
     frame.main_left_text:SetJustifyV("MIDDLE")
     frame.main_left_text:SetJustifyH("LEFT")
     -- Create the main hand bar right text
     frame.main_right_text = frame:CreateFontString(nil, "OVERLAY")
-    frame.main_right_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
+    frame.main_right_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
     frame.main_right_text:SetJustifyV("MIDDLE")
     frame.main_right_text:SetJustifyH("RIGHT")
     -- Create the off hand bar
@@ -505,12 +505,12 @@ function target.InitializeVisuals()
     frame.off_spark:SetTexture('Interface/AddOns/WeaponSwingTimer/Images/Spark')
     -- Create the off hand bar left text
     frame.off_left_text = frame:CreateFontString(nil, "OVERLAY")
-    frame.off_left_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
+    frame.off_left_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
     frame.off_left_text:SetJustifyV("MIDDLE")
     frame.off_left_text:SetJustifyH("LEFT")
     -- Create the off hand bar right text
     frame.off_right_text = frame:CreateFontString(nil, "OVERLAY")
-    frame.off_right_text:SetFont("Fonts/FRIZQT__.ttf", settings.fontsize)
+    frame.off_right_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
     frame.off_right_text:SetJustifyV("MIDDLE")
     frame.off_right_text:SetJustifyH("RIGHT")
     -- Show it off

@@ -164,7 +164,7 @@ function paladin.CreateConfigPanel(parent_panel)
         30,
         1,
         paladin.PaladinOffsetOnValChange)
-    panel.pala_offset_slider:SetPoint("TOPLEFT", 200, -60)
+    panel.pala_offset_slider:SetPoint("TOPLEFT", 240, -60)
 
     -- Return the final panel
     paladin.UpdateConfigPanelValues()

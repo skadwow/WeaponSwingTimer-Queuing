@@ -8,6 +8,10 @@ addon_data.utils = utils
 
 local INTERFACE_VERSION = select(4, GetBuildInfo())
 
+function utils.GetFont()
+    return GameFontNormal and GameFontNormal:GetFont() or STANDARD_TEXT_FONT or "Fonts/FRIZQT__.ttf"
+end
+
 -- Sends the given message to the chat frame with the addon name in front.
 function utils.PrintMsg(msg)
     local chat_msg = "|cFF00FFB0" .. addon_name .. ": |r" .. msg
