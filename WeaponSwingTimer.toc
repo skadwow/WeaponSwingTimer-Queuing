@@ -34,26 +34,28 @@
 ## Notes-zhTW: 跟踪近戰武器的揮動時間獵人自動射擊和魔杖射擊。
 ## IconTexture: Interface\AddOns\WeaponSwingTimer\Images\wst_logo_plain
 ## Author: LeftHandGlove, WatchYourSixx, Skad
-## Version: 2.6.5
+## Version: 2.7.0
 ## DefaultState: enabled
 ## OptionalDeps: ColorPickerPlus
 ## SavedVariables: WST_Profiles
 ## SavedVariablesPerCharacter: WST_Character
 
-localization.lua
-WeaponSwingTimer_Config.lua
-utils.lua
-spells.lua
-auras.lua
-items.lua
-profiles.lua
-WeaponSwingTimer_Player.lua
-WeaponSwingTimer_ranged_base_speed.lua
-WeaponSwingTimer_Target.lua
-WeaponSwingTimer_Castbar.lua
-WeaponSwingTimer_Queuing.lua
-WeaponSwingTimer_Warrior.lua
-WeaponSwingTimer_Druid.lua
-WeaponSwingTimer_Hunter.lua
+utilities/localization.lua
+utilities/config.lua
+utilities/utils.lua
+utilities/spells.lua
+utilities/auras.lua
+utilities/items.lua
+utilities/profiles.lua
+
+player.lua
+target.lua
+castbar.lua
+queuing.lua
+
+classes/warrior.lua
+classes/druid.lua
+classes/hunter.lua
 classes/paladin.lua
-WeaponSwingTimer_Core.lua
+
+core.lua

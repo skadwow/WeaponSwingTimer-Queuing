@@ -5,15 +5,15 @@ local addon_data = select(2, ...)
 local L = addon_data.localization.get
 
 local spells = {}
-addon_data.spells = spells
+addon_data.spells       = spells
 
 ---@type table<SpellID, SpellLine>
 local SPELL_INFO = {}
 
 -- Hunter
-SPELL_INFO[75] = {name = L"Auto Shot", rank = nil, castTime = nil, cooldown = nil}
-SPELL_INFO[5019] = {name = L"Shoot", rank = nil, castTime = nil, cooldown = nil}
-SPELL_INFO[5384] = {name = L"Feign Death", rank = nil, castTime = nil, cooldown = nil}
+SPELL_INFO[75]          = {name = L"Auto Shot", rank = nil, castTime = nil, cooldown = nil}
+SPELL_INFO[5019]        = {name = L"Shoot", rank = nil, castTime = nil, cooldown = nil}
+SPELL_INFO[5384]        = {name = L"Feign Death", rank = nil, castTime = nil, cooldown = nil}
 
 if addon_data.utils.IsClassicWow() then
     -- Hunter
@@ -547,7 +547,7 @@ function spells.GetSpellIDs(...)
     end
 end
 
-spells.GetSpellInfo = (C_Spell and C_Spell.GetSpellInfo) and C_Spell.GetSpellInfo or function(spellID)
+spells.GetSpellInfo     = (C_Spell and C_Spell.GetSpellInfo) and C_Spell.GetSpellInfo or function(spellID)
     local name, _, icon, castTime, minRange, maxRange, spellID, originalIcon = GetSpellInfo(spellID)
     return {
         name = name,
@@ -563,9 +563,9 @@ end
 spells.IsCurrentSpell   = C_Spell and C_Spell.IsCurrentSpell or IsCurrentSpell
 spells.IsSpellKnown     = C_SpellBook and C_SpellBook.IsSpellKnown or IsSpellKnown
 
-local PLAYER_CLASS              = select(2, UnitClass("player"))
+local PLAYER_CLASS      = select(2, UnitClass("player"))
 
-local QUEUED_SPELLS             = {
+local QUEUED_SPELLS     = {
     ["DEATHKNIGHT"] = {},
     ["DRUID"]       = spells.GetSpellIDs(L"Maul"),
     ["HUNTER"]      = spells.GetSpellIDs(L"Raptor Strike"),
@@ -585,7 +585,7 @@ function spells.IsQueuedSpell(spellID, class)
     return QUEUED_SPELLS[class or PLAYER_CLASS][spellID] or false
 end
 
-local RESET_SPELLS              = {
+local RESET_SPELLS      = {
     ["DEATHKNIGHT"] = {},
     ["DRUID"]       = spells.GetSpellIDs(
         L"Mark of the Wild",

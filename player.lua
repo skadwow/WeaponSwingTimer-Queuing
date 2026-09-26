@@ -498,7 +498,7 @@ end
 -- if new swing is below 20%, set to 20% (parry cannot reduce swing timer below 20%)
 if addon_data.utils.IsForeverWow() then
     parryHandler = function()
-        local min_swing_time = player.main_weapon_speed * 0.2
+        local min_swing_time = max(player.main_weapon_speed * 0.2 - 0.4, 0)
         local ts = GetTimePreciseSec()
         if player.main_swing_timer > min_swing_time and ts - prev_mh_swing_ts > 0.5 then
             player.main_swing_timer = max(player.main_swing_timer - (player.main_weapon_speed * 0.4), min_swing_time)

@@ -15,7 +15,7 @@ local player                = addon_data.player
 
 local GetSpellLines         = addon_data.spells.GetSpellLines
 local GetSpellIDs           = addon_data.spells.GetSpellIDs
-local GetRangedBaseSpeed    = addon_data.GetRangedBaseSpeed
+local GetWeaponSpeed        = addon_data.utils.GetWeaponSpeed
 local SimpleRound           = addon_data.utils.SimpleRound
 
 local SHOT_SPELL_IDS        = GetSpellLines(
@@ -127,14 +127,14 @@ end
 
 -- Replaced update info with this instead, checking weapon id every time inventory is changed for simplicity
 function hunter.OnInventoryChange()
-    hunter.base_speed = GetRangedBaseSpeed()
+    hunter.base_speed = GetWeaponSpeed(INVSLOT_RANGED)
 end
 
 --- Reset Swing Timer unhasted separately due to feign and other spells
 function hunter.FeignDeath()
     hunter.last_shot_time = GetTime()
     if not hunter.FeignFullReset then
-        hunter.range_speed = GetRangedBaseSpeed() + 0.15
+        hunter.range_speed = GetWeaponSpeed(INVSLOT_RANGED) + 0.15
         hunter.FeignFullReset = true
     end
     hunter.ResetShotTimer()
@@ -143,7 +143,7 @@ end
 -- Modified to use base speed and current ranged speed, to get the haste modifiers. This is used in multi-shot cast bar to provide an accurate bar, as well as multi clip
 function hunter.UpdateRangeCastSpeedModifier()
     if PLAYER_IS_RANGED and hunter.base_speed == 1 then
-        hunter.base_speed = GetRangedBaseSpeed()
+        hunter.base_speed = GetWeaponSpeed(INVSLOT_RANGED)
     else
         local range_speed, _, _, _, _, _ = UnitRangedDamage("player")
         -- added case for if range speed returns nil or 0
@@ -165,7 +165,7 @@ if addon_data.utils.IsForeverWow() then
         hunter.casting_auto = false
 
         if hunter.base_speed == 1 then
-            hunter.base_speed = GetRangedBaseSpeed()
+            hunter.base_speed = GetWeaponSpeed(INVSLOT_RANGED)
         else
             hunter.range_cast_speed_modifer = swingDuration / hunter.base_speed
         end
