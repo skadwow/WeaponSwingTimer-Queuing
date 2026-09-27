@@ -26,9 +26,10 @@ local warrior               = addon_data.warrior
 local frame                 = CreateFrame("Frame", addon_name .. "CoreFrame", UIParent)
 core.core_frame             = frame
 
-local VERSION = C_AddOns.GetAddOnMetadata(addon_name, "Version")
-local LOAD_MESSAGE = L"Thank you for installing WeaponSwingTimer Version" .. " " .. VERSION .. 
-                    " " .. L"by Skad! Use |cFFFFC300/wst|r for more options."
+local VERSION               = C_AddOns.GetAddOnMetadata(addon_name, "Version")
+local ICON_TEXTURE          = C_AddOns.GetAddOnMetadata(addon_name, "IconTexture")
+local LOAD_MESSAGE          = L"Thank you for installing WeaponSwingTimer Version" .. " " .. VERSION .. 
+                              " " .. L"by Skad! Use |cFFFFC300/wst|r for more options."
 
 ---@type ClassFile
 local PLAYER_CLASS          = player.class
@@ -314,6 +315,7 @@ function frame:PLAYER_LOGIN()
     end
 end
 
+
 function frame:PLAYER_IN_COMBAT_CHANGED(inCombat)
     player.OnInCombatChanged(inCombat)
 end
@@ -418,4 +420,16 @@ SLASH_WEAPONSWINGTIMER_CONFIG2 = "/weaponswingtimer"
 SLASH_WEAPONSWINGTIMER_CONFIG3 = "/wst"
 SlashCmdList["WEAPONSWINGTIMER_CONFIG"] = function(option)
     Settings.OpenToCategory(config.category:GetID())
+end
+
+-- Add button to open settings from Addon Compartment
+if AddonCompartmentFrame then
+    AddonCompartmentFrame:RegisterAddon({
+        text = addon_name,
+        icon = ICON_TEXTURE,
+        notCheckable = true,
+        func = function()
+            Settings.OpenToCategory(config.category:GetID())
+        end
+    })
 end
