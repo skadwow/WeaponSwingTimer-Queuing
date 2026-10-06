@@ -32,30 +32,40 @@
 ## Notes-ruRU: Отслеживает время прохождения оружия ближнего боя. Охотники с автоматическим выстрелом и палочки стреляют.
 ## Notes-zhCN: 跟踪近战武器的挥动时间猎人自动射击和魔杖射击。
 ## Notes-zhTW: 跟踪近戰武器的揮動時間獵人自動射擊和魔杖射擊。
-## IconTexture: Interface\AddOns\WeaponSwingTimer\Images\wst_logo_plain
+## AddonCompartmentFunc: WeaponSwingTimer_OnAddonCompartmentClick
+## IconTexture: Interface\AddOns\WeaponSwingTimer\Shared\images\wst_logo_plain
 ## Author: LeftHandGlove, WatchYourSixx, Skad
-## Version: 2.7.2
+## Version: 2.8.0
 ## DefaultState: enabled
 ## OptionalDeps: ColorPickerPlus
 ## SavedVariables: WST_Profiles
 ## SavedVariablesPerCharacter: WST_Character
 
-utilities/localization.lua
-utilities/config.lua
-utilities/utils.lua
-utilities/spells.lua
-utilities/auras.lua
-utilities/items.lua
-utilities/profiles.lua
+Shared/utilities/localization.lua
+Shared/utilities/config.lua
+Shared/utilities/utils.lua
+Shared/utilities/spells.lua
+[Family]/utilities/talents.lua [AllowLoadGameType mainline]
+[Family]/utilities/auras.lua [AllowLoadGameType classic]
+Shared/utilities/items.lua
+Shared/utilities/appearance.lua
+Shared/utilities/profiles.lua
 
-player.lua
-target.lua
-castbar.lua
-queuing.lua
+Shared/player.lua
+[Family]/player.lua
+[Game]/player.lua [AllowLoadGameType vanilla]
+Shared/target.lua
+[Family]/target.lua [AllowLoadGameType mainline]
+Shared/castbar.lua
+Shared/queuing.lua
+[Family]/queuing.lua
 
-classes/warrior.lua
-classes/druid.lua
-classes/hunter.lua
-classes/paladin.lua
+Shared/classes/warrior.lua
+[Family]/classes/warrior.lua
+Shared/classes/druid.lua
+Shared/classes/hunter.lua
+[Family]/classes/hunter.lua
+Shared/classes/paladin.lua
 
-core.lua
+Shared/core.lua
+[Family]/core.lua
