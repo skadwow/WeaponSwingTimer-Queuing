@@ -35,7 +35,7 @@
 ## AddonCompartmentFunc: WeaponSwingTimer_OnAddonCompartmentClick
 ## IconTexture: Interface\AddOns\WeaponSwingTimer\Shared\images\wst_logo_plain
 ## Author: LeftHandGlove, WatchYourSixx, Skad
-## Version: 2.8.1b
+## Version: 2.8.1c
 ## DefaultState: enabled
 ## OptionalDeps: ColorPickerPlus
 ## SavedVariables: WST_Profiles

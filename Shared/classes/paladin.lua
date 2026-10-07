@@ -14,6 +14,8 @@ addon_data.paladin          = paladin
 
 local player                = addon_data.player
 
+paladin.frame               = nil
+
 local settings              = {}
 paladin.default_settings    = {
     pala_show_blood = false,
@@ -38,7 +40,7 @@ end
 --[[=====================================================================================]]--
 
 local function UpdateIndicators()
-    local frame = player.frame
+    local frame = paladin.paladinFrame
 
     local frameWidth = frame:GetWidth()
     local secondWidth = frameWidth / player.main_weapon_speed
@@ -75,7 +77,7 @@ end
 function paladin.UpdateVisualsOnSettingsChange()
     if player.class ~= "PALADIN" then return end
 
-    local frame = player.frame
+    local frame = paladin.paladinFrame
 
     frame.pala_blood_marker:SetPoint("TOP", 0, settings.pala_offset)
     frame.pala_blood_marker:SetPoint("BOTTOM", 0, -settings.pala_offset)
@@ -89,12 +91,14 @@ function paladin.UpdateVisualsOnSettingsChange()
 end
 
 function paladin.InitializeVisuals()
-    local frame = player.frame
+    paladin.paladinFrame = CreateFrame("Frame", nil, player.frame)
+    paladin.paladinFrame:SetAllPoints()
+    local frame = paladin.paladinFrame
 
     -- Paladin sparks
-    frame.pala_blood_marker = frame:CreateTexture(nil,"BORDER")
+    frame.pala_blood_marker = frame:CreateTexture(nil,"OVERLAY")
     frame.pala_blood_marker:SetColorTexture(1, 0.996, 0.722, 1.0)
-    frame.pala_command_marker = frame:CreateTexture(nil,"BORDER")
+    frame.pala_command_marker = frame:CreateTexture(nil,"OVERLAY")
     frame.pala_command_marker:SetColorTexture(1.0, 0.0, 0.0, 0.8)
 
     paladin.UpdateVisualsOnSettingsChange()
