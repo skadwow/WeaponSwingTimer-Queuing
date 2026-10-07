@@ -691,6 +691,7 @@ function player.UpdateOffHandDisplay()
     if player.hasOffHand and settings.show_offhand and not settings.combined_bar then
         frame:SetHeight(settings.height * 2 + 2)
         frame.off_bar:Show()
+        frame.off_spark:SetShown(player.hasOffHand and (settings.combined_bar or addon_data.settings.appearance.classicBars and player.off_swing_timer > 0))
         frame.off_left_text:SetShown(settings.show_left_text)
         frame.off_right_text:SetShown(settings.show_right_text)
     else
@@ -788,7 +789,7 @@ function player.UpdateVisualsOnSettingsChange()
         frame.off_spark:SetSize(16, settings.height)
 
         main_spark:SetShown(addon_data.settings.appearance.classicBars and player.main_swing_timer > 0)
-        off_spark:SetShown(settings.combined_bar or addon_data.settings.appearance.classicBars and player.off_swing_timer > 0)
+        off_spark:SetShown(player.hasOffHand and (settings.combined_bar or addon_data.settings.appearance.classicBars and player.off_swing_timer > 0))
 
         frame.main_left_text:SetPoint("TOPLEFT", 5, -(settings.height / 2) + (settings.fontsize / 2))
         frame.main_left_text:SetTextColor(settings.main_text_r, settings.main_text_g, settings.main_text_b, settings.main_text_a)
