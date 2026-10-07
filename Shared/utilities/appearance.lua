@@ -186,6 +186,29 @@ function appearance.UpdateVisualsOnSettingsChange()
     addon_data.target.UpdateVisualsOnSettingsChange()
     addon_data.hunter.UpdateVisualsOnSettingsChange()
     addon_data.castbar.UpdateVisualsOnSettingsChange()
+
+    local frame = appearance.config_frame.exampleFrame
+
+    appearance.SetupFrame(frame, true)
+    appearance.SetupBar(frame.mainBar, true)
+    appearance.SetupBar(frame.offBar, true)
+
+    frame.mainBar:SetVertexColor(
+        addon_data.settings.player.main_r,
+        addon_data.settings.player.main_g,
+        addon_data.settings.player.main_b,
+        addon_data.settings.player.main_a
+    )
+
+    frame.offBar:SetVertexColor(
+        addon_data.settings.player.off_r,
+        addon_data.settings.player.off_g,
+        addon_data.settings.player.off_b,
+        addon_data.settings.player.off_a
+    )
+
+    frame.mainSpark:SetShown(settings.classicBars)
+    frame.offSpark:SetShown(settings.classicBars)
 end
 
 --[[====================================================================================]]--
@@ -233,7 +256,7 @@ function appearance.CreateConfigPanel(parent_panel)
 
     panel.drpBorderStyle = CreateFrame("Frame", addon_name .. "BorderStyleDropDown", panel, "UIDropDownMenuTemplate")
     panel.drpBorderStyle:SetPoint("TOPLEFT", 0, -70)
-    UIDropDownMenu_SetWidth(panel.drpBorderStyle, 150)
+    UIDropDownMenu_SetWidth(panel.drpBorderStyle, 200)
     UIDropDownMenu_SetText(panel.drpBorderStyle, settings.borderStyle)
     UIDropDownMenu_Initialize(panel.drpBorderStyle, function(self, level, menuList)
         local info = UIDropDownMenu_CreateInfo()
@@ -267,6 +290,32 @@ function appearance.CreateConfigPanel(parent_panel)
         0.05,
         appearance.BackdropAlphaOnValChange)
     panel.sldBackdropAlpha:SetPoint("TOPLEFT", 20, -170)
+
+    panel.txtExampleFrame = config.TextFactory(panel, L"Example Frame", 14)
+    panel.txtExampleFrame:SetPoint("TOPLEFT", 300, -60)
+    panel.txtExampleFrame:SetTextColor(1, 1, 1, 1)
+
+    panel.exampleFrame = CreateFrame("Frame", nil, panel)
+    panel.exampleFrame:SetPoint("TOPLEFT", 290, -80)
+    panel.exampleFrame:SetSize(300, 42)
+
+    panel.exampleFrame.mainBar = panel.exampleFrame:CreateTexture(nil, "ARTWORK")
+    panel.exampleFrame.mainBar:SetPoint("TOPLEFT")
+    panel.exampleFrame.mainBar:SetSize(240, 20)
+
+    panel.exampleFrame.mainSpark = panel.exampleFrame:CreateTexture(nil, "OVERLAY")
+    panel.exampleFrame.mainSpark:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Spark")
+    panel.exampleFrame.mainSpark:SetPoint("RIGHT", panel.exampleFrame.mainBar, 8, 0)
+    panel.exampleFrame.mainSpark:SetSize(16, 20)
+
+    panel.exampleFrame.offBar = panel.exampleFrame:CreateTexture(nil, "ARTWORK")
+    panel.exampleFrame.offBar:SetPoint("BOTTOMLEFT")
+    panel.exampleFrame.offBar:SetSize(120, 20)
+
+    panel.exampleFrame.offSpark = panel.exampleFrame:CreateTexture(nil, "OVERLAY")
+    panel.exampleFrame.offSpark:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Spark")
+    panel.exampleFrame.offSpark:SetPoint("RIGHT", panel.exampleFrame.offBar, 8, 0)
+    panel.exampleFrame.offSpark:SetSize(16, 20)
 
     appearance.UpdateConfigPanelValues()
     return panel
