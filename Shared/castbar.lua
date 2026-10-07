@@ -320,7 +320,7 @@ function castbar.UpdateVisualsOnUpdate()
             new_width = math.min(new_width, settings.width)
             frame.spell_bar:SetWidth(new_width)
             frame.spell_spark:SetPoint("TOPLEFT", new_width - 8, 0)
-            if new_width == settings.width or not addon_data.settings.appearance.classic_bars then
+            if new_width == settings.width or not addon_data.settings.appearance.classicBars then
                 frame.spell_spark:Hide()
             else
                 frame.spell_spark:Show()

@@ -627,7 +627,7 @@ function player.UpdateMainSwingTimer(elapsed)
             else
                 main_bar:SetWidth(swingTimer * main_second_width + 0.001)
             end
-            main_spark:SetShown(settings.classic_bars and player.main_swing_timer > 0)
+            main_spark:SetShown(addon_data.settings.appearance.classicBars and player.main_swing_timer > 0)
             main_right_text:SetText(SimpleRound(swingTimer, 0.1))
 
             idleTime = 0
@@ -671,7 +671,7 @@ function player.UpdateOffSwingTimer(elapsed)
                 else
                     off_bar:SetWidth(swingTimer * off_second_width + 0.001)
                 end
-                off_spark:SetShown(settings.combined_bar or addon_data.settings.appearance.classic_bars and player.off_swing_timer > 0)
+                off_spark:SetShown(settings.combined_bar or addon_data.settings.appearance.classicBars and player.off_swing_timer > 0)
                 off_right_text:SetText(SimpleRound(swingTimer, 0.1))
             end
         end
@@ -786,6 +786,9 @@ function player.UpdateVisualsOnSettingsChange()
 
         frame.main_spark:SetSize(16, settings.height)
         frame.off_spark:SetSize(16, settings.height)
+
+        main_spark:SetShown(addon_data.settings.appearance.classicBars and player.main_swing_timer > 0)
+        off_spark:SetShown(settings.combined_bar or addon_data.settings.appearance.classicBars and player.off_swing_timer > 0)
 
         frame.main_left_text:SetPoint("TOPLEFT", 5, -(settings.height / 2) + (settings.fontsize / 2))
         frame.main_left_text:SetTextColor(settings.main_text_r, settings.main_text_g, settings.main_text_b, settings.main_text_a)
