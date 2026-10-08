@@ -120,6 +120,18 @@ function profiles.LoadSettings()
         WST_Character.profile = profiles.default_settings.profile
     end
 
+    for page, info in pairs(DEFAULT_PROFILES[DEFAULT]) do
+        if WST_Profiles[WST_Character.profile][page] == nil then
+            WST_Profiles[WST_Character.profile][page] = info
+        end
+
+        for setting, value in pairs(info) do
+            if WST_Profiles[WST_Character.profile][page][setting] == nil then
+                WST_Profiles[WST_Character.profile][page][setting] = value
+            end
+        end
+    end
+
     addon_data.settings = WST_Profiles[WST_Character.profile]
     MigrateOldSavedVariables()
 end
