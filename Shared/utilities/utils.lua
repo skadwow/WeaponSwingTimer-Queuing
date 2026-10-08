@@ -25,6 +25,12 @@ function utils.DebugPrint(...)
     print(string.format("%.7f", GetTimePreciseSec()), ...)
 end
 
+local debugLog = {}
+function utils.DebugLog(str)
+    tinsert(debugLog,  string.format("%.7f | %s", GetTimePreciseSec(), str))
+    WST_DebugLog = debugLog
+end
+
 -- Rounds the given number to the given step.
 -- If num was 1.17 and step was 0.1 then this would return 1.1
 -- the step / 100 addition is to prevent rounding errors (i.e. 1.999997 instead of 2)

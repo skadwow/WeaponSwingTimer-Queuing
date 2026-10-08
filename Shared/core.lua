@@ -81,16 +81,26 @@ if player.isRanged then
 end
 
 function core.LoadAllSettings()
+    addon_data.utils.DebugLog("  Loading profiles settings...")
     profiles.LoadSettings()
 
+    addon_data.utils.DebugLog("  Loading core settings...")
     core.LoadSettings()
+    addon_data.utils.DebugLog("  Loading player settings...")
     player.LoadSettings()
+    addon_data.utils.DebugLog("  Loading target settings...")
     target.LoadSettings()
+    addon_data.utils.DebugLog("  Loading warrior settings...")
     warrior.LoadSettings()
+    addon_data.utils.DebugLog("  Loading druid settings...")
     druid.LoadSettings()
+    addon_data.utils.DebugLog("  Loading paladin settings...")
     paladin.LoadSettings()
+    addon_data.utils.DebugLog("  Loading hunter settings...")
     hunter.LoadSettings()
+    addon_data.utils.DebugLog("  Loading castbar settings...")
     castbar.LoadSettings()
+    addon_data.utils.DebugLog("  Loading appearance settings...")
     appearance.LoadSettings()
 end
 
@@ -108,18 +118,26 @@ function core.RestoreAllDefaults()
 end
 
 local function InitializeAllVisuals()
+    addon_data.utils.DebugLog("  Initializing player visuals...")
     player.InitializeVisuals()
+    addon_data.utils.DebugLog("  Initializing target visuals...")
     target.InitializeVisuals()
     if PLAYER_CLASS == "WARRIOR" then
+        addon_data.utils.DebugLog("  Initializing warrior visuals...")
         warrior.InitializeVisuals()
     elseif PLAYER_CLASS == "DRUID" then
+        addon_data.utils.DebugLog("  Initializing druid visuals...")
         druid.InitializeVisuals()
     elseif PLAYER_CLASS == "PALADIN" then
+        addon_data.utils.DebugLog("  Initializing paladin visuals...")
         paladin.InitializeVisuals()
     elseif player.isRanged then
+        addon_data.utils.DebugLog("  Initializing hunter visuals...")
         hunter.InitializeVisuals()
+        addon_data.utils.DebugLog("  Initializing castbar visuals...")
         castbar.InitializeVisuals()
     end
+    addon_data.utils.DebugLog("  Initializing config visuals...")
     config.InitializeVisuals()
 end
 
@@ -176,6 +194,7 @@ end
 
 function core.RegisterEvents()
     for _, event in ipairs(core.events) do
+        addon_data.utils.DebugLog("  Registering Event: "..event)
         frame:RegisterEvent(event)
     end
 end
@@ -186,11 +205,22 @@ function frame:OnAddonLoaded()
 
     self:UnregisterEvent("ADDON_LOADED")
     self:SetScript("OnUpdate", CoreFrame_OnUpdate)
-    core.RegisterEvents()
 
+    addon_data.utils.DebugLog("Registering Events...")
+    core.RegisterEvents()
+    addon_data.utils.DebugLog("Success!")
+
+    addon_data.utils.DebugLog("Loading Profiles...")
     profiles.LoadProfiles()
+    addon_data.utils.DebugLog("Success!")
+
+    addon_data.utils.DebugLog("Loading Settings...")
     core.LoadAllSettings()
+    addon_data.utils.DebugLog("Success!")
+
+    addon_data.utils.DebugLog("Initializing Visuals...")
     InitializeAllVisuals()
+    addon_data.utils.DebugLog("Success!")
 
     player.ZeroizeSwingTimers()
     target.ZeroizeSwingTimers()

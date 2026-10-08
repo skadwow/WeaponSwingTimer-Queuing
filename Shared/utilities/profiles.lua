@@ -35,8 +35,11 @@ function profiles.CreateDefaultProfile()
 end
 
 function profiles.LoadProfiles()
+    addon_data.utils.DebugLog("  Checking Default Profile...")
     if not DEFAULT_PROFILES[DEFAULT] then
+        addon_data.utils.DebugLog("    Creating Default Profile...")
         profiles.CreateDefaultProfile()
+        addon_data.utils.DebugLog("    Success!")
     end
 
     if not WST_Profiles then
@@ -47,6 +50,7 @@ function profiles.LoadProfiles()
         WST_Profiles[DEFAULT] = {}
     end
 
+    addon_data.utils.DebugLog("  Populating WST_Profiles[DEFAULT]...")
     for page, info in pairs(DEFAULT_PROFILES[DEFAULT]) do
         if WST_Profiles[DEFAULT][page] == nil then
             WST_Profiles[DEFAULT][page] = info
@@ -58,6 +62,7 @@ function profiles.LoadProfiles()
             end
         end
     end
+    addon_data.utils.DebugLog("  Success!")
 end
 
 local function MigrateOldSavedVariables()

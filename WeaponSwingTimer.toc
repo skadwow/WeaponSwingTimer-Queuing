@@ -38,7 +38,7 @@
 ## Version: 2.8.1c
 ## DefaultState: enabled
 ## OptionalDeps: ColorPickerPlus
-## SavedVariables: WST_Profiles
+## SavedVariables: WST_Profiles, WST_DebugLog
 ## SavedVariablesPerCharacter: WST_Character
 
 Shared/utilities/localization.lua

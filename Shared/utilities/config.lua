@@ -18,13 +18,17 @@ end
 
 function config.InitializeVisuals()
     -- Add the parent panel
+
+    addon_data.utils.DebugLog("    Creating config frame...")
     config.config_parent_panel = CreateFrame("Frame", "WeaponSwingTimerConfig", UIParent)
     local panel = config.config_parent_panel
     panel:SetSize(1, 1)
+    addon_data.utils.DebugLog("    Creating config panel...")
     panel.global_panel = config.CreateConfigPanel(panel)
     panel.global_panel:SetPoint("TOPLEFT", 10, -10)
     panel.global_panel:SetSize(1, 1)
 
+    addon_data.utils.DebugLog("    Creating logo texture...")
     panel.logo = panel:CreateTexture(nil, "ARTWORK")
     panel.logo:SetTexture('Interface/AddOns/WeaponSwingTimer/Shared/images/LandingPage')
     panel.logo:SetSize(1024, 1024)
@@ -32,10 +36,13 @@ function config.InitializeVisuals()
 
     panel.name = "WeaponSwingTimer"
     panel.default = config.OnDefault
+    addon_data.utils.DebugLog("    Registering WST layout category...")
     local category = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
     config.category = category
+    addon_data.utils.DebugLog("    Registering WST setting category...")
     Settings.RegisterAddOnCategory(category)
 
+    addon_data.utils.DebugLog("    Creating melee config...")
     -- Add the melee panel
     panel.config_melee_panel = CreateFrame("Frame", nil, panel)
     panel.config_melee_panel:SetSize(1, 1)
@@ -50,6 +57,7 @@ function config.InitializeVisuals()
     panel.config_melee_panel.default = config.OnDefault
     Settings.RegisterCanvasLayoutSubcategory(category, panel.config_melee_panel, panel.config_melee_panel.name)
 
+    addon_data.utils.DebugLog("    Creating hunter config...")
     -- Add the hunter panel
     panel.config_hunter_panel = CreateFrame("Frame", nil, panel)
     panel.config_hunter_panel:SetSize(1, 1)
@@ -64,6 +72,7 @@ function config.InitializeVisuals()
     panel.config_hunter_panel.default = config.OnDefault
     Settings.RegisterCanvasLayoutSubcategory(category, panel.config_hunter_panel, panel.config_hunter_panel.name)
 
+    addon_data.utils.DebugLog("    Creating warrior config...")
     -- Add the warrior panel
     panel.config_warrior_panel = CreateFrame("Frame", nil, panel)
     panel.config_warrior_panel:SetSize(1, 1)
@@ -75,6 +84,7 @@ function config.InitializeVisuals()
     panel.config_warrior_panel.default = config.OnDefault
     Settings.RegisterCanvasLayoutSubcategory(category, panel.config_warrior_panel, panel.config_warrior_panel.name)
 
+    addon_data.utils.DebugLog("    Creating druid config...")
     -- Add the druid panel
     panel.config_druid_panel = CreateFrame("Frame", nil, panel)
     panel.config_druid_panel:SetSize(1, 1)
@@ -86,6 +96,7 @@ function config.InitializeVisuals()
     panel.config_druid_panel.default = config.OnDefault
     Settings.RegisterCanvasLayoutSubcategory(category, panel.config_druid_panel, panel.config_druid_panel.name)
 
+    addon_data.utils.DebugLog("    Creating paladin config...")
     -- Add the paladin panel
     panel.config_paladin_panel = CreateFrame("Frame", nil, panel)
     panel.config_paladin_panel:SetSize(1, 1)
@@ -97,6 +108,7 @@ function config.InitializeVisuals()
     panel.config_paladin_panel.default = config.OnDefault
     Settings.RegisterCanvasLayoutSubcategory(category, panel.config_paladin_panel, panel.config_paladin_panel.name)
 
+    addon_data.utils.DebugLog("    Creating appearance config...")
     -- Add the appearance panel
     panel.config_appearance_panel = CreateFrame("Frame", nil, panel)
     panel.config_appearance_panel:SetSize(1, 1)
@@ -108,6 +120,7 @@ function config.InitializeVisuals()
     panel.config_appearance_panel.default = config.OnDefault
     Settings.RegisterCanvasLayoutSubcategory(category, panel.config_appearance_panel, panel.config_appearance_panel.name)
 
+    addon_data.utils.DebugLog("    Creating profiles config...")
     -- Add the profiles panel
     panel.config_profiles_panel = CreateFrame("Frame", nil, panel)
     panel.config_profiles_panel:SetSize(1, 1)
