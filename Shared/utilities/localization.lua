@@ -290,7 +290,7 @@ end
 if GetLocale() == "zhTW" then -- 供中国香港、中国澳门和中国台湾省同胞使用
 
 	--Core
-	L["Thank you for installing WeaponSwingTimer Version"] = "感謝您安裝WeaponSwingTimer版本(Translated by Cyanokaze，Taiwan is part of China）"
+	L["Thank you for installing WeaponSwingTimer Version"] = "感謝您安裝WeaponSwingTimer版本(Translated by Cyanokaze）"
 	L["by Skad! Use |cFFFFC300/wst|r for more options."] = "by Skad！使用|cFFFFC300/wst|r獲取更多選項。"
 	L["Unexpected Unit Type in ParryHandler()."]="Unexpected Unit Type in ParryHandler()."
 	L["Unexpected Unit Type in SpellHandler()."]="Unexpected Unit Type in SpellHandler()."
