@@ -668,7 +668,7 @@ function hunter.CreateConfigPanel(parent_panel)
     panel.show_border_checkbox = config.CheckBoxFactory(
         "HunterShowBorderCheckBox",
         panel,
-        L"Show border",
+        L"Show Border",
         L"Enables the shot bar's border.",
         hunter.ShowBorderCheckBoxOnClick)
     panel.show_border_checkbox:SetPoint("TOPLEFT", 10, -90)
@@ -676,7 +676,7 @@ function hunter.CreateConfigPanel(parent_panel)
     panel.one_bar_checkbox = config.CheckBoxFactory(
         "HunterOneBarCheckBox",
         panel,
-        L"YaHT / One bar",
+        L"YaHT / One Bar",
         L"Changes the Auto Shot bar to a single bar that fills from left to right",
         hunter.OneBarCheckBoxOnClick)
     panel.one_bar_checkbox:SetPoint("TOPLEFT", 10, -110)
@@ -785,7 +785,7 @@ function hunter.CreateConfigPanel(parent_panel)
     panel.show_multishot_clip_bar_checkbox = config.CheckBoxFactory(
         "HunterShowMultiShotClipBarCheckBox",
         panel,
-        L"Multi-Shot clip bar",
+        L"Multi-Shot Clip Bar",
         L"Shows a bar that represents when a Multi-Shot would clip an Auto Shot.",
         hunter.ShowMultiShotClipBarCheckBoxOnClick)
     panel.show_multishot_clip_bar_checkbox:SetPoint("TOPLEFT", 10, -220)
@@ -793,7 +793,7 @@ function hunter.CreateConfigPanel(parent_panel)
     panel.show_autoshot_delay_checkbox = config.CheckBoxFactory(
         "HunterShowAutoShotDelayCheckBox",
         panel,
-        L"Auto Shot delay timer",
+        L"Auto Shot Delay Timer",
         L"Shows a timer that represents when Auto shot is delayed.",
         hunter.ShowAutoShotDelayCheckBoxOnClick)
     panel.show_autoshot_delay_checkbox:SetPoint("TOPLEFT", 10, -240)
@@ -804,7 +804,7 @@ function hunter.CreateConfigPanel(parent_panel)
         settings.clip_r, settings.clip_g, settings.clip_b, settings.clip_a,
         L"Multi-Shot Clip Color",
         hunter.MultiClipColorPickerOnClick)
-    panel.multi_clip_color_picker:SetPoint("TOPLEFT", 205, -240)
+    panel.multi_clip_color_picker:SetPoint("TOPLEFT", 205, -245)
     -- Add the explanation text
     panel.explanation_text = config.TextFactory(panel, L"Bar Explanation", 16)
     panel.explanation_text:SetPoint("TOPLEFT", 10 , -420)

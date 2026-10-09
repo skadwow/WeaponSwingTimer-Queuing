@@ -1175,7 +1175,7 @@ function player.CreateConfigPanel(parent_panel)
     panel.show_border_checkbox = config.CheckBoxFactory(
         "PlayerShowBorderCheckBox",
         panel,
-        L"Show border",
+        L"Show Border",
         L"Enables the player bar's border.",
         player.ShowBorderCheckBoxOnClick)
     panel.show_border_checkbox:SetPoint("TOPLEFT", 10, -130)
@@ -1184,7 +1184,7 @@ function player.CreateConfigPanel(parent_panel)
     panel.combined_bar_checkbox = config.CheckBoxFactory(
         "PlayerCombinedBarCheckbox",
         panel,
-        L"Combined Main/Off bar",
+        L"Combined Main/Off Bar",
         L"Combine the Main-Hand and Off-Hand swing timers into one bar, with the Off-Hand only displayed using a spark.",
         player.CombinedBarCheckBoxOnClick)
     panel.combined_bar_checkbox:SetPoint("TOPLEFT", 10, -150)

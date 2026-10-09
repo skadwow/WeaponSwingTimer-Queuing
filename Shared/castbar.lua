@@ -546,7 +546,7 @@ function castbar.CreateConfigPanel(parent_panel)
         75,
         25,
         castbar.WidthEditBoxOnEnter)
-    panel.width_editbox:SetPoint("TOPLEFT", 240, -90)
+    panel.width_editbox:SetPoint("TOPLEFT", 240, -100)
     -- Height EditBox
     panel.height_editbox = config.EditBoxFactory(
         "CastBarHeightEditBox",
@@ -555,7 +555,7 @@ function castbar.CreateConfigPanel(parent_panel)
         75,
         25,
         castbar.HeightEditBoxOnEnter)
-    panel.height_editbox:SetPoint("TOPLEFT", 320, -90)
+    panel.height_editbox:SetPoint("TOPLEFT", 320, -100)
     -- Font Size EditBox
     panel.fontsize_editbox = config.EditBoxFactory(
         "FontSizeEditBox",
@@ -564,7 +564,7 @@ function castbar.CreateConfigPanel(parent_panel)
         75,
         25,
         castbar.FontSizeEditBoxOnEnter)
-    panel.fontsize_editbox:SetPoint("TOPLEFT", 160, -90)
+    panel.fontsize_editbox:SetPoint("TOPLEFT", 160, -100)
     -- X Offset EditBox
     panel.x_offset_editbox = config.EditBoxFactory(
         "CastBarXOffsetEditBox",
@@ -573,7 +573,7 @@ function castbar.CreateConfigPanel(parent_panel)
         75,
         25,
         castbar.XOffsetEditBoxOnEnter)
-    panel.x_offset_editbox:SetPoint("TOPLEFT", 200, -140)
+    panel.x_offset_editbox:SetPoint("TOPLEFT", 200, -150)
     -- Y Offset EditBox
     panel.y_offset_editbox = config.EditBoxFactory(
         "CastBarYOffsetEditBox",
@@ -582,7 +582,7 @@ function castbar.CreateConfigPanel(parent_panel)
         75,
         25,
         castbar.YOffsetEditBoxOnEnter)
-    panel.y_offset_editbox:SetPoint("TOPLEFT", 280, -140)
+    panel.y_offset_editbox:SetPoint("TOPLEFT", 280, -150)
     -- In Combat Alpha Slider
     panel.in_combat_alpha_slider = config.SliderFactory(
         "CastBarInCombatAlphaSlider",
@@ -592,12 +592,12 @@ function castbar.CreateConfigPanel(parent_panel)
         1,
         0.05,
         castbar.CombatAlphaOnValChange)
-    panel.in_combat_alpha_slider:SetPoint("TOPLEFT", 420, -90)
+    panel.in_combat_alpha_slider:SetPoint("TOPLEFT", 420, -100)
     -- Show Aimed Shot Cast Bar Checkbox
     panel.show_aimedshot_cast_bar_checkbox = config.CheckBoxFactory(
         "HunterShowAimedShotCastBarCheckBox",
         panel,
-        L"Aimed Shot cast bar",
+        L"Aimed Shot Cast Bar",
         L"Allows the cast bar to show Aimed Shot casts.",
         castbar.ShowAimedShotCastBarCheckBoxOnClick)
     panel.show_aimedshot_cast_bar_checkbox:SetPoint("TOPLEFT", 10, -50)
@@ -605,7 +605,7 @@ function castbar.CreateConfigPanel(parent_panel)
     panel.show_multishot_cast_bar_checkbox = config.CheckBoxFactory(
         "HunterShowMultiShotCastBarCheckBox",
         panel,
-        L"Multi-Shot cast bar",
+        L"Multi-Shot Cast Bar",
         L"Allows the cast bar to show Multi-Shot casts.",
         castbar.ShowMultiShotCastBarCheckBoxOnClick)
     panel.show_multishot_cast_bar_checkbox:SetPoint("TOPLEFT", 10, -70)
@@ -613,7 +613,7 @@ function castbar.CreateConfigPanel(parent_panel)
     panel.show_border_checkbox = config.CheckBoxFactory(
         "CastbarShowBorderCheckBox",
         panel,
-        L"Show cast border",
+        L"Show Cast Border",
         L"Enables the cast bar's border.",
         castbar.ShowBorderCheckBoxOnClick)
     panel.show_border_checkbox:SetPoint("TOPLEFT", 10, -90)
@@ -621,7 +621,7 @@ function castbar.CreateConfigPanel(parent_panel)
     panel.show_latency_bar_checkbox = config.CheckBoxFactory(
         "HunterShowLatencyBarCheckBox",
         panel,
-        L"Show latency bar",
+        L"Show Latency Bar",
         L"Shows a bar that represents latency on cast bar.",
         castbar.ShowLatencyBarsCheckBoxOnClick)
     panel.show_latency_bar_checkbox:SetPoint("TOPLEFT", 10, -110)
@@ -629,7 +629,7 @@ function castbar.CreateConfigPanel(parent_panel)
     panel.show_casttext_checkbox = config.CheckBoxFactory(
         "CastBarShowCastTextCheckBox",
         panel,
-        L"Show cast text",
+        L"Show Cast Text",
         L"Enables the cast bar text.",
         castbar.ShowCastTextCheckBoxOnClick)
     panel.show_casttext_checkbox:SetPoint("TOPLEFT", 10, -130)

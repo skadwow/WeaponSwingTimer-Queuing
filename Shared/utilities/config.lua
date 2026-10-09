@@ -131,7 +131,8 @@ end
 
 function config.CheckBoxFactory(g_name, parent, checkbtn_text, tooltip_text, on_click_func, scale)
     local checkbox = CreateFrame("CheckButton", addon_name .. g_name, parent, "ChatConfigCheckButtonTemplate")
-    _G[checkbox:GetName() .. "Text"]:SetText(checkbtn_text)
+    checkbox.Text:SetPointsOffset(0, 1)
+    checkbox.Text:SetText(checkbtn_text)
     checkbox.tooltip = tooltip_text
     checkbox:SetScript("OnClick", function(self)
         on_click_func(self)

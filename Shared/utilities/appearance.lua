@@ -276,7 +276,7 @@ function appearance.CreateConfigPanel(parent_panel)
     panel.chkClassicBars = config.CheckBoxFactory(
         "PlayerClassicBarsCheckBox",
         panel,
-        L"Classic bars",
+        L"Classic Bars",
         L"Enables the classic bar texture.",
         appearance.ClassicBarsCheckBoxOnClick)
     panel.chkClassicBars:SetPoint("TOPLEFT", 10, -105)

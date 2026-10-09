@@ -664,7 +664,7 @@ function target.CreateConfigPanel(parent_panel)
     panel.show_border_checkbox = config.CheckBoxFactory(
         "TargetShowBorderCheckBox",
         panel,
-        L"Show border",
+        L"Show Border",
         L"Enables the target bar's border.",
         target.ShowBorderCheckBoxOnClick)
     panel.show_border_checkbox:SetPoint("TOPLEFT", 10, -80)
