@@ -7,10 +7,12 @@
 ---@alias TalentName TalentName
 
 ---@class SpellLine
+---@field spellID number
 ---@field name string
----@field rank number
----@field castTime number|nil
----@field cooldown number|nil
+---@field rank number?
+---@field castTime number?
+---@field cooldown number?
+---@field excluded number?
 
 ---@class TalentPosition
 ---@field specialiazationIndex number

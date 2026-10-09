@@ -135,7 +135,6 @@ end
 
 function frame:PLAYER_TALENT_UPDATE()
     talents.UpdateTalentInfo()
-    addon_data.player.OnPlayerTalentUpdate()
     if addon_data.player.class == "WARRIOR" then
         addon_data.warrior.OnPlayerTalentUpdate()
     end

@@ -6,18 +6,6 @@ local L = addon_data.localization.get
 
 local player                = addon_data.player
 
-local IMP_SLAM_ID           = addon_data.talents.GetTalentIDs(L"Improved Slam")[1]
-local spells                = addon_data.spells
-
-function addon_data.player.OnPlayerTalentUpdate()
-    local rank = addon_data.talents.GetTalentRank(IMP_SLAM_ID)
-    if rank and rank > 0 then
-        spells.RegisterExcludedSpell(L"Slam")
-    else
-        spells.UnregisterExcludedSpell(L"Slam")
-    end
-end
-
 local unhandledParry = false
 
 function addon_data.player.OnPlayerSwingMainHand(swingDuration)
