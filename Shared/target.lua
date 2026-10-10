@@ -291,7 +291,7 @@ function target.UpdateVisualsOnUpdate()
         end
         frame.main_bar:SetWidth(main_width)
         frame.main_spark:SetPoint("TOPLEFT", main_width - 8, 0)
-        if main_width == settings.width or not addon_data.settings.appearance.classicBars or main_width == 0.001 then
+        if main_width == settings.width or not addon_data.settings.appearance.sparks or main_width == 0.001 then
             frame.main_spark:Hide()
         else
             frame.main_spark:Show()
@@ -325,7 +325,7 @@ function target.UpdateVisualsOnUpdate()
             end
             frame.off_bar:SetWidth(off_width)
             frame.off_spark:SetPoint("BOTTOMLEFT", off_width - 8, 0)
-            if off_width == settings.width or not addon_data.settings.appearance.classicBars or off_width == 0.001 then
+            if off_width == settings.width or not addon_data.settings.appearance.sparks or off_width == 0.001 then
                 frame.off_spark:Hide()
             else
                 frame.off_spark:Show()

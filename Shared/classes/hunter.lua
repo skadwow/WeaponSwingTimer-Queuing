@@ -326,7 +326,7 @@ function hunter.UpdateVisualsOnUpdate()
                 new_width = settings.width * ((shot_timer - auto_cast_time) / (range_speed - auto_cast_time))
                 if settings.show_multishot_clip_bar then
                     frame.multishot_clip_bar:Show()
-                    local multishot_clip_width = math.min((settings.width * 2) * (mult_cast_time / (hunter.range_speed)), settings.width)
+                    local multishot_clip_width = math.min((settings.width * 2) * (mult_cast_time / (range_speed)), settings.width)
                     frame.multishot_clip_bar:SetWidth(multishot_clip_width)
                 end
             end
@@ -340,18 +340,18 @@ function hunter.UpdateVisualsOnUpdate()
             else
                 frame.shot_bar:SetVertexColor(settings.cooldown_r, settings.cooldown_g, settings.cooldown_b, settings.cooldown_a)
             end
-            local timer_width = settings.width * ((hunter.range_speed - hunter.shot_timer) / hunter.range_speed)
+            local timer_width = settings.width * ((range_speed - shot_timer) / range_speed)
             local auto_shot_cast_width
             if hunter.auto_shot_ready then
-                auto_shot_cast_width = settings.width * (hunter.shot_timer / hunter.range_speed)
+                auto_shot_cast_width = settings.width * (shot_timer / range_speed)
             else
-                auto_shot_cast_width = settings.width * (hunter.auto_cast_time / hunter.range_speed)
+                auto_shot_cast_width = settings.width * (auto_cast_time / range_speed)
             end
             if settings.show_multishot_clip_bar then
                 frame.multishot_clip_bar:Show()
                 local multishot_clip_width = math.min(settings.width * (mult_cast_time / range_speed ), settings.width)
                 frame.multishot_clip_bar:SetWidth(5)
-                local multi_offset = (settings.width * (hunter.auto_cast_time / hunter.range_speed)) + multishot_clip_width
+                local multi_offset = (settings.width * (auto_cast_time / range_speed)) + multishot_clip_width
                 frame.multishot_clip_bar:SetPoint("BOTTOMRIGHT", -multi_offset, 0)
             end
             frame.shot_bar:SetWidth(math.min(timer_width, settings.width))
@@ -418,6 +418,11 @@ function hunter.UpdateVisualsOnSettingsChange()
         frame.shot_bar:SetHeight(settings.height)
         frame.shot_bar:SetVertexColor(settings.cooldown_r, settings.cooldown_g, settings.cooldown_b, settings.cooldown_a)
 
+        frame.leftSpark:SetHeight(settings.height)
+        frame.leftSpark:SetShown(not settings.one_bar and addon_data.settings.appearance.sparks)
+        frame.rightSpark:SetHeight(settings.height)
+        frame.rightSpark:SetShown(addon_data.settings.appearance.sparks)
+
         frame.multishot_clip_bar:SetHeight(settings.height)
         frame.multishot_clip_bar:SetVertexColor(settings.clip_r, settings.clip_g, settings.clip_b, settings.clip_a)
 
@@ -474,8 +479,19 @@ function hunter.InitializeVisuals()
     frame.shot_bar_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
     frame.shot_bar_text:SetJustifyV("MIDDLE")
     frame.shot_bar_text:SetJustifyH("CENTER")
+
+    frame.leftSpark = frame:CreateTexture(nil, "OVERLAY")
+    frame.leftSpark:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Spark")
+    frame.leftSpark:SetPoint("LEFT", frame.shot_bar, -8, 0)
+    frame.leftSpark:SetSize(16, settings.height)
+
+    frame.rightSpark = frame:CreateTexture(nil, "OVERLAY")
+    frame.rightSpark:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Spark")
+    frame.rightSpark:SetPoint("RIGHT", frame.shot_bar, 8, 0)
+    frame.rightSpark:SetSize(16, settings.height)
+
     -- Create the multishot clip bar
-    frame.multishot_clip_bar = frame:CreateTexture(nil,"OVERLAY")
+    frame.multishot_clip_bar = frame:CreateTexture(nil,"OVERLAY", nil, -1)
     -- Create the auto shot cast bar indicator
     frame.auto_shot_cast_bar = frame:CreateTexture(nil,"OVERLAY")
     -- Show it off

@@ -270,7 +270,7 @@ function castbar.OnUnitSpellCastFailed(unit, spellID)
             castbar.casting_spell_id = 0
             if spell_aimed_enabled or spell_multi_enabled then
                 castbar.frame.spell_bar:SetVertexColor(0.7, 0, 0, 1)
-                if settings.show_text then
+                if settings.show_cast_text then
                     frame.spell_text_center:SetText(L"Failed")
                 end
                 frame.spell_bar:SetWidth(settings.width)
@@ -295,7 +295,7 @@ function castbar.OnUnitSpellCastInterrupted(unit, spellID)
 
             if spell_aimed_enabled or spell_multi_enabled then
                 frame.spell_bar:SetVertexColor(0.7, 0, 0, 1)
-                if settings.show_text then
+                if settings.show_cast_text then
                     frame.spell_text_center:SetText(L"Interrupted")
                 end
                 frame.spell_bar:SetWidth(settings.width)
@@ -320,7 +320,7 @@ function castbar.UpdateVisualsOnUpdate()
             new_width = math.min(new_width, settings.width)
             frame.spell_bar:SetWidth(new_width)
             frame.spell_spark:SetPoint("TOPLEFT", new_width - 8, 0)
-            if new_width == settings.width or not addon_data.settings.appearance.classicBars then
+            if new_width == settings.width or not addon_data.settings.appearance.sparks then
                 frame.spell_spark:Hide()
             else
                 frame.spell_spark:Show()

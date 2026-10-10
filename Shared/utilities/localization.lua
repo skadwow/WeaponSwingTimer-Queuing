@@ -177,6 +177,8 @@ if GetLocale() == "ruRU" then
 
 	L["Bar Explanation"] = "Пояснение к полосам"
 
+	L["Sparks"] = "и́скры"
+
 	-- Spell
 	L["Auto Shot"] = "Автоматическая стрельба"
 	L["Feign Death"] = "Притвориться мёртвым"

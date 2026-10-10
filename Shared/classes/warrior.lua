@@ -225,7 +225,7 @@ function warrior.UpdateVisualsOnSettingsChange()
             frame.slam_delay_bar:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Bar-Rounded-Right")
         end
         frame.slam_delay_bar:SetTextureSliceMargins(0, 12, 8, 12)
-        frame.slam_delay_bar:SetTextureSliceMode(1)
+        frame.slam_delay_bar:SetTextureSliceMode(0)
     else
         if addon_data.settings.appearance.classicBars then
             frame.slam_delay_bar:SetTexture('Interface/AddOns/WeaponSwingTimer/Shared/images/ClassicBar')
