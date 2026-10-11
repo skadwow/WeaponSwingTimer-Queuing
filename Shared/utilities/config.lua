@@ -36,39 +36,44 @@ function config.InitializeVisuals()
     config.category = category
     Settings.RegisterAddOnCategory(category)
 
-    -- Add the melee panel
-    panel.config_melee_panel = CreateFrame("Frame", nil, panel)
-    panel.config_melee_panel:SetSize(1, 1)
-    panel.config_melee_panel.player_panel = addon_data.player.CreateConfigPanel(panel.config_melee_panel)
-    panel.config_melee_panel.player_panel:SetPoint("TOPLEFT", 0, 0)
-    panel.config_melee_panel.player_panel:SetSize(1, 1)
-    panel.config_melee_panel.target_panel = addon_data.target.CreateConfigPanel(panel.config_melee_panel)
-    panel.config_melee_panel.target_panel:SetPoint("TOPLEFT", 0, -325)
-    panel.config_melee_panel.target_panel:SetSize(1, 1)
-    panel.config_melee_panel.name = L"Melee Settings"
-    panel.config_melee_panel.parent = panel.name
-    panel.config_melee_panel.default = config.OnDefault
-    Settings.RegisterCanvasLayoutSubcategory(category, panel.config_melee_panel, panel.config_melee_panel.name)
+    -- Add the Player panel
+    panel.config_player_panel = CreateFrame("Frame", nil, panel)
+    panel.config_player_panel:SetSize(1, 1)
+    panel.config_player_panel.player_panel = addon_data.player.CreateConfigPanel(panel.config_player_panel)
+    panel.config_player_panel.player_panel:SetPoint("TOPLEFT")
+    panel.config_player_panel.player_panel:SetSize(1, 1)
+    panel.config_player_panel.name = L"Player Settings"
+    panel.config_player_panel.parent = panel.name
+    panel.config_player_panel.default = config.OnDefault
+    Settings.RegisterCanvasLayoutSubcategory(category, panel.config_player_panel, panel.config_player_panel.name)
 
-    -- Add the hunter panel
-    panel.config_hunter_panel = CreateFrame("Frame", nil, panel)
-    panel.config_hunter_panel:SetSize(1, 1)
-    panel.config_hunter_panel.hunter_panel = addon_data.hunter.CreateConfigPanel(panel.config_hunter_panel)
-    panel.config_hunter_panel.hunter_panel:SetPoint("TOPLEFT", 0, 0)
-    panel.config_hunter_panel.hunter_panel:SetSize(1, 1)
-    panel.config_hunter_panel.castbar_panel = addon_data.castbar.CreateConfigPanel(panel.config_hunter_panel)
-    panel.config_hunter_panel.castbar_panel:SetPoint("TOPLEFT", 0, -235)
-    panel.config_hunter_panel.castbar_panel:SetSize(1, 1)
-    panel.config_hunter_panel.name = L"Hunter & Wand Settings"
-    panel.config_hunter_panel.parent = panel.name
-    panel.config_hunter_panel.default = config.OnDefault
-    Settings.RegisterCanvasLayoutSubcategory(category, panel.config_hunter_panel, panel.config_hunter_panel.name)
+    -- Add the Target panel
+    panel.config_target_panel = CreateFrame("Frame", nil, panel)
+    panel.config_target_panel:SetSize(1, 1)
+    panel.config_target_panel.target_panel = addon_data.target.CreateConfigPanel(panel.config_target_panel)
+    panel.config_target_panel.target_panel:SetPoint("TOPLEFT")
+    panel.config_target_panel.target_panel:SetSize(1, 1)
+    panel.config_target_panel.name = L"Target Settings"
+    panel.config_target_panel.parent = panel.name
+    panel.config_target_panel.default = config.OnDefault
+    Settings.RegisterCanvasLayoutSubcategory(category, panel.config_target_panel, panel.config_target_panel.name)
+
+    -- Add the Shoot panel
+    panel.config_shoot_panel = CreateFrame("Frame", nil, panel)
+    panel.config_shoot_panel:SetSize(1, 1)
+    panel.config_shoot_panel.hunter_panel = addon_data.hunter.CreateConfigPanel(panel.config_shoot_panel)
+    panel.config_shoot_panel.hunter_panel:SetPoint("TOPLEFT")
+    panel.config_shoot_panel.hunter_panel:SetSize(1, 1)
+    panel.config_shoot_panel.name = L"Shoot & Wand Settings"
+    panel.config_shoot_panel.parent = panel.name
+    panel.config_shoot_panel.default = config.OnDefault
+    Settings.RegisterCanvasLayoutSubcategory(category, panel.config_shoot_panel, panel.config_shoot_panel.name)
 
     -- Add the warrior panel
     panel.config_warrior_panel = CreateFrame("Frame", nil, panel)
     panel.config_warrior_panel:SetSize(1, 1)
     panel.config_warrior_panel.warrior_panel = addon_data.warrior.CreateConfigPanel(panel.config_warrior_panel)
-    panel.config_warrior_panel.warrior_panel:SetPoint("TOPLEFT", 0, 0)
+    panel.config_warrior_panel.warrior_panel:SetPoint("TOPLEFT")
     panel.config_warrior_panel.warrior_panel:SetSize(1, 1)
     panel.config_warrior_panel.name = L"Warrior Settings"
     panel.config_warrior_panel.parent = panel.name
@@ -79,7 +84,7 @@ function config.InitializeVisuals()
     panel.config_druid_panel = CreateFrame("Frame", nil, panel)
     panel.config_druid_panel:SetSize(1, 1)
     panel.config_druid_panel.druid_panel = addon_data.druid.CreateConfigPanel(panel.config_druid_panel)
-    panel.config_druid_panel.druid_panel:SetPoint("TOPLEFT", 0, 0)
+    panel.config_druid_panel.druid_panel:SetPoint("TOPLEFT")
     panel.config_druid_panel.druid_panel:SetSize(1, 1)
     panel.config_druid_panel.name = L"Druid Settings"
     panel.config_druid_panel.parent = panel.name
@@ -90,18 +95,29 @@ function config.InitializeVisuals()
     panel.config_paladin_panel = CreateFrame("Frame", nil, panel)
     panel.config_paladin_panel:SetSize(1, 1)
     panel.config_paladin_panel.paladin_panel = addon_data.paladin.CreateConfigPanel(panel.config_paladin_panel)
-    panel.config_paladin_panel.paladin_panel:SetPoint("TOPLEFT", 0, 0)
+    panel.config_paladin_panel.paladin_panel:SetPoint("TOPLEFT")
     panel.config_paladin_panel.paladin_panel:SetSize(1, 1)
     panel.config_paladin_panel.name = L"Paladin Settings"
     panel.config_paladin_panel.parent = panel.name
     panel.config_paladin_panel.default = config.OnDefault
     Settings.RegisterCanvasLayoutSubcategory(category, panel.config_paladin_panel, panel.config_paladin_panel.name)
 
+    -- Add the Castbar panel
+    panel.config_castbar_panel = CreateFrame("Frame", nil, panel)
+    panel.config_castbar_panel:SetSize(1, 1)
+    panel.config_castbar_panel.castbar_panel = addon_data.castbar.CreateConfigPanel(panel.config_castbar_panel)
+    panel.config_castbar_panel.castbar_panel:SetPoint("TOPLEFT")
+    panel.config_castbar_panel.castbar_panel:SetSize(1, 1)
+    panel.config_castbar_panel.name = L"Hunter Settings"
+    panel.config_castbar_panel.parent = panel.name
+    panel.config_castbar_panel.default = config.OnDefault
+    Settings.RegisterCanvasLayoutSubcategory(category, panel.config_castbar_panel, panel.config_castbar_panel.name)
+
     -- Add the appearance panel
     panel.config_appearance_panel = CreateFrame("Frame", nil, panel)
     panel.config_appearance_panel:SetSize(1, 1)
     panel.config_appearance_panel.appearance_panel = addon_data.appearance.CreateConfigPanel(panel.config_appearance_panel)
-    panel.config_appearance_panel.appearance_panel:SetPoint("TOPLEFT", 0, 0)
+    panel.config_appearance_panel.appearance_panel:SetPoint("TOPLEFT")
     panel.config_appearance_panel.appearance_panel:SetSize(1, 1)
     panel.config_appearance_panel.name = L"Appearance"
     panel.config_appearance_panel.parent = panel.name
@@ -112,7 +128,7 @@ function config.InitializeVisuals()
     panel.config_profiles_panel = CreateFrame("Frame", nil, panel)
     panel.config_profiles_panel:SetSize(1, 1)
     panel.config_profiles_panel.profiles_panel = addon_data.profiles.CreateConfigPanel(panel.config_profiles_panel)
-    panel.config_profiles_panel.profiles_panel:SetPoint("TOPLEFT", 0, 0)
+    panel.config_profiles_panel.profiles_panel:SetPoint("TOPLEFT")
     panel.config_profiles_panel.profiles_panel:SetSize(1, 1)
     panel.config_profiles_panel.name = L"Profiles"
     panel.config_profiles_panel.parent = panel.name

@@ -26,10 +26,9 @@ function utils.DebugPrint(...)
 end
 
 -- Rounds the given number to the given step.
--- If num was 1.17 and step was 0.1 then this would return 1.1
--- the step / 100 addition is to prevent rounding errors (i.e. 1.999997 instead of 2)
+-- If num was 1.17 and step was 0.1 then this would return 1.2
 function utils.SimpleRound(num, step)
-    return floor(num / step + step / 100) * step
+    return floor(num / step + 0.5) * step
 end
 
 function utils.IsClassicWow()

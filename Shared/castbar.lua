@@ -73,11 +73,14 @@ castbar.default_settings    = {
     y_offset = -300,
     in_combat_alpha = 1.0,
     --ooc_alpha = 0.5,
-    show_cast_text = true,
     show_aimedshot_cast_bar = true,
     show_multishot_cast_bar = true,
+    show_border = true,
     show_latency_bars = false,
-    show_border = true
+    show_cast_text = true,
+    show_multishot_clip_bar = true,
+    cast_r = 0.8, cast_g = 0.64, cast_b = 0.0, cast_a = 1,
+    clip_r = 1.0, clip_g = 0.0, clip_b = 0.0, clip_a = 0.7,
 }
 --- Initializing variables for calculations and function calls
 
@@ -315,7 +318,7 @@ function castbar.UpdateVisualsOnUpdate()
             local time_left = math.max(SimpleRound(castbar.cast_time - castbar.cast_timer, 0.1), 0)
             frame.spell_bar_text:SetText(string.format("%.1f", time_left))
             frame:SetAlpha(1)
-            frame.spell_bar:SetVertexColor(0.8, 0.64, 0, 1)
+            frame.spell_bar:SetVertexColor(settings.cast_r, settings.cast_g, settings.cast_b, settings.cast_a)
             local new_width = settings.width * (castbar.cast_timer / castbar.cast_time)
             new_width = math.min(new_width, settings.width)
             frame.spell_bar:SetWidth(new_width)
@@ -338,15 +341,15 @@ function castbar.UpdateVisualsOnUpdate()
             frame.spell_spark:Hide()
         end
         if settings.show_latency_bars then
-                if castbar.casting_shot then
+            if castbar.casting_shot then
                 frame.cast_latency:Show()
                 local _, _, _, latency = GetNetStats()
                 local lag_width = settings.width * ((latency / 1000) / castbar.cast_time)
                 frame.cast_latency:SetWidth(lag_width)
             else
                 frame.cast_latency:Hide()
+            end
         end
-    end
     else
         frame.spell_bar:SetVertexColor(0.2, 0.2, 0.2, 1)
         frame:SetSize(settings.width, settings.height)
@@ -463,6 +466,8 @@ function castbar.UpdateConfigPanelValues()
     panel.show_border_checkbox:SetChecked(settings.show_border)
     panel.show_latency_bar_checkbox:SetChecked(settings.show_latency_bars)
     panel.show_casttext_checkbox:SetChecked(settings.show_cast_text)
+    panel.show_multishot_clip_bar_checkbox:SetChecked(settings.show_multishot_clip_bar)
+
     panel.width_editbox:SetText(tostring(settings.width))
     panel.width_editbox:SetCursorPosition(0)
     panel.height_editbox:SetText(tostring(settings.height))
@@ -474,8 +479,46 @@ function castbar.UpdateConfigPanelValues()
     panel.y_offset_editbox:SetText(tostring(settings.y_offset))
     panel.y_offset_editbox:SetCursorPosition(0)
 
+    panel.multi_clip_color_picker.foreground:SetColorTexture(
+        settings.clip_r, settings.clip_g, settings.clip_b, settings.clip_a)
+    panel.castbar_color_picker.foreground:SetColorTexture(
+        settings.cast_r, settings.cast_g, settings.cast_b, settings.cast_a)
+
     panel.in_combat_alpha_slider:SetValue(settings.in_combat_alpha)
     panel.in_combat_alpha_slider.editbox:SetCursorPosition(0)
+end
+
+function castbar.ShowMultiShotClipBarCheckBoxOnClick(self)
+    settings.show_multishot_clip_bar = self:GetChecked()
+    addon_data.hunter.UpdateVisualsOnSettingsChange()
+end
+
+function castbar.CastBarColorPickerOnClick()
+    local colorTable = settings
+    local r = "cast_r"
+    local g = "cast_g"
+    local b = "cast_b"
+    local a = "cast_a"
+    local updateFunc = function()
+        castbar.UpdateConfigPanelValues()
+        castbar.UpdateVisualsOnSettingsChange()
+    end
+
+    config.setup_color_picker(colorTable, r, g, b, a, updateFunc)
+end
+
+function castbar.MultiClipColorPickerOnClick()
+    local colorTable = settings
+    local r = "clip_r"
+    local g = "clip_g"
+    local b = "clip_b"
+    local a = "clip_a"
+    local updateFunc = function()
+        castbar.UpdateConfigPanelValues()
+        castbar.UpdateVisualsOnSettingsChange()
+    end
+
+    config.setup_color_picker(colorTable, r, g, b, a, updateFunc)
 end
 
 function castbar.ShowAimedShotCastBarCheckBoxOnClick(self)
@@ -538,24 +581,64 @@ function castbar.CreateConfigPanel(parent_panel)
     castbar.config_frame = CreateFrame("Frame", addon_name .. "HunterConfigPanel", parent_panel)
     local panel = castbar.config_frame
 
-    -- Width EditBox
-    panel.width_editbox = config.EditBoxFactory(
-        "CastBarWidthEditBox",
+    -- Title Text
+    panel.title_text = config.TextFactory(panel, L"Hunter Settings", 20)
+    panel.title_text:SetPoint("TOPLEFT", 10, -10)
+    panel.title_text:SetTextColor(1, 0.82, 0, 1)
+
+    -- Title Text
+    panel.title_text = config.TextFactory(panel, L"Castbar Spells", 13)
+    panel.title_text:SetPoint("TOPLEFT", 10, -50)
+
+    -- Show Aimed Shot Cast Bar Checkbox
+    panel.show_aimedshot_cast_bar_checkbox = config.CheckBoxFactory(
+        "HunterShowAimedShotCastBarCheckBox",
         panel,
-        L"Bar Width",
-        75,
-        25,
-        castbar.WidthEditBoxOnEnter)
-    panel.width_editbox:SetPoint("TOPLEFT", 240, -100)
-    -- Height EditBox
-    panel.height_editbox = config.EditBoxFactory(
-        "CastBarHeightEditBox",
+        L"Aimed Shot",
+        L"Allows the cast bar to show Aimed Shot casts.",
+        castbar.ShowAimedShotCastBarCheckBoxOnClick)
+    panel.show_aimedshot_cast_bar_checkbox:SetPoint("TOPLEFT", 20, -60)
+    -- Show Multi Shot Cast Bar Checkbox
+    panel.show_multishot_cast_bar_checkbox = config.CheckBoxFactory(
+        "HunterShowMultiShotCastBarCheckBox",
         panel,
-        L"Bar Height",
-        75,
-        25,
-        castbar.HeightEditBoxOnEnter)
-    panel.height_editbox:SetPoint("TOPLEFT", 320, -100)
+        L"Multi-Shot",
+        L"Allows the cast bar to show Multi-Shot casts.",
+        castbar.ShowMultiShotCastBarCheckBoxOnClick)
+    panel.show_multishot_cast_bar_checkbox:SetPoint("TOPLEFT", 20, -80)
+    -- Show Border Checkbox
+    panel.show_border_checkbox = config.CheckBoxFactory(
+        "CastbarShowBorderCheckBox",
+        panel,
+        L"Show Cast Border",
+        L"Enables the cast bar's border.",
+        castbar.ShowBorderCheckBoxOnClick)
+    panel.show_border_checkbox:SetPoint("TOPLEFT", 10, -100)
+    -- Show Latency Bar Checkbox
+    panel.show_latency_bar_checkbox = config.CheckBoxFactory(
+        "HunterShowLatencyBarCheckBox",
+        panel,
+        L"Show Latency Bar",
+        L"Shows a bar that represents latency on cast bar.",
+        castbar.ShowLatencyBarsCheckBoxOnClick)
+    panel.show_latency_bar_checkbox:SetPoint("TOPLEFT", 10, -120)
+    -- Show Text Checkbox
+    panel.show_casttext_checkbox = config.CheckBoxFactory(
+        "CastBarShowCastTextCheckBox",
+        panel,
+        L"Show Cast Text",
+        L"Enables the cast bar text.",
+        castbar.ShowCastTextCheckBoxOnClick)
+    panel.show_casttext_checkbox:SetPoint("TOPLEFT", 10, -140)
+    -- Show Multi-Shot Clip Bar Checkbox
+    panel.show_multishot_clip_bar_checkbox = config.CheckBoxFactory(
+        "HunterShowMultiShotClipBarCheckBox",
+        panel,
+        L"Multi-Shot Clip Bar",
+        L"Shows a bar that represents when a Multi-Shot would clip an Auto Shot.",
+        castbar.ShowMultiShotClipBarCheckBoxOnClick)
+    panel.show_multishot_clip_bar_checkbox:SetPoint("TOPLEFT", 10, -160)
+
     -- Font Size EditBox
     panel.fontsize_editbox = config.EditBoxFactory(
         "FontSizeEditBox",
@@ -564,7 +647,25 @@ function castbar.CreateConfigPanel(parent_panel)
         75,
         25,
         castbar.FontSizeEditBoxOnEnter)
-    panel.fontsize_editbox:SetPoint("TOPLEFT", 160, -100)
+    panel.fontsize_editbox:SetPoint("TOPLEFT", 160, -60)
+    -- Width EditBox
+    panel.width_editbox = config.EditBoxFactory(
+        "CastBarWidthEditBox",
+        panel,
+        L"Bar Width",
+        75,
+        25,
+        castbar.WidthEditBoxOnEnter)
+    panel.width_editbox:SetPoint("TOPLEFT", 240, -60)
+    -- Height EditBox
+    panel.height_editbox = config.EditBoxFactory(
+        "CastBarHeightEditBox",
+        panel,
+        L"Bar Height",
+        75,
+        25,
+        castbar.HeightEditBoxOnEnter)
+    panel.height_editbox:SetPoint("TOPLEFT", 320, -60)
     -- X Offset EditBox
     panel.x_offset_editbox = config.EditBoxFactory(
         "CastBarXOffsetEditBox",
@@ -573,7 +674,7 @@ function castbar.CreateConfigPanel(parent_panel)
         75,
         25,
         castbar.XOffsetEditBoxOnEnter)
-    panel.x_offset_editbox:SetPoint("TOPLEFT", 200, -150)
+    panel.x_offset_editbox:SetPoint("TOPLEFT", 200, -110)
     -- Y Offset EditBox
     panel.y_offset_editbox = config.EditBoxFactory(
         "CastBarYOffsetEditBox",
@@ -582,7 +683,25 @@ function castbar.CreateConfigPanel(parent_panel)
         75,
         25,
         castbar.YOffsetEditBoxOnEnter)
-    panel.y_offset_editbox:SetPoint("TOPLEFT", 280, -150)
+    panel.y_offset_editbox:SetPoint("TOPLEFT", 280, -110)
+
+    -- Castbar color picker
+    panel.castbar_color_picker = config.color_picker_factory(
+        "HunterCastbarColorPicker",
+        panel,
+        settings.cast_r, settings.cast_g, settings.cast_b, settings.cast_a,
+        L"Castbar Color",
+        castbar.CastBarColorPickerOnClick)
+    panel.castbar_color_picker:SetPoint("TOPLEFT", 205, -150)
+    -- Multi-shot clip color picker
+    panel.multi_clip_color_picker = config.color_picker_factory(
+        "HunterMultiClipColorPicker",
+        panel,
+        settings.clip_r, settings.clip_g, settings.clip_b, settings.clip_a,
+        L"Multi-Shot Clip Color",
+        castbar.MultiClipColorPickerOnClick)
+    panel.multi_clip_color_picker:SetPoint("TOPLEFT", 205, -170)
+
     -- In Combat Alpha Slider
     panel.in_combat_alpha_slider = config.SliderFactory(
         "CastBarInCombatAlphaSlider",
@@ -592,47 +711,7 @@ function castbar.CreateConfigPanel(parent_panel)
         1,
         0.05,
         castbar.CombatAlphaOnValChange)
-    panel.in_combat_alpha_slider:SetPoint("TOPLEFT", 420, -100)
-    -- Show Aimed Shot Cast Bar Checkbox
-    panel.show_aimedshot_cast_bar_checkbox = config.CheckBoxFactory(
-        "HunterShowAimedShotCastBarCheckBox",
-        panel,
-        L"Aimed Shot Cast Bar",
-        L"Allows the cast bar to show Aimed Shot casts.",
-        castbar.ShowAimedShotCastBarCheckBoxOnClick)
-    panel.show_aimedshot_cast_bar_checkbox:SetPoint("TOPLEFT", 10, -50)
-    -- Show Multi Shot Cast Bar Checkbox
-    panel.show_multishot_cast_bar_checkbox = config.CheckBoxFactory(
-        "HunterShowMultiShotCastBarCheckBox",
-        panel,
-        L"Multi-Shot Cast Bar",
-        L"Allows the cast bar to show Multi-Shot casts.",
-        castbar.ShowMultiShotCastBarCheckBoxOnClick)
-    panel.show_multishot_cast_bar_checkbox:SetPoint("TOPLEFT", 10, -70)
-    -- Show Border Checkbox
-    panel.show_border_checkbox = config.CheckBoxFactory(
-        "CastbarShowBorderCheckBox",
-        panel,
-        L"Show Cast Border",
-        L"Enables the cast bar's border.",
-        castbar.ShowBorderCheckBoxOnClick)
-    panel.show_border_checkbox:SetPoint("TOPLEFT", 10, -90)
-    -- Show Latency Bar Checkbox
-    panel.show_latency_bar_checkbox = config.CheckBoxFactory(
-        "HunterShowLatencyBarCheckBox",
-        panel,
-        L"Show Latency Bar",
-        L"Shows a bar that represents latency on cast bar.",
-        castbar.ShowLatencyBarsCheckBoxOnClick)
-    panel.show_latency_bar_checkbox:SetPoint("TOPLEFT", 10, -110)
-    -- Show Text Checkbox
-    panel.show_casttext_checkbox = config.CheckBoxFactory(
-        "CastBarShowCastTextCheckBox",
-        panel,
-        L"Show Cast Text",
-        L"Enables the cast bar text.",
-        castbar.ShowCastTextCheckBoxOnClick)
-    panel.show_casttext_checkbox:SetPoint("TOPLEFT", 10, -130)
+    panel.in_combat_alpha_slider:SetPoint("TOPLEFT", 420, -60)
 
     -- Return the final panel
     castbar.UpdateConfigPanelValues()

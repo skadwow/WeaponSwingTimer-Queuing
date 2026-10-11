@@ -89,13 +89,11 @@ hunter.default_settings     = {
     fade_when_idle = false,
     is_locked = false,
     show_text = true,
-    show_multishot_clip_bar = true,
     show_autoshot_delay_timer = true,
     show_border = false,
     one_bar = false,
     cooldown_r = 0.95, cooldown_g = 0.95, cooldown_b = 0.95, cooldown_a = 1.0,
     auto_cast_r = 0.8, auto_cast_g = 0.0, auto_cast_b = 0.0, auto_cast_a = 1.0,
-    clip_r = 1.0, clip_g = 0.0, clip_b = 0.0, clip_a = 0.7
 }
 
 function hunter.LoadSettings()
@@ -324,7 +322,7 @@ function hunter.UpdateVisualsOnUpdate()
                     frame.shot_bar:SetVertexColor(settings.cooldown_r, settings.cooldown_g, settings.cooldown_b, settings.cooldown_a)
                 end
                 new_width = settings.width * ((shot_timer - auto_cast_time) / (range_speed - auto_cast_time))
-                if settings.show_multishot_clip_bar then
+                if addon_data.settings.castbar.show_multishot_clip_bar then
                     frame.multishot_clip_bar:Show()
                     local multishot_clip_width = math.min((settings.width * 2) * (mult_cast_time / (range_speed)), settings.width)
                     frame.multishot_clip_bar:SetWidth(multishot_clip_width)
@@ -347,7 +345,7 @@ function hunter.UpdateVisualsOnUpdate()
             else
                 auto_shot_cast_width = settings.width * (auto_cast_time / range_speed)
             end
-            if settings.show_multishot_clip_bar then
+            if addon_data.settings.castbar.show_multishot_clip_bar then
                 frame.multishot_clip_bar:Show()
                 local multishot_clip_width = math.min(settings.width * (mult_cast_time / range_speed ), settings.width)
                 frame.multishot_clip_bar:SetWidth(5)
@@ -429,13 +427,13 @@ function hunter.UpdateVisualsOnSettingsChange()
         frame.rightSpark:SetShown(addon_data.settings.appearance.sparks)
 
         frame.multishot_clip_bar:SetHeight(settings.height)
-        frame.multishot_clip_bar:SetVertexColor(settings.clip_r, settings.clip_g, settings.clip_b, settings.clip_a)
+        frame.multishot_clip_bar:SetVertexColor(addon_data.settings.castbar.clip_r, addon_data.settings.castbar.clip_g, addon_data.settings.castbar.clip_b, addon_data.settings.castbar.clip_a)
 
         frame.shot_bar_text:SetPoint("BOTTOMRIGHT", -5, (settings.height / 2) - (settings.fontsize / 2))
         frame.shot_bar_text:SetTextColor(1.0, 1.0, 1.0, 1.0)
         frame.shot_bar_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
 
-        frame.multishot_clip_bar:SetShown(settings.show_multishot_clip_bar)
+        frame.multishot_clip_bar:SetShown(addon_data.settings.castbar.show_multishot_clip_bar)
         frame.shot_bar_text:SetShown(settings.show_text)
 
         fadingState = 0
@@ -514,7 +512,6 @@ local config = addon_data.config
 function hunter.UpdateConfigPanelValues()
     local panel = hunter.config_frame
     panel.enabled_checkbox:SetChecked(settings.enabled)
-    panel.show_multishot_clip_bar_checkbox:SetChecked(settings.show_multishot_clip_bar)
     panel.show_autoshot_delay_checkbox:SetChecked(settings.show_autoshot_delay_timer)
     panel.show_border_checkbox:SetChecked(settings.show_border)
     panel.one_bar_checkbox:SetChecked(settings.one_bar)
@@ -534,8 +531,6 @@ function hunter.UpdateConfigPanelValues()
         settings.cooldown_r, settings.cooldown_g, settings.cooldown_b, settings.cooldown_a)
     panel.autoshot_cast_color_picker.foreground:SetColorTexture(
         settings.auto_cast_r, settings.auto_cast_g, settings.auto_cast_b, settings.auto_cast_a)
-    panel.multi_clip_color_picker.foreground:SetColorTexture(
-        settings.clip_r, settings.clip_g, settings.clip_b, settings.clip_a)
 
     if settings.one_bar then
         panel.explanation:SetTexture('Interface/AddOns/WeaponSwingTimer/Shared/images/HunterOneBarExplainedAlpha')
@@ -554,11 +549,6 @@ end
 
 function hunter.EnabledCheckBoxOnClick(self)
     settings.enabled = self:GetChecked()
-    hunter.UpdateVisualsOnSettingsChange()
-end
-
-function hunter.ShowMultiShotClipBarCheckBoxOnClick(self)
-    settings.show_multishot_clip_bar = self:GetChecked()
     hunter.UpdateVisualsOnSettingsChange()
 end
 
@@ -641,20 +631,6 @@ function hunter.AutoShotCastColorPickerOnClick()
     config.setup_color_picker(colorTable, r, g, b, a, updateFunc)
 end
 
-function hunter.MultiClipColorPickerOnClick()
-    local colorTable = settings
-    local r = "clip_r"
-    local g = "clip_g"
-    local b = "clip_b"
-    local a = "clip_a"
-    local updateFunc = function()
-        hunter.UpdateConfigPanelValues()
-        hunter.UpdateVisualsOnSettingsChange()
-    end
-
-    config.setup_color_picker(colorTable, r, g, b, a, updateFunc)
-end
-
 function hunter.CombatAlphaOnValChange(self)
     settings.in_combat_alpha = tonumber(self:GetValue())
     hunter.UpdateVisualsOnSettingsChange()
@@ -670,13 +646,10 @@ function hunter.CreateConfigPanel(parent_panel)
     hunter.config_frame = CreateFrame("Frame", addon_name .. "HunterConfigPanel", parent_panel)
     local panel = hunter.config_frame
     -- Title Text
-    panel.title_text = config.TextFactory(panel, L"Hunter & Wand Shot Bar Settings", 20)
+    panel.title_text = config.TextFactory(panel, L"Shoot & Wand Bar Settings", 20)
     panel.title_text:SetPoint("TOPLEFT", 10 , -10)
-    panel.title_text:SetTextColor(1, 0.9, 0, 1)
-    -- General Settings Text
-    panel.general_text = config.TextFactory(panel, L"General Settings", 16)
-    panel.general_text:SetPoint("TOPLEFT", 10 , -50)
-    panel.general_text:SetTextColor(1, 0.9, 0, 1)
+    panel.title_text:SetTextColor(1, 0.82, 0, 1)
+
     -- Enabled Checkbox
     panel.enabled_checkbox = config.CheckBoxFactory(
         "HunterEnabledCheckBox",
@@ -684,7 +657,7 @@ function hunter.CreateConfigPanel(parent_panel)
         L"Enable",
         L"Enables the Autoshot/Shoot bars.",
         hunter.EnabledCheckBoxOnClick)
-    panel.enabled_checkbox:SetPoint("TOPLEFT", 10, -70)
+    panel.enabled_checkbox:SetPoint("TOPLEFT", 10, -40)
     -- Show Border Checkbox
     panel.show_border_checkbox = config.CheckBoxFactory(
         "HunterShowBorderCheckBox",
@@ -692,7 +665,7 @@ function hunter.CreateConfigPanel(parent_panel)
         L"Show Border",
         L"Enables the shot bar's border.",
         hunter.ShowBorderCheckBoxOnClick)
-    panel.show_border_checkbox:SetPoint("TOPLEFT", 10, -90)
+    panel.show_border_checkbox:SetPoint("TOPLEFT", 10, -60)
     -- One bar Checkbox
     panel.one_bar_checkbox = config.CheckBoxFactory(
         "HunterOneBarCheckBox",
@@ -700,7 +673,7 @@ function hunter.CreateConfigPanel(parent_panel)
         L"YaHT / One Bar",
         L"Changes the Auto Shot bar to a single bar that fills from left to right",
         hunter.OneBarCheckBoxOnClick)
-    panel.one_bar_checkbox:SetPoint("TOPLEFT", 10, -110)
+    panel.one_bar_checkbox:SetPoint("TOPLEFT", 10, -80)
     -- Show Text Checkbox
     panel.show_text_checkbox = config.CheckBoxFactory(
         "HunterShowTextCheckBox",
@@ -708,7 +681,7 @@ function hunter.CreateConfigPanel(parent_panel)
         L"Show Text",
         L"Enables the shot bar text.",
         hunter.ShowTextCheckBoxOnClick)
-    panel.show_text_checkbox:SetPoint("TOPLEFT", 10, -130)
+    panel.show_text_checkbox:SetPoint("TOPLEFT", 10, -120)
     -- Fade When Idle Checkbox
     panel.fade_when_idle_checkbox = config.CheckBoxFactory(
         "HunterFadeWhenIdleCheckBox",
@@ -716,7 +689,7 @@ function hunter.CreateConfigPanel(parent_panel)
         L"Fade When Idle",
         L"Causes the bar the begin fading after 2 seconds of idle time.",
         hunter.FadeWhenIdleCheckBoxOnClick)
-    panel.fade_when_idle_checkbox:SetPoint("TOPLEFT", 10, -150)
+    panel.fade_when_idle_checkbox:SetPoint("TOPLEFT", 10, -140)
     -- Width EditBox
     panel.width_editbox = config.EditBoxFactory(
         "HunterWidthEditBox",
@@ -725,7 +698,7 @@ function hunter.CreateConfigPanel(parent_panel)
         75,
         25,
         hunter.WidthEditBoxOnEnter)
-    panel.width_editbox:SetPoint("TOPLEFT", 240, -90)
+    panel.width_editbox:SetPoint("TOPLEFT", 240, -60)
     -- Height EditBox
     panel.height_editbox = config.EditBoxFactory(
         "HunterHeightEditBox",
@@ -734,7 +707,7 @@ function hunter.CreateConfigPanel(parent_panel)
         75,
         25,
         hunter.HeightEditBoxOnEnter)
-    panel.height_editbox:SetPoint("TOPLEFT", 320, -90)
+    panel.height_editbox:SetPoint("TOPLEFT", 320, -60)
     -- Font Size EditBox
     panel.fontsize_editbox = config.EditBoxFactory(
         "FontSizeEditBox",
@@ -743,7 +716,7 @@ function hunter.CreateConfigPanel(parent_panel)
         75,
         25,
         hunter.FontSizeEditBoxOnEnter)
-    panel.fontsize_editbox:SetPoint("TOPLEFT", 160, -90)
+    panel.fontsize_editbox:SetPoint("TOPLEFT", 160, -60)
     -- X Offset EditBox
     panel.x_offset_editbox = config.EditBoxFactory(
         "HunterXOffsetEditBox",
@@ -752,7 +725,7 @@ function hunter.CreateConfigPanel(parent_panel)
         75,
         25,
         hunter.XOffsetEditBoxOnEnter)
-    panel.x_offset_editbox:SetPoint("TOPLEFT", 200, -140)
+    panel.x_offset_editbox:SetPoint("TOPLEFT", 200, -110)
     -- Y Offset EditBox
     panel.y_offset_editbox = config.EditBoxFactory(
         "HunterYOffsetEditBox",
@@ -761,7 +734,7 @@ function hunter.CreateConfigPanel(parent_panel)
         75,
         25,
         hunter.YOffsetEditBoxOnEnter)
-    panel.y_offset_editbox:SetPoint("TOPLEFT", 280, -140)
+    panel.y_offset_editbox:SetPoint("TOPLEFT", 280, -110)
     -- Cooldown color picker
     panel.cooldown_color_picker = config.color_picker_factory(
         "HunterCooldownColorPicker",
@@ -769,7 +742,7 @@ function hunter.CreateConfigPanel(parent_panel)
         settings.cooldown_r, settings.cooldown_g, settings.cooldown_b, settings.cooldown_a,
         L"Auto Shot Cooldown Color",
         hunter.CooldownColorPickerOnClick)
-    panel.cooldown_color_picker:SetPoint("TOPLEFT", 205, -180)
+    panel.cooldown_color_picker:SetPoint("TOPLEFT", 205, -150)
     -- Autoshot cast color picker
     panel.autoshot_cast_color_picker = config.color_picker_factory(
         "HunterAutoShotCastColorPicker",
@@ -777,7 +750,7 @@ function hunter.CreateConfigPanel(parent_panel)
         settings.auto_cast_r, settings.auto_cast_g, settings.auto_cast_b, settings.auto_cast_a,
         L"Auto Shot Cast Color",
         hunter.AutoShotCastColorPickerOnClick)
-    panel.autoshot_cast_color_picker:SetPoint("TOPLEFT", 205, -200)
+    panel.autoshot_cast_color_picker:SetPoint("TOPLEFT", 205, -170)
     -- In Combat Alpha Slider
     panel.in_combat_alpha_slider = config.SliderFactory(
         "HunterInCombatAlphaSlider",
@@ -787,7 +760,7 @@ function hunter.CreateConfigPanel(parent_panel)
         1,
         0.05,
         hunter.CombatAlphaOnValChange)
-    panel.in_combat_alpha_slider:SetPoint("TOPLEFT", 420, -90)
+    panel.in_combat_alpha_slider:SetPoint("TOPLEFT", 420, -60)
     -- Out Of Combat Alpha Slider
     panel.ooc_alpha_slider = config.SliderFactory(
         "HunterOOCAlphaSlider",
@@ -797,19 +770,7 @@ function hunter.CreateConfigPanel(parent_panel)
         1,
         0.05,
         hunter.OOCAlphaOnValChange)
-    panel.ooc_alpha_slider:SetPoint("TOPLEFT", 420, -140)
-    -- Hunter Specific Settings Text
-    panel.hunter_text = config.TextFactory(panel, L"Hunter Specific Settings", 16)
-    panel.hunter_text:SetPoint("TOPLEFT", 10 , -220)
-    panel.hunter_text:SetTextColor(1, 0.9, 0, 1)
-    -- Show Multi-Shot Clip Bar Checkbox
-    panel.show_multishot_clip_bar_checkbox = config.CheckBoxFactory(
-        "HunterShowMultiShotClipBarCheckBox",
-        panel,
-        L"Multi-Shot Clip Bar",
-        L"Shows a bar that represents when a Multi-Shot would clip an Auto Shot.",
-        hunter.ShowMultiShotClipBarCheckBoxOnClick)
-    panel.show_multishot_clip_bar_checkbox:SetPoint("TOPLEFT", 10, -220)
+    panel.ooc_alpha_slider:SetPoint("TOPLEFT", 420, -110)
     -- Show Autoshot delay timer Checkbox
     panel.show_autoshot_delay_checkbox = config.CheckBoxFactory(
         "HunterShowAutoShotDelayCheckBox",
@@ -817,15 +778,7 @@ function hunter.CreateConfigPanel(parent_panel)
         L"Auto Shot Delay Timer",
         L"Shows a timer that represents when Auto shot is delayed.",
         hunter.ShowAutoShotDelayCheckBoxOnClick)
-    panel.show_autoshot_delay_checkbox:SetPoint("TOPLEFT", 10, -240)
-    -- Multi-shot clip color picker
-    panel.multi_clip_color_picker = config.color_picker_factory(
-        "HunterMultiClipColorPicker",
-        panel,
-        settings.clip_r, settings.clip_g, settings.clip_b, settings.clip_a,
-        L"Multi-Shot Clip Color",
-        hunter.MultiClipColorPickerOnClick)
-    panel.multi_clip_color_picker:SetPoint("TOPLEFT", 205, -245)
+    panel.show_autoshot_delay_checkbox:SetPoint("TOPLEFT", 10, -100)
     -- Add the explanation text
     panel.explanation_text = config.TextFactory(panel, L"Bar Explanation", 16)
     panel.explanation_text:SetPoint("TOPLEFT", 10 , -420)

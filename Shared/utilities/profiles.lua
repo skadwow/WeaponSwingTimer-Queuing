@@ -103,6 +103,46 @@ local function MigrateOldSavedVariables()
         end
         character_castbar_settings = nil
     end
+
+    local movedVars = {
+        {
+            fromTable = addon_data.settings.hunter,
+            fromVar = "show_multishot_clip_bar",
+            toTable = addon_data.settings.castbar,
+            toVar = "show_multishot_clip_bar",
+        },
+        {
+            fromTable = addon_data.settings.hunter,
+            fromVar = "clip_r",
+            toTable = addon_data.settings.castbar,
+            toVar = "clip_r",
+        },
+        {
+            fromTable = addon_data.settings.hunter,
+            fromVar = "clip_g",
+            toTable = addon_data.settings.castbar,
+            toVar = "clip_g",
+        },
+        {
+            fromTable = addon_data.settings.hunter,
+            fromVar = "clip_b",
+            toTable = addon_data.settings.castbar,
+            toVar = "clip_b",
+        },
+        {
+            fromTable = addon_data.settings.hunter,
+            fromVar = "clip_a",
+            toTable = addon_data.settings.castbar,
+            toVar = "clip_a",
+        },
+    }
+
+    for _, moveTable in ipairs(movedVars) do
+        if moveTable.fromTable[moveTable.fromVar] ~= nil then
+            moveTable.toTable[moveTable.toVar] = moveTable.fromTable[moveTable.fromVar]
+            moveTable.fromTable[moveTable.fromVar] = nil
+        end
+    end
 end
 
 function profiles.LoadSettings()

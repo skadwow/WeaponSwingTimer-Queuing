@@ -311,6 +311,10 @@ function appearance.CreateConfigPanel(parent_panel)
         CloseDropDownMenus()
     end
 
+    panel.txtBorderDisclaimer = config.TextFactory(panel, L"Enable/Disable borders in individual settings pages.", 8)
+    panel.txtBorderDisclaimer:SetPoint("TOPLEFT", 18, -158)
+    panel.txtBorderDisclaimer:SetTextColor(1, 1, 1, 1)
+
 
     panel.chkSparks = config.CheckBoxFactory(
         "SparksCheckBox",
@@ -609,12 +613,12 @@ function appearance.UpdateExampleFrameSettings()
     frame.shotText:SetShown(addon_data.settings.hunter.show_text)
 
     frame.clipBar:SetHeight(height)
-    frame.clipBar:SetShown(addon_data.settings.hunter.show_multishot_clip_bar)
+    frame.clipBar:SetShown(addon_data.settings.castbar.show_multishot_clip_bar)
     frame.clipBar:SetVertexColor(
-        addon_data.settings.hunter.clip_r,
-        addon_data.settings.hunter.clip_g,
-        addon_data.settings.hunter.clip_b,
-        addon_data.settings.hunter.clip_a
+        addon_data.settings.castbar.clip_r,
+        addon_data.settings.castbar.clip_g,
+        addon_data.settings.castbar.clip_b,
+        addon_data.settings.castbar.clip_a
     )
 
     if addon_data.settings.hunter.one_bar then
@@ -660,7 +664,12 @@ function appearance.UpdateExampleFrameSettings()
 
     appearance.SetupBar(frame.castBar, addon_data.settings.castbar.show_border)
     frame.castBar:SetHeight(height)
-    frame.castBar:SetVertexColor(0.8, 0.64, 0, 1)
+    frame.castBar:SetVertexColor(
+        addon_data.settings.castbar.cast_r,
+        addon_data.settings.castbar.cast_g,
+        addon_data.settings.castbar.cast_b,
+        addon_data.settings.castbar.cast_a
+    )
     frame.castSpark:SetHeight(height)
     frame.castSpark:SetShown(settings.sparks)
     frame.castText:SetFontHeight(addon_data.settings.castbar.fontsize)

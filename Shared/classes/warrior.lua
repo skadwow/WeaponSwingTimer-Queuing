@@ -516,7 +516,7 @@ function warrior.CreateConfigPanel(parent_panel)
         L"Cleave Coloring",
         L"Enables unique coloring of heroic strikes and cleaves.",
         warrior.CleaveCheckBoxOnClick)
-    panel.cleave_checkbox:SetPoint("TOPLEFT", 10, -125)
+    panel.cleave_checkbox:SetPoint("TOPLEFT", 10, -140)
 
     -- Queued main-hand color picker
     panel.queued_mh_color_picker = config.color_picker_factory(
