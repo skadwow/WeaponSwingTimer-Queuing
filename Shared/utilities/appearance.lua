@@ -13,8 +13,8 @@ addon_data.appearance       = appearance
 
 local settings              = {}
 appearance.default_settings = {
-    borderStyle = "Cooldown Manager Bar",
-    classicBars = true,
+    barStyle = L"Classic",
+    borderStyle = L"Cooldown Manager Bar",
     sparks = true,
     backdropAlpha = 0.5,
 }
@@ -35,10 +35,46 @@ end
 --[[=================================== VISUALS ====================================]]--
 --[[================================================================================]]--
 
+local BAR_STYLES = {
+    [L"Classic"] = "Interface/AddOns/WeaponSwingTimer/Shared/images/Bar-Classic",
+    [L"Plain"] = "Interface/AddOns/WeaponSwingTimer/Shared/images/Bar-Plain",
+    [L"Minimalist"] = "Interface/AddOns/WeaponSwingTimer/Shared/images/Bar-Minimalist",
+    [L"Cooldown Manager Bar"] = "Interface/AddOns/WeaponSwingTimer/Shared/images/Bar-CooldownManager",
+}
+
+local ORDERED_BAR_STYLES = {
+    L"Classic",
+    L"Plain",
+    L"Minimalist",
+    L"Cooldown Manager Bar",
+}
+
+---Setups up `bar` according to bar and border style settings.
+---@param bar Texture -- Bar to setup.
+---@param borderShown? boolean -- Whether the bar should expect a border, defaults to `true`.
+---@param ... string -- Args.
+function appearance.SetupBar(bar, borderShown, ...)
+    local args = {...}
+    if borderShown ~= false and appearance.IsBorderRounded() then
+        tinsert(args, 1, "Rounded")
+    end
+
+    local barTexture = BAR_STYLES[settings.barStyle]
+    for _, arg in ipairs(args) do
+        local newTexture = barTexture.."-"..arg
+        if C_UIFileAsset.IsKnownFile(newTexture) then
+            barTexture = newTexture
+        end
+    end
+    bar:SetTexture(barTexture)
+
+    bar:SetTextureSliceMargins(5, 5, 5, 5)
+end
+
 local BORDER_STYLES = {
     [L"Classic Castbar"] = function(frame)
         frame.border:SetBackdrop({
-            edgeFile = "Interface/AddOns/WeaponSwingTimer/Shared/images/ClassicCastbar-Border",
+            edgeFile = "Interface/AddOns/WeaponSwingTimer/Shared/images/Border-ClassicCastbar",
             tile = true,
             tileSize = 16,
             edgeSize = 12,
@@ -50,7 +86,7 @@ local BORDER_STYLES = {
     end,
     [L"Classic Castbar (Gold)"] = function(frame)
         frame.border:SetBackdrop({
-            edgeFile = "Interface/AddOns/WeaponSwingTimer/Shared/images/ClassicCastbar-Gold-Border",
+            edgeFile = "Interface/AddOns/WeaponSwingTimer/Shared/images/Border-ClassicCastbar-Gold",
             tile = true,
             tileSize = 16,
             edgeSize = 12,
@@ -62,7 +98,7 @@ local BORDER_STYLES = {
     end,
     [L"Cooldown Manager Bar"] = function(frame)
         frame.border:SetBackdrop({
-            edgeFile = "Interface/AddOns/WeaponSwingTimer/Shared/images/CooldownManager-Border",
+            edgeFile = "Interface/AddOns/WeaponSwingTimer/Shared/images/Border-CooldownManager",
             tile = true,
             tileSize = 16,
             edgeSize = 12,
@@ -70,12 +106,12 @@ local BORDER_STYLES = {
         frame.border:SetPoint("TOPLEFT", -5, 4)
         frame.border:SetPoint("BOTTOMRIGHT", 4, -4)
 
-        frame.backdrop:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/CooldownManager-Backdrop")
+        frame.backdrop:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Backdrop-CooldownManager")
         frame.backdrop:SetTextureSliceMargins(5, 5, 5, 5)
     end,
     [L"Cooldown Manager Bar (Grey)"] = function(frame)
         frame.border:SetBackdrop({
-            edgeFile = "Interface/AddOns/WeaponSwingTimer/Shared/images/CooldownManager-Grey-Border",
+            edgeFile = "Interface/AddOns/WeaponSwingTimer/Shared/images/Border-CooldownManager-Grey",
             tile = true,
             tileSize = 16,
             edgeSize = 12,
@@ -83,12 +119,12 @@ local BORDER_STYLES = {
         frame.border:SetPoint("TOPLEFT", -5, 4)
         frame.border:SetPoint("BOTTOMRIGHT", 4, -4)
 
-        frame.backdrop:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/CooldownManager-Backdrop")
+        frame.backdrop:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Backdrop-CooldownManager")
         frame.backdrop:SetTextureSliceMargins(5, 5, 5, 5)
     end,
     [L"Blizzard Swing Timer"] = function(frame)
         frame.border:SetBackdrop({
-            edgeFile = "Interface/AddOns/WeaponSwingTimer/Shared/images/BlizzardSwingTimer-Border",
+            edgeFile = "Interface/AddOns/WeaponSwingTimer/Shared/images/Border-BlizzardSwingTimer",
             tile = true,
             tileSize = 16,
             edgeSize = 12,
@@ -96,13 +132,13 @@ local BORDER_STYLES = {
         frame.border:SetPoint("TOPLEFT", -6, 6)
         frame.border:SetPoint("BOTTOMRIGHT", 6, -6)
 
-        frame.border.artLeft:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/BlizzardSwingTimer-Diamond")
+        frame.border.artLeft:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Art-BlizzardSwingTimer-Diamond")
         frame.border.artLeft:SetTexCoord(2/16, 9/16, 0/16, 10/16)
         frame.border.artLeft:SetPoint("LEFT", 4, 0)
         frame.border.artLeft:SetSize(7.5, 11)
         frame.border.artLeft:Show()
 
-        frame.border.artRight:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/BlizzardSwingTimer-Diamond")
+        frame.border.artRight:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Art-BlizzardSwingTimer-Diamond")
         frame.border.artRight:SetTexCoord(0/16, 7/16, 0/16, 10/16)
         frame.border.artRight:SetPoint("RIGHT", -4, 0)
         frame.border.artRight:SetSize(7, 11)
@@ -112,7 +148,7 @@ local BORDER_STYLES = {
     end,
     [L"Black Pixel Line"] = function(frame)
         frame.border:SetBackdrop({
-            edgeFile = "Interface/AddOns/WeaponSwingTimer/Shared/images/BlackPixelLine-Border",
+            edgeFile = "Interface/AddOns/WeaponSwingTimer/Shared/images/Border-BlackPixelLine",
             tile = true,
             tileSize = 4,
             edgeSize = 4,
@@ -130,6 +166,10 @@ local ROUNDED_BORDERS = {
     [L"Blizzard Swing Timer"] = true,
 }
 
+function appearance.IsBorderRounded()
+    return ROUNDED_BORDERS[settings.borderStyle] or false
+end
+
 local ORDERED_BORDER_STYLES = {
     L"Classic Castbar",
     L"Classic Castbar (Gold)",
@@ -138,29 +178,6 @@ local ORDERED_BORDER_STYLES = {
     L"Blizzard Swing Timer",
     L"Black Pixel Line",
 }
-
----Setups up a `bar` according to border style and classic bar setting.
----@param bar Texture -- Bar to setup.
----@param borderShown? boolean -- Whether the border will be shown, defaults to `true`.
-function appearance.SetupBar(bar, borderShown)
-    local barTexture
-    if borderShown ~= false and ROUNDED_BORDERS[settings.borderStyle] then
-        if settings.classicBars then
-            barTexture = "Interface/AddOns/WeaponSwingTimer/Shared/images/ClassicBar-Rounded"
-        else
-            barTexture = "Interface/AddOns/WeaponSwingTimer/Shared/images/Bar-Rounded"
-        end
-        bar:SetTextureSliceMargins(8, 12, 8, 12)
-    else
-        if settings.classicBars then
-            barTexture = "Interface/AddOns/WeaponSwingTimer/Shared/images/ClassicBar"
-        else
-            barTexture = "Interface/AddOns/WeaponSwingTimer/Shared/images/Bar"
-        end
-        bar:SetTextureSliceMargins(0, 0, 0, 0)
-    end
-    bar:SetTexture(barTexture)
-end
 
 ---Setups up the border and backdrop for a given `frame` according to set border style.
 ---@param frame table|Frame -- Frame to setup.
@@ -209,21 +226,22 @@ local config = addon_data.config
 function appearance.UpdateConfigPanelValues()
     local panel = appearance.config_frame
 
+    UIDropDownMenu_SetText(panel.drpBarStyle, settings.barStyle)
     UIDropDownMenu_SetText(panel.drpBorderStyle, settings.borderStyle)
-    panel.chkClassicBars:SetChecked(settings.classicBars)
     panel.chkSparks:SetChecked(settings.sparks)
     panel.sldBackdropAlpha:SetValue(settings.backdropAlpha)
     panel.sldBackdropAlpha.editbox:SetCursorPosition(0)
 end
 
-function appearance.SetBorderStyle(borderStyle)
-    settings.borderStyle = borderStyle
-    UIDropDownMenu_SetText(appearance.config_frame.drpBorderStyle, settings.borderStyle)
+function appearance.SetBarStyle(barStyle)
+    settings.barStyle = barStyle
+    UIDropDownMenu_SetText(appearance.config_frame.drpBarStyle, settings.barStyle)
     appearance.UpdateVisualsOnSettingsChange()
 end
 
-function appearance.ClassicBarsCheckBoxOnClick(self)
-    settings.classicBars = self:GetChecked()
+function appearance.SetBorderStyle(borderStyle)
+    settings.borderStyle = borderStyle
+    UIDropDownMenu_SetText(appearance.config_frame.drpBorderStyle, settings.borderStyle)
     appearance.UpdateVisualsOnSettingsChange()
 end
 
@@ -245,12 +263,37 @@ function appearance.CreateConfigPanel(parent_panel)
     panel.txtTitle:SetPoint("TOPLEFT", 10, -10)
     panel.txtTitle:SetTextColor(1, 0.82, 0, 1)
 
+
+    panel.txtBarStyle = config.TextFactory(panel, L"Bar Style", 14)
+    panel.txtBarStyle:SetPoint("TOPLEFT", 15, -50)
+    panel.txtBarStyle:SetTextColor(1, 1, 1, 1)
+
+    panel.drpBarStyle = CreateFrame("Frame", addon_name .. "BarStyleDropDown", panel, "UIDropDownMenuTemplate")
+    panel.drpBarStyle:SetPoint("TOPLEFT", 0, -70)
+    UIDropDownMenu_SetWidth(panel.drpBarStyle, 200)
+    UIDropDownMenu_SetText(panel.drpBarStyle, settings.barStyle)
+    UIDropDownMenu_Initialize(panel.drpBarStyle, function(self, level, menuList)
+        local info = UIDropDownMenu_CreateInfo()
+        for _, barStyle in ipairs(ORDERED_BAR_STYLES) do
+            info.text    = barStyle
+            info.arg1    = barStyle
+            info.checked = barStyle == settings.barStyle
+            info.func    = self.SetValue
+            UIDropDownMenu_AddButton(info)
+        end
+    end)
+    function panel.drpBarStyle:SetValue(barStyle)
+        appearance.SetBarStyle(barStyle)
+        CloseDropDownMenus()
+    end
+
+
     panel.txtBorderStyle = config.TextFactory(panel, L"Border Style", 14)
-    panel.txtBorderStyle:SetPoint("TOPLEFT", 15, -50)
+    panel.txtBorderStyle:SetPoint("TOPLEFT", 15, -110)
     panel.txtBorderStyle:SetTextColor(1, 1, 1, 1)
 
     panel.drpBorderStyle = CreateFrame("Frame", addon_name .. "BorderStyleDropDown", panel, "UIDropDownMenuTemplate")
-    panel.drpBorderStyle:SetPoint("TOPLEFT", 0, -70)
+    panel.drpBorderStyle:SetPoint("TOPLEFT", 0, -130)
     UIDropDownMenu_SetWidth(panel.drpBorderStyle, 200)
     UIDropDownMenu_SetText(panel.drpBorderStyle, settings.borderStyle)
     UIDropDownMenu_Initialize(panel.drpBorderStyle, function(self, level, menuList)
@@ -268,13 +311,6 @@ function appearance.CreateConfigPanel(parent_panel)
         CloseDropDownMenus()
     end
 
-    panel.chkClassicBars = config.CheckBoxFactory(
-        "ClassicBarsCheckBox",
-        panel,
-        L"Classic Bars",
-        L"Enables the classic bar texture.",
-        appearance.ClassicBarsCheckBoxOnClick)
-    panel.chkClassicBars:SetPoint("TOPLEFT", 10, -105)
 
     panel.chkSparks = config.CheckBoxFactory(
         "SparksCheckBox",
@@ -282,7 +318,7 @@ function appearance.CreateConfigPanel(parent_panel)
         L"Sparks",
         L"Enables sparks at the edge of bars.",
         appearance.SparksCheckBoxOnClick)
-    panel.chkSparks:SetPoint("TOPLEFT", 10, -125)
+    panel.chkSparks:SetPoint("TOPLEFT", 10, -160)
 
     panel.sldBackdropAlpha = config.SliderFactory(
         "PlayerBackdropAlphaSlider",
@@ -292,7 +328,7 @@ function appearance.CreateConfigPanel(parent_panel)
         1,
         0.05,
         appearance.BackdropAlphaOnValChange)
-    panel.sldBackdropAlpha:SetPoint("TOPLEFT", 20, -190)
+    panel.sldBackdropAlpha:SetPoint("TOPLEFT", 20, -230)
 
     appearance.CreateExampleFrame()
 
@@ -551,7 +587,6 @@ function appearance.UpdateExampleFrameSettings()
     autoSecond = autoWidth / autoSpeed
     onebarRangedSecond = autoWidth / (rangedSpeed + autoSpeed)
 
-    appearance.SetupBar(frame.castBar, addon_data.settings.hunter.show_border)
     frame.castBar:SetHeight(height)
     frame.castBar:SetVertexColor(
         addon_data.settings.hunter.auto_cast_r,
@@ -560,7 +595,6 @@ function appearance.UpdateExampleFrameSettings()
         addon_data.settings.hunter.auto_cast_a
     )
 
-    appearance.SetupBar(frame.shotBar, addon_data.settings.hunter.show_border)
     frame.shotBar:SetHeight(height)
     frame.shotBar:SetVertexColor(
         addon_data.settings.hunter.cooldown_r,
@@ -568,12 +602,12 @@ function appearance.UpdateExampleFrameSettings()
         addon_data.settings.hunter.cooldown_b,
         addon_data.settings.hunter.cooldown_a
     )
+    frame.shotBar:Show()
     frame.leftSpark:SetHeight(height)
     frame.rightSpark:SetHeight(height)
     frame.shotText:SetFontHeight(addon_data.settings.hunter.fontsize)
     frame.shotText:SetShown(addon_data.settings.hunter.show_text)
 
-    appearance.SetupBar(frame.clipBar, addon_data.settings.hunter.show_border)
     frame.clipBar:SetHeight(height)
     frame.clipBar:SetShown(addon_data.settings.hunter.show_multishot_clip_bar)
     frame.clipBar:SetVertexColor(
@@ -584,6 +618,10 @@ function appearance.UpdateExampleFrameSettings()
     )
 
     if addon_data.settings.hunter.one_bar then
+        appearance.SetupBar(frame.castBar, addon_data.settings.hunter.show_border)
+        appearance.SetupBar(frame.shotBar, addon_data.settings.hunter.show_border)
+        appearance.SetupBar(frame.clipBar, addon_data.settings.hunter.show_border)
+
         frame.shotBar:SetPoint("LEFT")
         frame.clipBar:SetPoint("LEFT", frame, "RIGHT", -2 * autoSpeed * onebarRangedSecond, 0)
         frame.clipBar:SetWidth(5)
@@ -593,6 +631,10 @@ function appearance.UpdateExampleFrameSettings()
         frame.leftSpark:Hide()
         frame.rightSpark:SetShown(settings.sparks)
     else
+        appearance.SetupBar(frame.castBar, addon_data.settings.hunter.show_border, "Bidirectional")
+        appearance.SetupBar(frame.shotBar, addon_data.settings.hunter.show_border, "Bidirectional")
+        appearance.SetupBar(frame.clipBar, addon_data.settings.hunter.show_border, "Bidirectional")
+
         frame.shotBar:ClearPoint("LEFT")
         frame.clipBar:ClearPoint("LEFT")
         frame.clipBar:SetWidth(multiSpeed * rangedSecond)

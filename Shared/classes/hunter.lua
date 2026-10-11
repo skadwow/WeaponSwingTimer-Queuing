@@ -396,17 +396,22 @@ function hunter.UpdateVisualsOnSettingsChange()
 
         addon_data.appearance.SetupFrame(frame, settings.show_border)
 
-        addon_data.appearance.SetupBar(frame.shot_bar, settings.show_border)
-        addon_data.appearance.SetupBar(frame.auto_shot_cast_bar, settings.show_border)
-        addon_data.appearance.SetupBar(frame.multishot_clip_bar, false)
 
         frame.shot_bar:ClearAllPoints()
         frame.multishot_clip_bar:ClearAllPoints()
         if not settings.one_bar then
+            addon_data.appearance.SetupBar(frame.shot_bar, settings.show_border, "Bidirectional")
+            addon_data.appearance.SetupBar(frame.auto_shot_cast_bar, settings.show_border, "Bidirectional")
+            addon_data.appearance.SetupBar(frame.multishot_clip_bar, false, "Bidirectional")
+
             frame.shot_bar:SetPoint("BOTTOM", 0, 0)
             frame.auto_shot_cast_bar:Hide()
             frame.multishot_clip_bar:SetPoint("BOTTOM", 0, 0)
         else
+            addon_data.appearance.SetupBar(frame.shot_bar, settings.show_border)
+            addon_data.appearance.SetupBar(frame.auto_shot_cast_bar, settings.show_border)
+            addon_data.appearance.SetupBar(frame.multishot_clip_bar, false)
+
             frame.shot_bar:SetPoint("BOTTOMLEFT", 0, 0)
             frame.auto_shot_cast_bar:Show()
             frame.auto_shot_cast_bar:SetPoint("BOTTOMRIGHT", 0, 0)

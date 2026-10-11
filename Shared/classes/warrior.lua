@@ -208,33 +208,11 @@ local function UpdateColorPalettes()
     end
 end
 
-local ROUNDED_BORDERS = {
-    [L"Cooldown Manager Bar"] = true,
-    [L"Cooldown Manager Bar (Grey)"] = true,
-    [L"Blizzard Swing Timer"] = true,
-}
-
 function warrior.UpdateVisualsOnSettingsChange()
     if player.class ~= "WARRIOR" then return end
 
     local frame = player.frame
-    if addon_data.settings.player.show_border and ROUNDED_BORDERS[addon_data.settings.player.borderStyle] then
-        if addon_data.settings.appearance.classicBars then
-            frame.slam_delay_bar:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/ClassicBar-Rounded-Right")
-        else
-            frame.slam_delay_bar:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Bar-Rounded-Right")
-        end
-        frame.slam_delay_bar:SetTextureSliceMargins(0, 12, 8, 12)
-        frame.slam_delay_bar:SetTextureSliceMode(0)
-    else
-        if addon_data.settings.appearance.classicBars then
-            frame.slam_delay_bar:SetTexture('Interface/AddOns/WeaponSwingTimer/Shared/images/ClassicBar')
-        else
-            frame.slam_delay_bar:SetTexture('Interface/AddOns/WeaponSwingTimer/Shared/images/Bar')
-        end
-        frame.slam_delay_bar:SetTextureSliceMargins(0, 0, 0, 0)
-        frame.slam_delay_bar:SetTextureSliceMode(0)
-    end
+    addon_data.appearance.SetupBar(frame.slam_delay_bar, addon_data.settings.player.show_border, "Right")
     frame.slam_delay_bar:SetVertexColor(settings.slam_delay_r, settings.slam_delay_g, settings.slam_delay_b, settings.slam_delay_a)
     frame.slam_gcd_spark:SetVertexColor(settings.slam_delay_r, settings.slam_delay_g, settings.slam_delay_b, settings.slam_delay_a)
     UpdateColorPalettes()
