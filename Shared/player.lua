@@ -42,26 +42,26 @@ player.isMoving                 = false
 player.frame                    = nil
 
 -- Values pertaining to the mainhand swing timer
-player.main_swing_timer         = 0.00001
-local base_main_speed           = GetWeaponSpeed(INVSLOT_MAINHAND)
-player.main_weapon_speed        = base_main_speed
-local prev_main_weapon_speed    = nil
-local main_weapon_id            = GetInventoryItemID("player", 16)
-local main_speed_changed        = false
+player.mainSwingTimer           = 0.00001
+player.mainSpeedBase            = GetWeaponSpeed(INVSLOT_MAINHAND)
+player.mainSpeed                = player.mainSpeedBase
+player.mainSpeedPrev            = nil
+player.mainID                   = GetInventoryItemID("player", 16)
+player.mainSpeedChanged         = false
 
 -- Values pertaining to the offhand swing timer
-player.off_swing_timer          = 0.00001
-local base_off_speed            = GetWeaponSpeed(INVSLOT_OFFHAND)
-player.off_weapon_speed         = base_off_speed
-local prev_off_weapon_speed     = nil
-local off_weapon_id             = GetInventoryItemID("player", 17)
-local off_speed_changed         = false
+player.offSwingTimer            = 0.00001
+player.offSpeedBase             = GetWeaponSpeed(INVSLOT_OFFHAND)
+player.offSpeed                 = player.offSpeedBase
+player.offSpeedPrev             = nil
+player.offID                    = GetInventoryItemID("player", 17)
+player.offSpeedChanged          = false
 
 -- Most recently measured attack speed scale
-player.speedScale              = not issecretvalue(UnitAttackSpeed("player")) and UnitAttackSpeed("player") / base_main_speed or 1
+player.speedScale               = not issecretvalue(UnitAttackSpeed("player")) and UnitAttackSpeed("player") / player.mainSpeedBase or 1
 
 -- Ranged weapon id for checking if the ranged weapon has been changed
-local ranged_weapon_id          = GetInventoryItemID("player", 18)
+player.rangedID                 = GetInventoryItemID("player", 18)
 
 -- Player's wielding states for checking whether to display conditional elements
 player.hasTwoHand               = false
@@ -69,7 +69,7 @@ player.hasOffHand               = false
 player.hasShield                = false
 
 -- Values for special handling of swing timers when swapping weapons
-local weapon_swap_time          = nil
+player.tsWeaponSwap             = nil
 player.delayOffHand             = false
 
 -- Value for limiting offhand swing timer when not attacking
@@ -108,9 +108,6 @@ local FADE_DURATION             = 1.0000
 local idleTime                  = 0
 local fadingState               = 0
 
--- Whether the swing timer's progress should be paused
-local isPaused                  = false
-
 -- Values pertaining to UI sizing for quicker access
 ---@type Texture
 local main_bar
@@ -126,8 +123,8 @@ local off_spark
 local off_right_text
 
 local bar_width                 = 300
-local main_second_width         = bar_width / player.main_weapon_speed
-local off_second_width          = bar_width / player.off_weapon_speed
+local main_second_width         = bar_width / player.mainSpeed
+local off_second_width          = bar_width / player.offSpeed
 
 local settings                  = {}
 player.default_settings         = {
@@ -226,11 +223,11 @@ local function scaleAttackSpeed()
         inBackdateWindow = t_speed_delay < BACKDATE_WINDOW
         player.tsPrevAura = 0
     end
-    if main_speed_changed
-            and prev_main_weapon_speed
-            and player.main_weapon_speed then
-        local old_speed = prev_main_weapon_speed
-        local new_speed = player.main_weapon_speed
+    if player.mainSpeedChanged
+            and player.mainSpeedPrev
+            and player.mainSpeed then
+        local old_speed = player.mainSpeedPrev
+        local new_speed = player.mainSpeed
         local scale = new_speed / old_speed
         local new_timer
         if advancedSpeedScaling and inBackdateWindow then
@@ -257,17 +254,17 @@ local function scaleAttackSpeed()
             new_timer = scaled_timer - dt                                   -- the new swing timer is the timer scaled to the new speed at the most recent aura/swing/parry event minus the time from that event
             new_timer = max(new_timer, 0)                                   -- limit the swing timer to 0
         else
-            new_timer = player.main_swing_timer * scale
+            new_timer = player.mainSwingTimer * scale
         end
-        player.main_swing_timer = new_timer
+        player.mainSwingTimer = new_timer
         player.tsPrevMhSwing = ts - (new_speed - new_timer)                 -- shift the recorded swing timestamp to be as if no speed change occurred (for future calculations)
     end
-    if off_speed_changed
+    if player.offSpeedChanged
             and player.hasOffHand
-            and prev_off_weapon_speed
-            and player.off_weapon_speed then
-        local old_speed = prev_off_weapon_speed
-        local new_speed = player.off_weapon_speed
+            and player.offSpeedPrev
+            and player.offSpeed then
+        local old_speed = player.offSpeedPrev
+        local new_speed = player.offSpeed
         local scale = new_speed / old_speed
         local swing_ts = player.tsPrevOhSwing
         local new_timer
@@ -283,9 +280,9 @@ local function scaleAttackSpeed()
             end
             new_timer = max(scaled_timer - dt, player.isAttacking and 0 or OFFHAND_IDLE_LIMIT * new_speed)
         else
-            new_timer = player.off_swing_timer * scale
+            new_timer = player.offSwingTimer * scale
         end
-        player.off_swing_timer = new_timer
+        player.offSwingTimer = new_timer
         player.tsPrevOhSwing = ts - (new_speed - new_timer)
     end
 end
@@ -299,26 +296,26 @@ function player.OnAttackSpeedChanged()
     player.UpdateOffWeaponSpeed()
 
     if is_shifting then
-        local new_spd_mh = player.main_weapon_speed
+        local new_spd_mh = player.mainSpeed
         shift_speed = new_spd_mh
         if not shift_scale then
-            shift_scale = new_spd_mh / prev_main_weapon_speed
-            player.main_weapon_speed = prev_main_weapon_speed
-            main_second_width = bar_width / player.main_weapon_speed
+            shift_scale = new_spd_mh / player.mainSpeedPrev
+            player.mainSpeed = player.mainSpeedPrev
+            main_second_width = bar_width / player.mainSpeed
             return
         else
-            player.main_weapon_speed = new_spd_mh / shift_scale
-            main_second_width = bar_width / player.main_weapon_speed
-            main_speed_changed = player.main_weapon_speed ~= prev_main_weapon_speed
+            player.mainSpeed = new_spd_mh / shift_scale
+            main_second_width = bar_width / player.mainSpeed
+            player.mainSpeedChanged = player.mainSpeed ~= player.mainSpeedPrev
         end
     end
     scaleAttackSpeed()
 end
 
 function player.OnInventoryChange()
-    local oldMainID   = main_weapon_id
-    local oldOffID    = off_weapon_id
-    local oldRangedID = ranged_weapon_id
+    local oldMainID   = player.mainID
+    local oldOffID    = player.offID
+    local oldRangedID = player.rangedID
 
     local HAD_OFFHAND = player.hasOffHand
     local HAD_TWOHAND = player.hasTwoHand
@@ -329,14 +326,14 @@ function player.OnInventoryChange()
     player.UpdateOffWeapon()
     player.UpdateRangedWeapon()
 
-    if main_weapon_id ~= oldMainID or off_weapon_id ~= oldOffID or ranged_weapon_id ~= oldRangedID then
+    if player.mainID ~= oldMainID or player.offID ~= oldOffID or player.rangedID ~= oldRangedID then
         resetTimers = true
     end
 
     if resetTimers then
         local elapsed
-        if weapon_swap_time then
-            elapsed = GetTimePreciseSec() - weapon_swap_time
+        if player.tsWeaponSwap then
+            elapsed = GetTimePreciseSec() - player.tsWeaponSwap
             --arbitrary 1s bound for SPELL_UPDATE_COOLDOWN event being related to weapon swap
             if elapsed > 1 then elapsed = nil end
         end
@@ -350,9 +347,9 @@ function player.OnInventoryChange()
         ---Temporary patch for bugged WoW: Forever weapon swap handling.
         if player.hasOffHand and addon_data.utils.IsForeverWow() then
             if HAD_OFFHAND then
-                player.UpdateOffSwingTimer(player.off_weapon_speed * 0.5)
+                player.UpdateOffSwingTimer(player.offSpeed * 0.5)
             elseif HAD_TWOHAND then
-                player.UpdateOffSwingTimer(player.off_weapon_speed * (1 - OFFHAND_IDLE_LIMIT))
+                player.UpdateOffSwingTimer(player.offSpeed * (1 - OFFHAND_IDLE_LIMIT))
             else
                 player.DelayOffSwingTimer(elapsed)
             end
@@ -361,8 +358,8 @@ function player.OnInventoryChange()
 end
 
 function player.UpdateMainWeapon()
-    main_weapon_id   = GetInventoryItemID("player", INVSLOT_MAINHAND)
-    base_main_speed  = GetWeaponSpeed(INVSLOT_MAINHAND)
+    player.mainID   = GetInventoryItemID("player", INVSLOT_MAINHAND)
+    player.mainSpeedBase  = GetWeaponSpeed(INVSLOT_MAINHAND)
 
     if C_Item.DoesItemExist(MAINHAND_SLOT) then
         player.hasTwoHand = C_Item.GetItemInventoryType(MAINHAND_SLOT) == Enum.InventoryType.Index2HweaponType
@@ -374,8 +371,8 @@ function player.UpdateMainWeapon()
 end
 
 function player.UpdateOffWeapon()
-    off_weapon_id    = GetInventoryItemID("player", INVSLOT_OFFHAND)
-    base_off_speed   = GetWeaponSpeed(INVSLOT_OFFHAND)
+    player.offID    = GetInventoryItemID("player", INVSLOT_OFFHAND)
+    player.offSpeedBase   = GetWeaponSpeed(INVSLOT_OFFHAND)
 
     if C_Item.DoesItemExist(OFFHAND_SLOT) then
         local itemType = C_Item.GetItemInventoryType(OFFHAND_SLOT)
@@ -392,7 +389,7 @@ function player.UpdateOffWeapon()
 end
 
 function player.UpdateRangedWeapon()
-    ranged_weapon_id = GetInventoryItemID("player", INVSLOT_RANGED)
+    player.rangedID = GetInventoryItemID("player", INVSLOT_RANGED)
 end
 
 function player.UpdateMainWeaponSpeed()
@@ -400,7 +397,7 @@ function player.UpdateMainWeaponSpeed()
     if not issecretvalue(attackSpeed) then
         player.SetMainWeaponSpeed(attackSpeed)
     else
-        player.SetMainWeaponSpeed(player.speedScale * base_main_speed)
+        player.SetMainWeaponSpeed(player.speedScale * player.mainSpeedBase)
     end
 end
 
@@ -409,26 +406,26 @@ function player.UpdateOffWeaponSpeed()
     if not issecretvalue(offhandAttackSpeed) then
         player.SetOffWeaponSpeed(offhandAttackSpeed)
     else
-        player.SetOffWeaponSpeed(player.speedScale * base_off_speed)
+        player.SetOffWeaponSpeed(player.speedScale * player.offSpeedBase)
     end
 end
 
 function player.SetMainWeaponSpeed(attackSpeed)
-    prev_main_weapon_speed = player.main_weapon_speed
-    player.main_weapon_speed = attackSpeed
-    main_speed_changed = attackSpeed ~= prev_main_weapon_speed
-    player.speedScale = attackSpeed / base_main_speed
+    player.mainSpeedPrev = player.mainSpeed
+    player.mainSpeed = attackSpeed
+    player.mainSpeedChanged = attackSpeed ~= player.mainSpeedPrev
+    player.speedScale = attackSpeed / player.mainSpeedBase
 
     main_second_width = bar_width / attackSpeed
 end
 
 function player.SetOffWeaponSpeed(attackSpeed)
-    prev_off_weapon_speed = player.off_weapon_speed
-    player.off_weapon_speed = attackSpeed
-    off_speed_changed = attackSpeed ~= prev_off_weapon_speed
+    player.offSpeedPrev = player.offSpeed
+    player.offSpeed = attackSpeed
+    player.offSpeedChanged = attackSpeed ~= player.offSpeedPrev
 
     if attackSpeed then
-        player.speedScale = attackSpeed / base_off_speed
+        player.speedScale = attackSpeed / player.offSpeedBase
         off_second_width = bar_width / attackSpeed
     end
 end
@@ -437,14 +434,14 @@ function player.ResetMainSwingTimer(carry)
     local ts = GetTimePreciseSec()
     player.tsPrevMhSwing = ts - (carry or 0)
     mh_overflow = 0
-    player.main_swing_timer = player.main_weapon_speed
+    player.mainSwingTimer = player.mainSpeed
     if carry then
         player.UpdateMainSwingTimer(carry)
     end
     if is_shifting then
         if shift_speed then
-            player.main_weapon_speed = shift_speed
-            main_speed_changed = true
+            player.mainSpeed = shift_speed
+            player.mainSpeedChanged = true
             scaleAttackSpeed()
         end
         is_shifting = false
@@ -458,7 +455,7 @@ function player.ResetOffSwingTimer(carry)
         local ts = GetTimePreciseSec()
         player.tsPrevOhSwing = ts - (carry or 0)
         oh_overflow = 0
-        player.off_swing_timer = player.off_weapon_speed
+        player.offSwingTimer = player.offSpeed
         if carry then
             player.UpdateOffSwingTimer(carry)
         end
@@ -467,8 +464,8 @@ end
 
 function player.DelayOffSwingTimer(carry)
     if player.hasOffHand then
-        local new_off_swing_timer = player.main_weapon_speed + player.off_weapon_speed / 2
-        local offset = player.off_weapon_speed - new_off_swing_timer
+        local new_off_swing_timer = player.mainSpeed + player.offSpeed / 2
+        local offset = player.offSpeed - new_off_swing_timer
         player.ResetOffSwingTimer(offset + (carry or 0))
     end
 end
@@ -477,7 +474,7 @@ function player.OnSpellUpdateCooldown(spellID)
     -- nil, 3018 (shoot), and 2764 (throw) fire on a weapon or ranged swap in combat
     -- 3018 (shoot) and 2764 (throw) fire on a weapon swap out of combat
     if spellID == nil or spellID == 3018 or spellID == 2764 then
-        weapon_swap_time = GetTimePreciseSec()
+        player.tsWeaponSwap = GetTimePreciseSec()
     end
 end
 
@@ -535,7 +532,7 @@ local function CheckSpellSwingReset(unit, spellID, didCastSucceed)
         player.ResetMainSwingTimer()
         player.ResetOffSwingTimer()
     else
-        if player.main_swing_timer == 0 and spell_overflow_duration > 0 and player.isAttacking then
+        if player.mainSwingTimer == 0 and spell_overflow_duration > 0 and player.isAttacking then
             player.ResetMainSwingTimer(spell_overflow_duration)
         end
     end
@@ -565,10 +562,10 @@ end
 
 function player.LimitOffSwingTimer()
     if player.hasOffHand then
-        local limit = OFFHAND_IDLE_LIMIT * player.off_weapon_speed
-        if player.off_swing_timer < limit then
+        local limit = OFFHAND_IDLE_LIMIT * player.offSpeed
+        if player.offSwingTimer < limit then
             prev_oh_limit_ts = GetTimePreciseSec()
-            player.off_swing_timer = limit
+            player.offSwingTimer = limit
             return true
         else
             return false
@@ -582,8 +579,8 @@ function player.OnInCombatChanged(inCombat)
 end
 
 function player.ZeroizeSwingTimers()
-    player.main_swing_timer = 0.0001
-    player.off_swing_timer = player.off_weapon_speed * 0.6
+    player.mainSwingTimer = 0.0001
+    player.offSwingTimer = player.offSpeed * 0.6
 end
 
 function player.OnUiErrorMessage()
@@ -594,13 +591,13 @@ end
 
 function player.UpdateMainSwingTimer(elapsed)
     if settings.enabled then
-        local overflow = elapsed - player.main_swing_timer
+        local overflow = elapsed - player.mainSwingTimer
         local progress = false
-        if player.main_swing_timer > 0 then
+        if player.mainSwingTimer > 0 then
             progress = true
-            player.main_swing_timer = player.main_swing_timer - elapsed
-            if player.main_swing_timer < 0 then
-                player.main_swing_timer = 0
+            player.mainSwingTimer = player.mainSwingTimer - elapsed
+            if player.mainSwingTimer < 0 then
+                player.mainSwingTimer = 0
             end
             spell_overflow_duration = 0
         end
@@ -610,8 +607,8 @@ function player.UpdateMainSwingTimer(elapsed)
                 if player.flagSwingError and mh_overflow > SWING_ERROR_THRESHOLD then
                     local ts = GetTimePreciseSec()
                     progress = true
-                    player.main_swing_timer = max(SWING_ERROR_PUSHBACK - mh_overflow, 0)
-                    player.tsPrevMhSwing = ts - (player.main_weapon_speed - player.main_swing_timer)
+                    player.mainSwingTimer = max(SWING_ERROR_PUSHBACK - mh_overflow, 0)
+                    player.tsPrevMhSwing = ts - (player.mainSpeed - player.mainSwingTimer)
                     mh_overflow = 0
                 end
             end
@@ -621,13 +618,13 @@ function player.UpdateMainSwingTimer(elapsed)
         end
 
         if progress then
-            local swingTimer = player.main_swing_timer
+            local swingTimer = player.mainSwingTimer
             if settings.fill_empty then
                 main_bar:SetWidth(bar_width - swingTimer * main_second_width)
             else
                 main_bar:SetWidth(swingTimer * main_second_width + 0.001)
             end
-            main_spark:SetShown(addon_data.settings.appearance.sparks and player.main_swing_timer > 0)
+            main_spark:SetShown(addon_data.settings.appearance.sparks and player.mainSwingTimer > 0)
             main_right_text:SetText(SimpleRound(swingTimer, 0.1))
 
             idleTime = 0
@@ -640,13 +637,13 @@ end
 function player.UpdateOffSwingTimer(elapsed)
     if settings.enabled then
         if player.hasOffHand then
-            local overflow = elapsed - player.off_swing_timer
+            local overflow = elapsed - player.offSwingTimer
             local progress = false
-            if player.off_swing_timer > (player.isAttacking and 0 or OFFHAND_IDLE_LIMIT * player.off_weapon_speed) then
+            if player.offSwingTimer > (player.isAttacking and 0 or OFFHAND_IDLE_LIMIT * player.offSpeed) then
                 progress = true
-                player.off_swing_timer = player.off_swing_timer - elapsed
-                if player.off_swing_timer < 0 then
-                    player.off_swing_timer = 0
+                player.offSwingTimer = player.offSwingTimer - elapsed
+                if player.offSwingTimer < 0 then
+                    player.offSwingTimer = 0
                 end
             end
             if not player.isAttacking then
@@ -658,20 +655,20 @@ function player.UpdateOffSwingTimer(elapsed)
                 if player.flagSwingError and oh_overflow > SWING_ERROR_THRESHOLD then
                     local ts = GetTimePreciseSec()
                     progress = true
-                    player.off_swing_timer = max(SWING_ERROR_PUSHBACK - oh_overflow, 0)
-                    player.tsPrevOhSwing = ts - (player.off_weapon_speed - player.off_swing_timer)
+                    player.offSwingTimer = max(SWING_ERROR_PUSHBACK - oh_overflow, 0)
+                    player.tsPrevOhSwing = ts - (player.offSpeed - player.offSwingTimer)
                     oh_overflow = 0
                 end
             end
 
             if progress then
-                local swingTimer = player.off_swing_timer
+                local swingTimer = player.offSwingTimer
                 if settings.fill_empty then
                     off_bar:SetWidth(bar_width - swingTimer * off_second_width)
                 else
                     off_bar:SetWidth(swingTimer * off_second_width + 0.001)
                 end
-                off_spark:SetShown(settings.show_offhand and (settings.combined_bar or addon_data.settings.appearance.sparks and player.off_swing_timer > 0))
+                off_spark:SetShown(settings.show_offhand and (settings.combined_bar or addon_data.settings.appearance.sparks and player.offSwingTimer > 0))
                 off_right_text:SetText(SimpleRound(swingTimer, 0.1))
             end
         end
@@ -679,7 +676,7 @@ function player.UpdateOffSwingTimer(elapsed)
 end
 
 function WST_GetSwingTimers()
-    return player.main_swing_timer, player.off_swing_timer
+    return player.mainSwingTimer, player.offSwingTimer
 end
 
 --[[============================================================================================]]--
@@ -691,7 +688,7 @@ function player.UpdateOffHandDisplay()
     if player.hasOffHand and settings.show_offhand and not settings.combined_bar then
         frame:SetHeight(settings.height * 2 + 2)
         frame.off_bar:Show()
-        frame.off_spark:SetShown(player.hasOffHand and settings.show_offhand and (settings.combined_bar or addon_data.settings.appearance.sparks and player.off_swing_timer > 0))
+        frame.off_spark:SetShown(player.hasOffHand and settings.show_offhand and (settings.combined_bar or addon_data.settings.appearance.sparks and player.offSwingTimer > 0))
         frame.off_left_text:SetShown(settings.show_left_text)
         frame.off_right_text:SetShown(settings.show_right_text)
     else
@@ -755,9 +752,9 @@ function player.UpdateVisualsOnSettingsChange()
         frame:SetPoint(settings.point, UIParent, settings.rel_point, settings.x_offset, settings.y_offset)
         frame:SetWidth(settings.width)
         bar_width = settings.width
-        main_second_width = bar_width / player.main_weapon_speed
-        if player.off_weapon_speed then
-            off_second_width = bar_width / player.off_weapon_speed
+        main_second_width = bar_width / player.mainSpeed
+        if player.offSpeed then
+            off_second_width = bar_width / player.offSpeed
         end
         frame:SetAlpha(player.inCombat and settings.in_combat_alpha or settings.ooc_alpha)
         if player.hasOffHand and settings.show_offhand and not settings.combined_bar then
@@ -780,18 +777,18 @@ function player.UpdateVisualsOnSettingsChange()
         frame.off_bar:SetVertexColor(settings.off_r, settings.off_g, settings.off_b, settings.off_a)
 
         if settings.fill_empty then
-            main_bar:SetWidth(bar_width - player.main_swing_timer * main_second_width)
-            off_bar:SetWidth(bar_width - player.off_swing_timer * off_second_width)
+            main_bar:SetWidth(bar_width - player.mainSwingTimer * main_second_width)
+            off_bar:SetWidth(bar_width - player.offSwingTimer * off_second_width)
         else
-            main_bar:SetWidth(player.main_swing_timer * main_second_width + 0.001)
-            off_bar:SetWidth(player.off_swing_timer * off_second_width + 0.001)
+            main_bar:SetWidth(player.mainSwingTimer * main_second_width + 0.001)
+            off_bar:SetWidth(player.offSwingTimer * off_second_width + 0.001)
         end
 
         frame.main_spark:SetSize(16, settings.height)
         frame.off_spark:SetSize(16, settings.height)
 
-        main_spark:SetShown(addon_data.settings.appearance.sparks and player.main_swing_timer > 0)
-        off_spark:SetShown(player.hasOffHand and settings.show_offhand and (settings.combined_bar or addon_data.settings.appearance.sparks and player.off_swing_timer > 0))
+        main_spark:SetShown(addon_data.settings.appearance.sparks and player.mainSwingTimer > 0)
+        off_spark:SetShown(player.hasOffHand and settings.show_offhand and (settings.combined_bar or addon_data.settings.appearance.sparks and player.offSwingTimer > 0))
 
         frame.main_left_text:SetPoint("TOPLEFT", 5, -(settings.height / 2) + (settings.fontsize / 2))
         frame.main_left_text:SetTextColor(settings.main_text_r, settings.main_text_g, settings.main_text_b, settings.main_text_a)

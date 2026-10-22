@@ -43,7 +43,7 @@ local function UpdateIndicators()
     local frame = paladin.paladinFrame
 
     local frameWidth = frame:GetWidth()
-    local secondWidth = frameWidth / player.main_weapon_speed
+    local secondWidth = frameWidth / player.mainSpeed
 
     if addon_data.settings.player.fill_empty then
         frame.pala_blood_marker:ClearPoint("LEFT")

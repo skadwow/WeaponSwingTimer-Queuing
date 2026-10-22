@@ -209,14 +209,14 @@ function player.OnCombatLogUnfiltered(combatInfo)
             -- if swing is below 20%, do nothing.
             -- if swing is above 20%, reduce by 40% of main_weapon_speed
             -- if new swing is below 20%, set to 20% (parry cannot reduce swing timer below 20%)
-            local min_swing_time = player.main_weapon_speed * 0.2
-            if player.main_swing_timer > min_swing_time then
+            local min_swing_time = player.mainSpeed * 0.2
+            if player.mainSwingTimer > min_swing_time then
                 local ts = GetTimePreciseSec()
-                player.main_swing_timer = max(player.main_swing_timer - (player.main_weapon_speed * 0.4), min_swing_time)
+                player.mainSwingTimer = max(player.mainSwingTimer - (player.mainSpeed * 0.4), min_swing_time)
                 if player.tsPrevSpeed < player.tsPrevAura then
                     prev_parry_ts = ts
                 else
-                    player.tsPrevMhSwing = ts - (player.main_weapon_speed - player.main_swing_timer)
+                    player.tsPrevMhSwing = ts - (player.mainSpeed - player.mainSwingTimer)
                 end
             end
         end

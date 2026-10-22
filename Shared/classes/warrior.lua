@@ -93,7 +93,7 @@ function UpdateIndicators()
     local frame = player.frame
 
     local frameWidth = frame:GetWidth()
-    local secondWidth = frameWidth / player.main_weapon_speed
+    local secondWidth = frameWidth / player.mainSpeed
 
     frame.slam_delay_bar:SetWidth(settings.slam_delay * secondWidth)
     if addon_data.settings.player.fill_empty then

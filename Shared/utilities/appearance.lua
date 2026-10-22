@@ -486,9 +486,9 @@ function appearance.UpdateExampleFrameSettings()
     frame:SetScale(scale)
     frame:SetPointsOffset(30 / scale, -40 / scale)
     playerWidth = width
-    playerMainhandSpeed = addon_data.player.main_weapon_speed or playerMainhandSpeed
+    playerMainhandSpeed = addon_data.player.mainSpeed or playerMainhandSpeed
     playerMainhandSecond = playerWidth / playerMainhandSpeed
-    playerOffhandSpeed = addon_data.player.off_weapon_speed or playerOffhandSpeed
+    playerOffhandSpeed = addon_data.player.offSpeed or playerOffhandSpeed
     playerOffhandSecond = playerWidth / playerOffhandSpeed
 
     appearance.SetupBar(frame.mainBar, addon_data.settings.player.show_border)

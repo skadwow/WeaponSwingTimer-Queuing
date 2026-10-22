@@ -10,6 +10,7 @@ local hunter                = addon_data.hunter
 local player                = addon_data.player
 local queuing               = addon_data.queuing
 local target                = addon_data.target
+local utils                 = addon_data.utils
 
 local frame                 = core.core_frame
 tinsert(core.events, "COMBAT_LOG_EVENT_UNFILTERED")
@@ -32,4 +33,11 @@ else
         player.OnCombatLogUnfiltered(combatInfo)
         target.OnCombatLogUnfiltered(combatInfo)
     end
+end
+
+function frame:PLAYER_TARGET_CHANGED()
+    utils.DebugPrint("PLAYER_TARGET_CHANGED")
+    player.OnPlayerTargetChanged()
+    queuing.OnPlayerTargetChanged()
+    target.OnPlayerTargetChanged()
 end

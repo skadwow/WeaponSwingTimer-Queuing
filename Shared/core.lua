@@ -326,13 +326,6 @@ function frame:PLAYER_STOPPED_MOVING()
     player.isMoving = false
 end
 
-function frame:PLAYER_TARGET_CHANGED()
-    utils.DebugPrint("PLAYER_TARGET_CHANGED")
-    player.OnPlayerTargetChanged()
-    queuing.OnPlayerTargetChanged()
-    target.OnPlayerTargetChanged()
-end
-
 function frame:SPELLS_CHANGED()
     if PLAYER_CLASS == "WARRIOR" then
         warrior.OnSpellsChanged()

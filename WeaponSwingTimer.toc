@@ -35,7 +35,7 @@
 ## AddonCompartmentFunc: WeaponSwingTimer_OnAddonCompartmentClick
 ## IconTexture: Interface\AddOns\WeaponSwingTimer\Shared\images\wst_logo_plain
 ## Author: LeftHandGlove, WatchYourSixx, Skad
-## Version: 2.8.5
+## Version: 2.8.6
 ## DefaultState: enabled
 ## OptionalDeps: ColorPickerPlus
 ## SavedVariables: WST_Profiles
@@ -59,6 +59,8 @@ Shared/target.lua
 Shared/castbar.lua
 Shared/queuing.lua
 [Family]/queuing.lua
+
+[Family]/utilities/mobs.lua [AllowLoadGameType mainline]
 
 Shared/classes/warrior.lua
 [Family]/classes/warrior.lua
