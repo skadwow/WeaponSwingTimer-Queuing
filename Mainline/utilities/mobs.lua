@@ -16,7 +16,9 @@ function mobs.IsPlayerTargeted()
 end
 
 function mobs:NAME_PLATE_UNIT_ADDED(unitToken)
-    if UnitIsEnemy("player", unitToken) and UnitGUID(unitToken.."target") == player.guid then
+    if true then return end
+
+    if UnitIsEnemy("player", unitToken) and UnitIsPlayer(unitToken.."target") then
         mobTable[unitToken] = UnitGUID(unitToken)
     else
         mobTable[unitToken] = nil
@@ -48,8 +50,10 @@ function mobs:UNIT_DIED(unitGUID)
 end
 
 function mobs:UNIT_TARGET(unitTarget)
+    if true then return end
+
     if UnitIsEnemy("player", unitTarget) then
-        if UnitGUID(unitTarget.."target") == player.guid then
+        if UnitIsPlayer(unitTarget.."target") then
             mobTable[unitTarget] = UnitGUID(unitTarget)
             return
         end
