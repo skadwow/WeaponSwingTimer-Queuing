@@ -16,7 +16,7 @@ function mobs.IsPlayerTargeted()
 end
 
 function mobs:NAME_PLATE_UNIT_ADDED(unitToken)
-    if true then return end
+    if true then return end -- HOTFIX: block due to secret values
 
     if UnitIsEnemy("player", unitToken) and UnitIsPlayer(unitToken.."target") then
         mobTable[unitToken] = UnitGUID(unitToken)
@@ -50,7 +50,7 @@ function mobs:UNIT_DIED(unitGUID)
 end
 
 function mobs:UNIT_TARGET(unitTarget)
-    if true then return end
+    if true then return end -- HOTFIX: block due to secret values
 
     if UnitIsEnemy("player", unitTarget) then
         if UnitIsPlayer(unitTarget.."target") then

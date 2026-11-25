@@ -126,8 +126,16 @@ function talents.GetTalentRank(talentID)
 end
 
 local frame = CreateFrame("Frame")
+frame:RegisterEvent("ACTIVE_COMBAT_CONFIG_CHANGED")
 frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("PLAYER_TALENT_UPDATE")
+
+function frame:ACTIVE_COMBAT_CONFIG_CHANGED(configID)
+    talents.UpdateTalentInfo()
+    if addon_data.player.class == "WARRIOR" then
+        addon_data.warrior.OnPlayerTalentUpdate()
+    end
+end
 
 function frame:PLAYER_LOGIN()
     talents.UpdateTalentInfo()

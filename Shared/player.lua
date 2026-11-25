@@ -624,7 +624,7 @@ function player.UpdateMainSwingTimer(elapsed)
             else
                 main_bar:SetWidth(swingTimer * main_second_width + 0.001)
             end
-            main_spark:SetShown(addon_data.settings.appearance.sparks and player.mainSwingTimer > 0)
+            main_spark:SetShown(addon_data.settings.appearance.sparks and swingTimer > 0)
             main_right_text:SetText(SimpleRound(swingTimer, 0.1))
 
             idleTime = 0

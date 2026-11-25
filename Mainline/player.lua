@@ -69,7 +69,7 @@ end
 
 function addon_data.player.OnUnitCombat(event)
     if event == "PARRY" then
-        local min_swing_time = max(player.mainSpeed * 0.2 - 0.5, 0)
+        local min_swing_time = max(player.mainSpeed * 0.2 - 0.5, 0.01) -- 0.01 safety factor due to player progress check requiring > 0 swing timer. Ugly bandaid.
         local ts = GetTimePreciseSec()
         local dtReset = ts - player.tsPrevMhSwing
         addon_data.utils.DebugPrint("UNIT_COMBAT Parry, isAttackEarly?", isEarlyAttack, "didSkipAttack?", didSkipAttack, "dtReset?", dtReset)

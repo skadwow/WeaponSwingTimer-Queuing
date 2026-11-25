@@ -220,7 +220,6 @@ if player.isRanged then
 
     function frame:UNIT_SPELLCAST_INTERRUPTED(unitTarget, _, spellID)
         if unitTarget == "player" then
-            utils.DebugPrint("UNIT_SPELLCAST_INTERRUPTED", spellID)
             player.OnUnitSpellCastInterrupted(unitTarget, spellID)
             queuing.OnUnitSpellCastInterrupted(unitTarget, spellID)
             hunter.OnUnitSpellCastInterrupted(unitTarget, spellID)
@@ -230,7 +229,6 @@ if player.isRanged then
 
     function frame:UNIT_SPELLCAST_SUCCEEDED(unitTarget, _, spellID)
         if unitTarget == "player" then
-            utils.DebugPrint("UNIT_SPELLCAST_SUCCEEDED", spellID)
             player.OnUnitSpellCastSucceeded(unitTarget, spellID)
             queuing.OnUnitSpellCastSucceeded(unitTarget, spellID)
             hunter.OnUnitSpellCastSucceeded(unitTarget, spellID)
@@ -267,7 +265,6 @@ else
 
     function frame:UNIT_SPELLCAST_INTERRUPTED(unitTarget, _, spellID)
         if unitTarget == "player" then
-            utils.DebugPrint("UNIT_SPELLCAST_INTERRUPTED", spellID)
             player.OnUnitSpellCastInterrupted(unitTarget, spellID)
             queuing.OnUnitSpellCastInterrupted(unitTarget, spellID)
         end
@@ -275,7 +272,6 @@ else
 
     function frame:UNIT_SPELLCAST_SUCCEEDED(unitTarget, _, spellID)
         if unitTarget == "player" then
-            utils.DebugPrint("UNIT_SPELLCAST_SUCCEEDED", spellID)
             player.OnUnitSpellCastSucceeded(unitTarget, spellID)
             queuing.OnUnitSpellCastSucceeded(unitTarget, spellID)
         end
@@ -370,7 +366,6 @@ end
 
 function frame:UNIT_SPELLCAST_SENT(unitTarget, _, _, spellID)
     if unitTarget == "player" then
-        utils.DebugPrint("UNIT_SPELLCAST_SENT", spellID)
         queuing.OnUnitSpellCastSent(unitTarget, spellID)
     end;
 end
