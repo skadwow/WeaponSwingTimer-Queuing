@@ -59,7 +59,6 @@ hunter.last_shot_time = GetTime()
 hunter.auto_shot_ready = true
 hunter.FeignStatus = false
 hunter.FeignFullReset = false
-hunter.range_auto_speed_modified = 1
 hunter.base_speed = 1
 hunter.spell_GCD = 0
 hunter.spell_GCD_Time = 0
@@ -180,7 +179,7 @@ function hunter.UpdateAutoShotTimer(elapsed)
     -- If the player moved then the timer resets
     if player.isMoving or hunter.casting then
         if hunter.shot_timer <= hunter.auto_cast_time then
-            hunter.ResetShotTimer()
+            hunter.shot_timer = hunter.auto_cast_time
         end
     end
     -- If the shot timer is less than the auto cast time then the auto shot is ready
@@ -188,7 +187,7 @@ function hunter.UpdateAutoShotTimer(elapsed)
         hunter.auto_shot_ready = true
         -- If we are not shooting then the timer should be reset
         if not hunter.shooting then
-            hunter.ResetShotTimer()
+            hunter.shot_timer = hunter.auto_cast_time
         end
     else
         hunter.auto_shot_ready = false
@@ -202,6 +201,37 @@ function hunter.UpdateAutoShotTimer(elapsed)
         idleTime = idleTime + elapsed
     else
         idleTime = 0
+    end
+end
+
+function hunter.UpdateRangedSpeed(attackSpeed)
+    if hunter.base_speed == 1 then
+        hunter.base_speed = GetWeaponSpeed(INVSLOT_RANGED)
+    else
+        hunter.range_cast_speed_modifer = attackSpeed / hunter.base_speed
+    end
+
+    if attackSpeed ~= hunter.range_speed then
+        if not hunter.auto_shot_ready then
+            hunter.shot_timer = hunter.shot_timer * (attackSpeed / hunter.range_speed)
+        end
+        hunter.range_speed = attackSpeed
+    end
+
+    hunter.UpdateStatusBarBounds()
+end
+
+function hunter.UpdateStatusBarBounds()
+    if not hunter.frame then return end
+
+    if settings.one_bar then
+        hunter.frame.shot_bar:SetMinMaxValues(0, hunter.range_speed)
+        hunter.frame.multishot_clip_bar:SetMinMaxValues(0, hunter.range_speed)
+        hunter.frame.auto_shot_cast_bar:SetMinMaxValues(0, hunter.range_speed)
+    else
+        hunter.frame.shot_bar:SetMinMaxValues(hunter.auto_cast_time, hunter.range_speed)
+        hunter.frame.multishot_clip_bar:SetMinMaxValues(hunter.auto_cast_time, hunter.range_speed)
+        hunter.frame.auto_shot_cast_bar:SetMinMaxValues(0, hunter.auto_cast_time)
     end
 end
 
@@ -300,7 +330,6 @@ function hunter.UpdateVisualsOnUpdate()
     local range_speed = hunter.range_speed
     local shot_timer = hunter.shot_timer
     local auto_cast_time = hunter.auto_cast_time
-    local mult_cast_time = 0.5 * hunter.range_cast_speed_modifer
 
     if settings.enabled then
         frame.shot_bar_text:SetText(tostring(SimpleRound(shot_timer, 0.1)))
@@ -310,52 +339,32 @@ function hunter.UpdateVisualsOnUpdate()
             frame:SetAlpha(settings.ooc_alpha)
         end
         if not settings.one_bar then
-            local new_width
-            if hunter.auto_shot_ready then
-                frame.shot_bar:SetVertexColor(settings.auto_cast_r, settings.auto_cast_g, settings.auto_cast_b, settings.auto_cast_a)
-                new_width = settings.width * (auto_cast_time - shot_timer) / auto_cast_time
+            if hunter.auto_shot_ready and shot_timer < auto_cast_time then
+                frame.shot_bar:Hide()
                 frame.multishot_clip_bar:Hide()
+                frame.auto_shot_cast_bar:SetValue(auto_cast_time - shot_timer)
+                frame.auto_shot_cast_bar:Show()
             else
                 if hunter.spell_GCD > 0.5 then
-                    frame.shot_bar:SetVertexColor(0.8, 0.64, 0, 1)
+                    frame.shot_bar:SetStatusBarColor(0.8, 0.64, 0, 1)
                 else
-                    frame.shot_bar:SetVertexColor(settings.cooldown_r, settings.cooldown_g, settings.cooldown_b, settings.cooldown_a)
+                    frame.shot_bar:SetStatusBarColor(settings.cooldown_r, settings.cooldown_g, settings.cooldown_b, settings.cooldown_a)
                 end
-                new_width = settings.width * ((shot_timer - auto_cast_time) / (range_speed - auto_cast_time))
-                if addon_data.settings.castbar.show_multishot_clip_bar then
-                    frame.multishot_clip_bar:Show()
-                    local multishot_clip_width = math.min((settings.width * 2) * (mult_cast_time / (range_speed)), settings.width)
-                    frame.multishot_clip_bar:SetWidth(multishot_clip_width)
-                end
+                frame.shot_bar:SetValue(shot_timer)
+                frame.shot_bar:Show()
+                frame.multishot_clip_bar:SetValue(0.5 * hunter.range_cast_speed_modifer)
+                frame.multishot_clip_bar:SetShown(addon_data.settings.castbar.show_multishot_clip_bar)
+                frame.auto_shot_cast_bar:Hide()
             end
-            if new_width < 2 then
-                new_width = 2
-            end
-            frame.shot_bar:SetWidth(math.min(new_width, settings.width))
         else
             if hunter.spell_GCD > 0.2 then
-                frame.shot_bar:SetVertexColor(0.8, 0.64, 0, 1)
+                frame.shot_bar:SetStatusBarColor(0.8, 0.64, 0, 1)
             else
-                frame.shot_bar:SetVertexColor(settings.cooldown_r, settings.cooldown_g, settings.cooldown_b, settings.cooldown_a)
+                frame.shot_bar:SetStatusBarColor(settings.cooldown_r, settings.cooldown_g, settings.cooldown_b, settings.cooldown_a)
             end
-            local timer_width = settings.width * ((range_speed - shot_timer) / range_speed)
-            local auto_shot_cast_width
-            if hunter.auto_shot_ready then
-                auto_shot_cast_width = settings.width * (shot_timer / range_speed)
-            else
-                auto_shot_cast_width = settings.width * (auto_cast_time / range_speed)
-            end
-            if addon_data.settings.castbar.show_multishot_clip_bar then
-                frame.multishot_clip_bar:Show()
-                local multishot_clip_width = math.min(settings.width * (mult_cast_time / range_speed ), settings.width)
-                frame.multishot_clip_bar:SetWidth(5)
-                local multi_offset = (settings.width * (auto_cast_time / range_speed)) + multishot_clip_width
-                frame.multishot_clip_bar:SetPoint("BOTTOMRIGHT", -multi_offset, 0)
-            end
-            frame.shot_bar:SetWidth(math.min(timer_width, settings.width))
-            frame.auto_shot_cast_bar:SetWidth(math.max(auto_shot_cast_width, 0.001))
+            frame.auto_shot_cast_bar:SetValue(auto_cast_time)
+            frame.shot_bar:SetValue(range_speed - shot_timer)
         end
-        frame:SetSize(settings.width, settings.height)
 
         if not hunter.shooting and settings.fade_when_idle then
             if idleTime < IDLE_THRESHOLD then
@@ -391,43 +400,43 @@ function hunter.UpdateVisualsOnSettingsChange()
         frame:Show()
         frame:ClearAllPoints()
         frame:SetPoint(settings.point, UIParent, settings.rel_point, settings.x_offset, settings.y_offset)
+        frame:SetSize(settings.width, settings.height)
 
         addon_data.appearance.SetupFrame(frame, settings.show_border)
 
+        frame.auto_shot_cast_bar:SetStatusBarColor(settings.auto_cast_r, settings.auto_cast_g, settings.auto_cast_b, settings.auto_cast_a)
 
-        frame.shot_bar:ClearAllPoints()
-        frame.multishot_clip_bar:ClearAllPoints()
         if not settings.one_bar then
             addon_data.appearance.SetupBar(frame.shot_bar, settings.show_border, "Bidirectional")
             addon_data.appearance.SetupBar(frame.auto_shot_cast_bar, settings.show_border, "Bidirectional")
             addon_data.appearance.SetupBar(frame.multishot_clip_bar, false, "Bidirectional")
 
-            frame.shot_bar:SetPoint("BOTTOM", 0, 0)
-            frame.auto_shot_cast_bar:Hide()
-            frame.multishot_clip_bar:SetPoint("BOTTOM", 0, 0)
+            frame.shot_bar:SetFillStyle(Enum.StatusBarFillStyle.Center)
+            frame.multishot_clip_bar:SetFillStyle(Enum.StatusBarFillStyle.Center)
+            frame.auto_shot_cast_bar:SetFillStyle(Enum.StatusBarFillStyle.Center)
+
+            frame.multishot_clip_bar:SetValue(0.5 * hunter.range_cast_speed_modifer)
         else
             addon_data.appearance.SetupBar(frame.shot_bar, settings.show_border)
             addon_data.appearance.SetupBar(frame.auto_shot_cast_bar, settings.show_border)
             addon_data.appearance.SetupBar(frame.multishot_clip_bar, false)
 
-            frame.shot_bar:SetPoint("BOTTOMLEFT", 0, 0)
-            frame.auto_shot_cast_bar:Show()
-            frame.auto_shot_cast_bar:SetPoint("BOTTOMRIGHT", 0, 0)
-            frame.auto_shot_cast_bar:SetHeight(settings.height)
-            frame.auto_shot_cast_bar:SetVertexColor(settings.auto_cast_r, settings.auto_cast_g, settings.auto_cast_b, settings.auto_cast_a)
-            frame.multishot_clip_bar:SetPoint("BOTTOMRIGHT", 0, 0)
+            frame.shot_bar:SetFillStyle(Enum.StatusBarFillStyle.Standard)
+            frame.multishot_clip_bar:SetFillStyle(Enum.StatusBarFillStyle.Reverse)
+            frame.auto_shot_cast_bar:SetFillStyle(Enum.StatusBarFillStyle.Reverse)
+
+            frame.multishot_clip_bar:SetValue(0.5 * hunter.range_cast_speed_modifer + hunter.auto_cast_time)
+            frame.auto_shot_cast_bar:SetValue(hunter.auto_cast_time)
         end
 
-        frame.shot_bar:SetHeight(settings.height)
-        frame.shot_bar:SetVertexColor(settings.cooldown_r, settings.cooldown_g, settings.cooldown_b, settings.cooldown_a)
+        frame.shot_bar:SetStatusBarColor(settings.cooldown_r, settings.cooldown_g, settings.cooldown_b, settings.cooldown_a)
+        frame.multishot_clip_bar:SetStatusBarColor(addon_data.settings.castbar.clip_r, addon_data.settings.castbar.clip_g, addon_data.settings.castbar.clip_b, addon_data.settings.castbar.clip_a)
+        frame.auto_shot_cast_bar:SetStatusBarColor(settings.auto_cast_r, settings.auto_cast_g, settings.auto_cast_b, settings.auto_cast_a)
 
         frame.leftSpark:SetHeight(settings.height)
         frame.leftSpark:SetShown(not settings.one_bar and addon_data.settings.appearance.sparks)
         frame.rightSpark:SetHeight(settings.height)
         frame.rightSpark:SetShown(addon_data.settings.appearance.sparks)
-
-        frame.multishot_clip_bar:SetHeight(settings.height)
-        frame.multishot_clip_bar:SetVertexColor(addon_data.settings.castbar.clip_r, addon_data.settings.castbar.clip_g, addon_data.settings.castbar.clip_b, addon_data.settings.castbar.clip_a)
 
         frame.shot_bar_text:SetPoint("BOTTOMRIGHT", -5, (settings.height / 2) - (settings.fontsize / 2))
         frame.shot_bar_text:SetTextColor(1.0, 1.0, 1.0, 1.0)
@@ -435,6 +444,8 @@ function hunter.UpdateVisualsOnSettingsChange()
 
         frame.multishot_clip_bar:SetShown(addon_data.settings.castbar.show_multishot_clip_bar)
         frame.shot_bar_text:SetShown(settings.show_text)
+
+        hunter.UpdateStatusBarBounds()
 
         fadingState = 0
         idleTime = 0
@@ -476,9 +487,16 @@ function hunter.InitializeVisuals()
     frame:SetScript("OnDragStop", hunter.OnFrameDragStop)
 
     -- Create the shot bar
-    frame.shot_bar = frame:CreateTexture(nil,"ARTWORK")
+    frame.shot_bar = CreateFrame("StatusBar", nil, frame)
+    frame.shot_bar:SetMinMaxValues(0, hunter.range_speed)
+    frame.shot_bar:SetAllPoints()
+
+    frame.textFrame = CreateFrame("Frame", nil, frame)
+    frame.textFrame:SetFrameLevel(3)
+    frame.textFrame:SetAllPoints()
+
     -- Create the shot bar text
-    frame.shot_bar_text = frame:CreateFontString(nil,"OVERLAY")
+    frame.shot_bar_text = frame.textFrame:CreateFontString(nil,"OVERLAY")
     frame.shot_bar_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
     frame.shot_bar_text:SetJustifyV("MIDDLE")
     frame.shot_bar_text:SetJustifyH("CENTER")
@@ -494,9 +512,11 @@ function hunter.InitializeVisuals()
     frame.rightSpark:SetSize(16, settings.height)
 
     -- Create the multishot clip bar
-    frame.multishot_clip_bar = frame:CreateTexture(nil,"OVERLAY", nil, -1)
+    frame.multishot_clip_bar = CreateFrame("StatusBar", nil, frame)
+    frame.multishot_clip_bar:SetAllPoints()
     -- Create the auto shot cast bar indicator
-    frame.auto_shot_cast_bar = frame:CreateTexture(nil,"OVERLAY")
+    frame.auto_shot_cast_bar = CreateFrame("StatusBar", nil, frame)
+    frame.auto_shot_cast_bar:SetAllPoints()
     -- Show it off
     hunter.UpdateVisualsOnSettingsChange()
     hunter.UpdateVisualsOnUpdate()

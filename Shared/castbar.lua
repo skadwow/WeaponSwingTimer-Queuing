@@ -81,6 +81,9 @@ castbar.default_settings    = {
     show_multishot_clip_bar = true,
     cast_r = 0.8, cast_g = 0.64, cast_b = 0.0, cast_a = 1,
     clip_r = 1.0, clip_g = 0.0, clip_b = 0.0, clip_a = 0.7,
+    raptor_queuing = true,
+    raptor_r = 0.67, raptor_g = 0.83, raptor_b = 0.45, raptor_a = 1.0,
+    raptor_text_r = 1.0, raptor_text_g = 1.0, raptor_text_b = 1.0, raptor_text_a = 1.0,
 }
 --- Initializing variables for calculations and function calls
 
@@ -197,7 +200,8 @@ function castbar.StartCastingSpell(spellID)
                 castbar.hitcount = 0
                 castbar.initial_cast_time = castTime
                 castbar.cast_timer = 0
-                castbar.frame.spell_bar:SetVertexColor(0.7, 0.4, 0, 1)
+                castbar.frame.spell_bar:SetStatusBarColor(0.7, 0.4, 0, 1)
+                castbar.frame.spell_bar:SetMinMaxValues(0, castbar.cast_time)
 
                 if settings.show_latency_bars then
                     local _, _, _, latency = GetNetStats()
@@ -247,7 +251,7 @@ function castbar.OnUnitSpellCastSucceeded(unit, spellID)
             local spell_aimed_enabled = (castbar.is_spell_aimed_shot(spellID) and settings.show_aimedshot_cast_bar)
             local spell_multi_enabled = (castbar.is_spell_multi_shot(spellID) and settings.show_multishot_cast_bar)
             if (spell_aimed_enabled or spell_multi_enabled) then
-                castbar.frame.spell_bar:SetWidth(0)
+                castbar.frame.spell_bar:SetValue(0)
                 castbar.frame.spell_spark:Hide()
                 castbar.frame.spell_bar_text:SetText("")
             end
@@ -272,11 +276,11 @@ function castbar.OnUnitSpellCastFailed(unit, spellID)
             castbar.casting_shot = false
             castbar.casting_spell_id = 0
             if spell_aimed_enabled or spell_multi_enabled then
-                castbar.frame.spell_bar:SetVertexColor(0.7, 0, 0, 1)
+                castbar.frame.spell_bar:SetStatusBarColor(0.7, 0, 0, 1)
                 if settings.show_cast_text then
                     frame.spell_text_center:SetText(L"Failed")
                 end
-                frame.spell_bar:SetWidth(settings.width)
+                frame.spell_bar:SetValue(100)
             end
         end
     end
@@ -297,11 +301,11 @@ function castbar.OnUnitSpellCastInterrupted(unit, spellID)
             castbar.casting_spell_id = 0
 
             if spell_aimed_enabled or spell_multi_enabled then
-                frame.spell_bar:SetVertexColor(0.7, 0, 0, 1)
+                frame.spell_bar:SetStatusBarColor(0.7, 0, 0, 1)
                 if settings.show_cast_text then
                     frame.spell_text_center:SetText(L"Interrupted")
                 end
-                frame.spell_bar:SetWidth(settings.width)
+                frame.spell_bar:SetValue(100)
             end
         end
     end
@@ -318,10 +322,10 @@ function castbar.UpdateVisualsOnUpdate()
             local time_left = math.max(SimpleRound(castbar.cast_time - castbar.cast_timer, 0.1), 0)
             frame.spell_bar_text:SetText(string.format("%.1f", time_left))
             frame:SetAlpha(1)
-            frame.spell_bar:SetVertexColor(settings.cast_r, settings.cast_g, settings.cast_b, settings.cast_a)
+            frame.spell_bar:SetStatusBarColor(settings.cast_r, settings.cast_g, settings.cast_b, settings.cast_a)
             local new_width = settings.width * (castbar.cast_timer / castbar.cast_time)
             new_width = math.min(new_width, settings.width)
-            frame.spell_bar:SetWidth(new_width)
+            frame.spell_bar:SetValue(castbar.cast_timer)
             frame.spell_spark:SetPoint("TOPLEFT", new_width - 8, 0)
             if new_width == settings.width or not addon_data.settings.appearance.sparks then
                 frame.spell_spark:Hide()
@@ -351,7 +355,7 @@ function castbar.UpdateVisualsOnUpdate()
             end
         end
     else
-        frame.spell_bar:SetVertexColor(0.2, 0.2, 0.2, 1)
+        frame.spell_bar:SetStatusBarColor(0.2, 0.2, 0.2, 1)
         frame:SetSize(settings.width, settings.height)
         if not (settings.is_locked) then
             frame.spell_text_center:SetText(L"Spell Bar Unlocked")
@@ -359,6 +363,30 @@ function castbar.UpdateVisualsOnUpdate()
         else
             frame:SetAlpha(0)
         end
+    end
+end
+
+local function UpdateColorPalettes()
+    if not settings.raptor_queuing then
+        addon_data.queuing.UnregisterSpell(L"Raptor Strike")
+    else
+        local raptorPalette = {
+            MainHand = {
+                bar = {
+                    r = settings.raptor_r,
+                    g = settings.raptor_g,
+                    b = settings.raptor_b,
+                    a = settings.raptor_a,
+                },
+                text = {
+                    r = settings.raptor_text_r,
+                    g = settings.raptor_text_g,
+                    b = settings.raptor_text_b,
+                    a = settings.raptor_text_a,
+                }
+            },
+        }
+        addon_data.queuing.RegisterSpell(L"Raptor Strike", raptorPalette)
     end
 end
 
@@ -395,6 +423,8 @@ function castbar.UpdateVisualsOnSettingsChange()
     else
         frame:Hide()
     end
+
+    UpdateColorPalettes()
 end
 
 function castbar.OnFrameDragStart()
@@ -430,23 +460,31 @@ function castbar.InitializeVisuals()
     frame:SetScript("OnDragStop", castbar.OnFrameDragStop)
 
     -- Create the range spell shot bar
-    frame.spell_bar = frame:CreateTexture(nil,"ARTWORK")
+    frame.spell_bar = CreateFrame("StatusBar", nil, frame)
+
+    frame.spell_bar.textFrame = CreateFrame("Frame", nil, frame.spell_bar)
+    frame.spell_bar.textFrame:SetAllPoints()
+
     -- Create the spell bar text
-    frame.spell_bar_text = frame:CreateFontString(nil,"OVERLAY")
+    frame.spell_bar_text = frame.spell_bar.textFrame:CreateFontString(nil,"OVERLAY")
     frame.spell_bar_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
     frame.spell_bar_text:SetJustifyV("MIDDLE")
     frame.spell_bar_text:SetJustifyH("CENTER")
+
     -- Create the spell spark
     frame.spell_spark = frame:CreateTexture(nil,"OVERLAY")
     frame.spell_spark:SetTexture('Interface/AddOns/WeaponSwingTimer/Shared/images/Spark')
+
     -- Create the range spell shot bar center text
-    frame.spell_text_center = frame:CreateFontString(nil,"OVERLAY")
+    frame.spell_text_center = frame.spell_bar.textFrame:CreateFontString(nil,"OVERLAY")
     frame.spell_text_center:SetFont(addon_data.utils.GetFont(), settings.fontsize)
     frame.spell_text_center:SetTextColor(1, 1, 1, 1)
     frame.spell_text_center:SetJustifyV("MIDDLE")
     frame.spell_text_center:SetJustifyH("LEFT")
+
     -- Create the latency bar
     frame.cast_latency = frame:CreateTexture(nil,"OVERLAY")
+
     -- Show it off
     castbar.UpdateVisualsOnSettingsChange()
     castbar.UpdateVisualsOnUpdate()
@@ -486,6 +524,13 @@ function castbar.UpdateConfigPanelValues()
 
     panel.in_combat_alpha_slider:SetValue(settings.in_combat_alpha)
     panel.in_combat_alpha_slider.editbox:SetCursorPosition(0)
+
+    panel.raptor_checkbox:SetChecked(settings.raptor_queuing)
+
+    panel.raptor_color_picker.foreground:SetColorTexture(
+        settings.raptor_r, settings.raptor_g, settings.raptor_b, settings.raptor_a)
+    panel.raptor_text_color_picker.foreground:SetColorTexture(
+        settings.raptor_text_r, settings.raptor_text_g, settings.raptor_text_b, settings.raptor_text_a)
 end
 
 function castbar.ShowMultiShotClipBarCheckBoxOnClick(self)
@@ -576,6 +621,39 @@ function castbar.CombatAlphaOnValChange(self)
     castbar.UpdateVisualsOnSettingsChange()
 end
 
+function castbar.EnabledCheckBoxOnClick(self)
+    settings.raptor_queuing = self:GetChecked()
+    castbar.UpdateVisualsOnSettingsChange()
+end
+
+function castbar.RaptorColorPickerOnClick()
+    local colorTable = settings
+    local r = "raptor_r"
+    local g = "raptor_g"
+    local b = "raptor_b"
+    local a = "raptor_a"
+    local updateFunc = function()
+        castbar.UpdateConfigPanelValues()
+        castbar.UpdateVisualsOnSettingsChange()
+    end
+
+    config.setup_color_picker(colorTable, r, g, b, a, updateFunc)
+end
+
+function castbar.RaptorTextColorPickerOnClick()
+    local colorTable = settings
+    local r = "raptor_text_r"
+    local g = "raptor_text_g"
+    local b = "raptor_text_b"
+    local a = "raptor_text_a"
+    local updateFunc = function()
+        castbar.UpdateConfigPanelValues()
+        castbar.UpdateVisualsOnSettingsChange()
+    end
+
+    config.setup_color_picker(colorTable, r, g, b, a, updateFunc)
+end
+
 --- Initializes the main setting panel including layout, alignment, and design
 function castbar.CreateConfigPanel(parent_panel)
     castbar.config_frame = CreateFrame("Frame", addon_name .. "HunterConfigPanel", parent_panel)
@@ -586,7 +664,7 @@ function castbar.CreateConfigPanel(parent_panel)
     panel.title_text:SetPoint("TOPLEFT", 10, -10)
     panel.title_text:SetTextColor(1, 0.82, 0, 1)
 
-    -- Title Text
+    -- Castbar Spells Text
     panel.title_text = config.TextFactory(panel, L"Castbar Spells", 13)
     panel.title_text:SetPoint("TOPLEFT", 10, -50)
 
@@ -712,6 +790,38 @@ function castbar.CreateConfigPanel(parent_panel)
         0.05,
         castbar.CombatAlphaOnValChange)
     panel.in_combat_alpha_slider:SetPoint("TOPLEFT", 420, -60)
+
+    -- Raptor Strike Text
+    panel.title_text = config.TextFactory(panel, L"Raptor Strike Queuing", 20)
+    panel.title_text:SetPoint("TOPLEFT", 10, -220)
+    panel.title_text:SetTextColor(1, 0.82, 0, 1)
+
+    -- Enabled Checkbox
+    panel.raptor_checkbox = config.CheckBoxFactory(
+        "HunterRaptorStrikeCheckBox",
+        panel,
+        L"Raptor Strike coloring",
+        L"Enables Raptor Strike bar coloring.",
+        castbar.RaptorCheckBoxOnClick)
+    panel.raptor_checkbox:SetPoint("TOPLEFT", 10, -230)
+
+    -- Queued main-hand color picker
+    panel.raptor_color_picker = config.color_picker_factory(
+        "HunterRaptorStrikeColorPicker",
+        panel,
+        settings.raptor_r, settings.raptor_g, settings.raptor_b, settings.raptor_a,
+        L"Raptor Strike Bar Color",
+        castbar.RaptorColorPickerOnClick)
+    panel.raptor_color_picker:SetPoint("TOPLEFT", 205, -260)
+
+    -- Queued main-hand color text picker
+    panel.raptor_text_color_picker = config.color_picker_factory(
+        "HunterRaptorStrikeTextColorPicker",
+        panel,
+        settings.raptor_text_r, settings.raptor_text_g, settings.raptor_text_b, settings.raptor_text_a,
+        L"Raptor Strike Bar Text Color",
+        castbar.RaptorTextColorPickerOnClick)
+    panel.raptor_text_color_picker:SetPoint("TOPLEFT", 205, -280)
 
     -- Return the final panel
     castbar.UpdateConfigPanelValues()

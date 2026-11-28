@@ -50,7 +50,7 @@ local ORDERED_BAR_STYLES = {
 }
 
 ---Setups up `bar` according to bar and border style settings.
----@param bar Texture -- Bar to setup.
+---@param bar Frame|StatusBar|Texture -- Bar to setup.
 ---@param borderShown? boolean -- Whether the bar should expect a border, defaults to `true`.
 ---@param ... string -- Args.
 function appearance.SetupBar(bar, borderShown, ...)
@@ -66,9 +66,7 @@ function appearance.SetupBar(bar, borderShown, ...)
             barTexture = newTexture
         end
     end
-    bar:SetTexture(barTexture)
-
-    bar:SetTextureSliceMargins(5, 5, 5, 5)
+    bar:SetStatusBarTexture(barTexture)
 end
 
 local BORDER_STYLES = {
@@ -189,6 +187,7 @@ function appearance.SetupFrame(frame, borderShown)
     end
     if not frame.border then
         frame.border = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+        frame.border:SetFrameLevel(5)
     end
     if not frame.border.artLeft or not frame.border.artRight then
         frame.border.artLeft = frame.border:CreateTexture(nil, "OVERLAY")
@@ -347,117 +346,105 @@ end
 local EXAMPLE_WIDTH = 300
 local EXAMPLE_HEIGHT = 20
 
-local playerWidth = EXAMPLE_WIDTH
 local playerMainhandSpeed = 2.6
 local playerOffhandSpeed = 1.8
-local playerMainhandSecond = playerWidth / playerMainhandSpeed
-local playerOffhandSecond = playerWidth / playerOffhandSpeed
+local playerMainhandTimer = playerMainhandSpeed
+local playerOffhandTimer = playerOffhandSpeed
 
-local targetWidth = EXAMPLE_WIDTH
 local targetMainhandSpeed = 2
 local targetOffhandSpeed = 1.5
-local targetMainhandSecond = targetWidth / targetMainhandSpeed
-local targetOffhandSecond = targetWidth / targetOffhandSpeed
+local targetMainhandTimer = targetMainhandSpeed
+local targetOffhandTimer = targetOffhandSpeed
 
-local autoWidth = EXAMPLE_WIDTH
 local rangedSpeed = 2
-local autoSpeed = 0.5
 local multiSpeed = 1
-local rangedSecond = autoWidth / rangedSpeed
-local onebarRangedSecond = autoWidth / (rangedSpeed + autoSpeed)
-local autoSecond = autoWidth / autoSpeed
+local autoSpeed = 0.5
+local shootShotTimer = rangedSpeed + autoSpeed
+local shootCastTimer = autoSpeed
 
-local castWidth = EXAMPLE_WIDTH
 local castSpeed = 3
-local castSecond = castWidth / castSpeed
+local castTimer = castSpeed
 
 local SimpleRound = addon_data.utils.SimpleRound
 
 local exampleFrame
 
 local function ExampleFrames_OnUpdate(self, elapsed)
-    local width
+    local frame
+    local value
 
-    local frame = exampleFrame.playerFrame
-    width = frame.mainBar:GetWidth()
-    width = width + elapsed * playerMainhandSecond
-    if width > playerWidth then
-        width = width - playerWidth
+    frame = exampleFrame.playerFrame
+    playerMainhandTimer = playerMainhandTimer + elapsed
+    if playerMainhandTimer >= playerMainhandSpeed then
+        playerMainhandTimer = playerMainhandTimer - playerMainhandSpeed
     end
-    frame.mainBar:SetWidth(width)
-    frame.mainRightText:SetText(SimpleRound((playerWidth - width) / playerMainhandSecond, 0.1))
+    frame.mainBar:SetValue(playerMainhandTimer)
+    frame.mainRightText:SetText(SimpleRound(playerMainhandSpeed - playerMainhandTimer, 0.1))
 
-    width = frame.offBar:GetWidth()
-    width = width + elapsed * playerOffhandSecond
-    if width > playerWidth then
-        width = width - playerWidth
+    playerOffhandTimer = playerOffhandTimer + elapsed
+    if playerOffhandTimer >= playerOffhandSpeed then
+        playerOffhandTimer = playerOffhandTimer - playerOffhandSpeed
     end
-    frame.offBar:SetWidth(width)
-    frame.offRightText:SetText(SimpleRound((playerWidth - width) / playerOffhandSecond, 0.1))
-
+    frame.offBar:SetValue(playerOffhandTimer)
+    frame.offRightText:SetText(SimpleRound(playerOffhandSpeed - playerOffhandTimer, 0.1))
 
     frame = exampleFrame.targetFrame
-    width = frame.mainBar:GetWidth()
-    width = width + elapsed * targetMainhandSecond
-    if width > targetWidth then
-        width = width - targetWidth
+    targetMainhandTimer = targetMainhandTimer + elapsed
+    if targetMainhandTimer > targetMainhandSpeed then
+        targetMainhandTimer = targetMainhandTimer - targetMainhandSpeed
     end
-    frame.mainBar:SetWidth(width)
-    frame.mainRightText:SetText(SimpleRound((targetWidth - width) / targetMainhandSecond, 0.1))
+    frame.mainBar:SetValue(targetMainhandTimer)
+    frame.mainRightText:SetText(SimpleRound(targetMainhandSpeed - targetMainhandTimer, 0.1))
 
-    width = frame.offBar:GetWidth()
-    width = width + elapsed * targetOffhandSecond
-    if width > targetWidth then
-        width = width - targetWidth
+    targetOffhandTimer = targetOffhandTimer + elapsed
+    if targetOffhandTimer > targetOffhandSpeed then
+        targetOffhandTimer = targetOffhandTimer - targetOffhandSpeed
     end
-    frame.offBar:SetWidth(width)
-    frame.offRightText:SetText(SimpleRound((targetWidth - width) / targetOffhandSecond, 0.1))
+    frame.offBar:SetValue(targetOffhandTimer)
+    frame.offRightText:SetText(SimpleRound(targetOffhandSpeed - targetOffhandTimer, 0.1))
 
     frame = exampleFrame.autoFrame
     if addon_data.settings.hunter.one_bar then
-        width = frame.shotBar:GetWidth()
-        width = width + elapsed * onebarRangedSecond
-        if width > autoWidth then
-            width = width - autoWidth
+        value = value + elapsed
+        if value > (rangedSpeed + autoSpeed) then
+            value = 0
         end
-        frame.shotBar:SetWidth(width)
-        frame.shotText:SetText(SimpleRound((autoWidth - width) / onebarRangedSecond, 0.1))
+        frame.shotBar:SetValue(value)
+        frame.shotText:SetText(SimpleRound(value, 0.1))
     else
         if frame.shotBar:IsShown() then
-            width = frame.shotBar:GetWidth()
-            width = width - elapsed * rangedSecond
-            if width < 0 then
+            shootShotTimer = shootShotTimer - elapsed
+            if shootShotTimer < 0 then
                 frame.shotBar:Hide()
                 frame.clipBar:Hide()
+                frame.castBar:SetValue(-shootShotTimer)
                 frame.castBar:Show()
-                frame.castBar:SetWidth(-width)
                 frame.leftSpark:SetPoint("LEFT", frame.castBar, -8, 0)
                 frame.rightSpark:SetPoint("RIGHT", frame.castBar, 8, 0)
             end
-            frame.shotBar:SetWidth(width)
-            frame.shotText:SetText(SimpleRound(width / rangedSecond + autoSpeed, 0.1))
+            frame.shotBar:SetValue(shootShotTimer)
+            frame.shotText:SetText(SimpleRound(shootShotTimer + autoSpeed, 0.1))
         else
-            width = frame.castBar:GetWidth()
-            width = width + elapsed * autoSecond
-            if width > autoWidth then
+            shootCastTimer = shootCastTimer + elapsed
+            if shootCastTimer > autoSpeed then
+                frame.shotBar:SetValue(rangedSpeed + autoSpeed - shootCastTimer)
                 frame.shotBar:Show()
-                frame.shotBar:SetWidth(2 * autoWidth - width)
                 frame.clipBar:Show()
                 frame.castBar:Hide()
                 frame.leftSpark:SetPoint("LEFT", frame.shotBar, -8, 0)
                 frame.rightSpark:SetPoint("RIGHT", frame.shotBar, 8, 0)
             end
-            frame.castBar:SetWidth(width)
-            frame.shotText:SetText(SimpleRound((autoWidth - width) / autoSecond, 0.1))
+            frame.castBar:SetValue(shootCastTimer)
+            frame.shotText:SetText(SimpleRound(autoSpeed - shootCastTimer, 0.1))
         end
     end
 
-    width = exampleFrame.castFrame.castBar:GetWidth()
-    width = width + elapsed * castSecond
-    if width > castWidth then
-        width = width - castWidth
+    frame = exampleFrame.castFrame
+    castTimer = castTimer + elapsed
+    if castTimer >= castSpeed then
+        castTimer = castTimer - castSpeed
     end
-    exampleFrame.castFrame.castBar:SetWidth(width)
+    frame.castBar:SetValue(castTimer)
 end
 
 function appearance.UpdateExampleFrameSettings()
@@ -485,15 +472,15 @@ function appearance.UpdateExampleFrameSettings()
     end
     frame:SetScale(scale)
     frame:SetPointsOffset(30 / scale, -40 / scale)
-    playerWidth = width
     playerMainhandSpeed = addon_data.player.mainSpeed or playerMainhandSpeed
-    playerMainhandSecond = playerWidth / playerMainhandSpeed
     playerOffhandSpeed = addon_data.player.offSpeed or playerOffhandSpeed
-    playerOffhandSecond = playerWidth / playerOffhandSpeed
 
+    local attackSpeed, offhandAttackSpeed = UnitAttackSpeed("player")
+    frame.mainBar:SetMinMaxValues(0, attackSpeed or playerMainhandSpeed)
     appearance.SetupBar(frame.mainBar, addon_data.settings.player.show_border)
+    frame.mainBar:SetWidth(width)
     frame.mainBar:SetHeight(height)
-    frame.mainBar:SetVertexColor(
+    frame.mainBar:SetStatusBarColor(
         addon_data.settings.player.main_r,
         addon_data.settings.player.main_g,
         addon_data.settings.player.main_b,
@@ -508,9 +495,11 @@ function appearance.UpdateExampleFrameSettings()
     frame.mainRightText:SetFontHeight(addon_data.settings.player.fontsize)
     frame.mainRightText:SetShown(addon_data.settings.player.show_right_text)
 
+    frame.offBar:SetMinMaxValues(0, offhandAttackSpeed or playerOffhandSpeed)
     appearance.SetupBar(frame.offBar, addon_data.settings.player.show_border)
+    frame.offBar:SetWidth(width)
     frame.offBar:SetHeight(height)
-    frame.offBar:SetVertexColor(
+    frame.offBar:SetStatusBarColor(
         addon_data.settings.player.off_r,
         addon_data.settings.player.off_g,
         addon_data.settings.player.off_b,
@@ -537,13 +526,12 @@ function appearance.UpdateExampleFrameSettings()
     frame:SetHeight(height * 2 + 2)
     frame:SetScale(scale)
     frame:SetPointsOffset(0, -40 / scale)
-    targetWidth = width
-    targetMainhandSecond = targetWidth / targetMainhandSpeed
-    targetOffhandSecond = targetWidth / targetOffhandSpeed
 
+    frame.mainBar:SetMinMaxValues(0, targetMainhandSpeed)
     appearance.SetupBar(frame.mainBar, addon_data.settings.target.show_border)
+    frame.mainBar:SetWidth(width)
     frame.mainBar:SetHeight(height)
-    frame.mainBar:SetVertexColor(
+    frame.mainBar:SetStatusBarColor(
         addon_data.settings.target.main_r,
         addon_data.settings.target.main_g,
         addon_data.settings.target.main_b,
@@ -558,9 +546,11 @@ function appearance.UpdateExampleFrameSettings()
     frame.mainRightText:SetFontHeight(addon_data.settings.target.fontsize)
     frame.mainRightText:SetShown(addon_data.settings.target.show_right_text)
 
+    frame.offBar:SetMinMaxValues(0, targetOffhandSpeed)
     appearance.SetupBar(frame.offBar, addon_data.settings.target.show_border)
+    frame.offBar:SetWidth(width)
     frame.offBar:SetHeight(height)
-    frame.offBar:SetVertexColor(
+    frame.offBar:SetStatusBarColor(
         addon_data.settings.target.off_r,
         addon_data.settings.target.off_g,
         addon_data.settings.target.off_b,
@@ -586,21 +576,20 @@ function appearance.UpdateExampleFrameSettings()
     frame:SetHeight(height)
     frame:SetScale(scale)
     frame:SetPointsOffset(0, -40 / scale)
-    autoWidth = width
-    rangedSecond = autoWidth / rangedSpeed
-    autoSecond = autoWidth / autoSpeed
-    onebarRangedSecond = autoWidth / (rangedSpeed + autoSpeed)
 
+    frame.castBar:SetMinMaxValues(0, rangedSpeed)
+    frame.castBar:SetWidth(width)
     frame.castBar:SetHeight(height)
-    frame.castBar:SetVertexColor(
+    frame.castBar:SetStatusBarColor(
         addon_data.settings.hunter.auto_cast_r,
         addon_data.settings.hunter.auto_cast_g,
         addon_data.settings.hunter.auto_cast_b,
         addon_data.settings.hunter.auto_cast_a
     )
 
+    frame.shotBar:SetWidth(width)
     frame.shotBar:SetHeight(height)
-    frame.shotBar:SetVertexColor(
+    frame.shotBar:SetStatusBarColor(
         addon_data.settings.hunter.cooldown_r,
         addon_data.settings.hunter.cooldown_g,
         addon_data.settings.hunter.cooldown_b,
@@ -612,9 +601,10 @@ function appearance.UpdateExampleFrameSettings()
     frame.shotText:SetFontHeight(addon_data.settings.hunter.fontsize)
     frame.shotText:SetShown(addon_data.settings.hunter.show_text)
 
+    frame.clipBar:SetWidth(width)
     frame.clipBar:SetHeight(height)
     frame.clipBar:SetShown(addon_data.settings.castbar.show_multishot_clip_bar)
-    frame.clipBar:SetVertexColor(
+    frame.clipBar:SetStatusBarColor(
         addon_data.settings.castbar.clip_r,
         addon_data.settings.castbar.clip_g,
         addon_data.settings.castbar.clip_b,
@@ -626,11 +616,16 @@ function appearance.UpdateExampleFrameSettings()
         appearance.SetupBar(frame.shotBar, addon_data.settings.hunter.show_border)
         appearance.SetupBar(frame.clipBar, addon_data.settings.hunter.show_border)
 
-        frame.shotBar:SetPoint("LEFT")
-        frame.clipBar:SetPoint("LEFT", frame, "RIGHT", -2 * autoSpeed * onebarRangedSecond, 0)
-        frame.clipBar:SetWidth(5)
-        frame.castBar:SetPoint("LEFT", frame, "RIGHT", -1 * autoSpeed * onebarRangedSecond, 0)
-        frame.castBar:SetWidth(autoSpeed * onebarRangedSecond)
+        frame.shotBar:SetMinMaxValues(0, rangedSpeed + autoSpeed)
+        frame.clipBar:SetMinMaxValues(0, rangedSpeed + autoSpeed)
+        frame.castBar:SetMinMaxValues(0, rangedSpeed + autoSpeed)
+
+        frame.shotBar:SetFillStyle(Enum.StatusBarFillStyle.Standard)
+        frame.clipBar:SetFillStyle(Enum.StatusBarFillStyle.Reverse)
+        frame.castBar:SetFillStyle(Enum.StatusBarFillStyle.Reverse)
+
+        frame.clipBar:SetValue(2 * autoSpeed)
+        frame.castBar:SetValue(autoSpeed)
         frame.castBar:Show()
         frame.leftSpark:Hide()
         frame.rightSpark:SetShown(settings.sparks)
@@ -639,10 +634,15 @@ function appearance.UpdateExampleFrameSettings()
         appearance.SetupBar(frame.shotBar, addon_data.settings.hunter.show_border, "Bidirectional")
         appearance.SetupBar(frame.clipBar, addon_data.settings.hunter.show_border, "Bidirectional")
 
-        frame.shotBar:ClearPoint("LEFT")
-        frame.clipBar:ClearPoint("LEFT")
-        frame.clipBar:SetWidth(multiSpeed * rangedSecond)
-        frame.castBar:ClearPoint("LEFT")
+        frame.shotBar:SetMinMaxValues(0, rangedSpeed)
+        frame.clipBar:SetMinMaxValues(0, rangedSpeed)
+        frame.castBar:SetMinMaxValues(0, autoSpeed)
+
+        frame.shotBar:SetFillStyle(Enum.StatusBarFillStyle.Center)
+        frame.clipBar:SetFillStyle(Enum.StatusBarFillStyle.Center)
+        frame.castBar:SetFillStyle(Enum.StatusBarFillStyle.Center)
+
+        frame.clipBar:SetValue(multiSpeed)
         frame.castBar:Hide()
         frame.leftSpark:SetShown(settings.sparks)
         frame.rightSpark:SetShown(settings.sparks)
@@ -659,12 +659,12 @@ function appearance.UpdateExampleFrameSettings()
     frame:SetHeight(height)
     frame:SetScale(scale)
     frame:SetPointsOffset(0, -40 / scale)
-    castWidth = width
-    castSecond = castWidth / castSpeed
 
+    frame.castBar:SetMinMaxValues(0, castSpeed)
     appearance.SetupBar(frame.castBar, addon_data.settings.castbar.show_border)
+    frame.castBar:SetWidth(width)
     frame.castBar:SetHeight(height)
-    frame.castBar:SetVertexColor(
+    frame.castBar:SetStatusBarColor(
         addon_data.settings.castbar.cast_r,
         addon_data.settings.castbar.cast_g,
         addon_data.settings.castbar.cast_b,
@@ -723,40 +723,43 @@ function appearance.CreateExampleFrame()
     exampleFrame.txtPlayerFrame = config.TextFactory(exampleFrame, L"Player Bars", 14)
     exampleFrame.txtPlayerFrame:SetPoint("TOPLEFT", exampleFrame.playerFrame, 10, 20)
 
-    exampleFrame.playerFrame.mainBar = exampleFrame.playerFrame:CreateTexture(nil, "ARTWORK")
+    exampleFrame.playerFrame.mainBar = CreateFrame("StatusBar", nil, exampleFrame.playerFrame)
     exampleFrame.playerFrame.mainBar:SetPoint("TOPLEFT")
-    exampleFrame.playerFrame.mainBar:SetSize(random(0, EXAMPLE_WIDTH), EXAMPLE_HEIGHT)
+    exampleFrame.playerFrame.mainBar:SetSize(EXAMPLE_WIDTH, EXAMPLE_HEIGHT)
 
     exampleFrame.playerFrame.mainSpark = exampleFrame.playerFrame:CreateTexture(nil, "OVERLAY")
     exampleFrame.playerFrame.mainSpark:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Spark")
     exampleFrame.playerFrame.mainSpark:SetPoint("RIGHT", exampleFrame.playerFrame.mainBar, 8, 0)
     exampleFrame.playerFrame.mainSpark:SetSize(16, EXAMPLE_HEIGHT)
 
-    exampleFrame.playerFrame.offBar = exampleFrame.playerFrame:CreateTexture(nil, "ARTWORK")
+    exampleFrame.playerFrame.offBar = CreateFrame("StatusBar", nil, exampleFrame.playerFrame)
     exampleFrame.playerFrame.offBar:SetPoint("BOTTOMLEFT")
-    exampleFrame.playerFrame.offBar:SetSize(random(0, EXAMPLE_WIDTH), EXAMPLE_HEIGHT)
+    exampleFrame.playerFrame.offBar:SetSize(EXAMPLE_WIDTH, EXAMPLE_HEIGHT)
 
     exampleFrame.playerFrame.offSpark = exampleFrame.playerFrame:CreateTexture(nil, "OVERLAY")
     exampleFrame.playerFrame.offSpark:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Spark")
     exampleFrame.playerFrame.offSpark:SetPoint("RIGHT", exampleFrame.playerFrame.offBar, 8, 0)
     exampleFrame.playerFrame.offSpark:SetSize(16, EXAMPLE_HEIGHT)
 
-    exampleFrame.playerFrame.mainLeftText = exampleFrame.playerFrame:CreateFontString(nil, "OVERLAY")
+    exampleFrame.playerFrame.textFrame = CreateFrame("Frame", nil, exampleFrame.playerFrame)
+    exampleFrame.playerFrame.textFrame:SetAllPoints()
+
+    exampleFrame.playerFrame.mainLeftText = exampleFrame.playerFrame.textFrame:CreateFontString(nil, "OVERLAY")
     exampleFrame.playerFrame.mainLeftText:SetPoint("LEFT", 5, 6)
     exampleFrame.playerFrame.mainLeftText:SetFont(addon_data.utils.GetFont(), 12)
     exampleFrame.playerFrame.mainLeftText:SetText(L"Main-Hand")
 
-    exampleFrame.playerFrame.mainRightText = exampleFrame.playerFrame:CreateFontString(nil, "OVERLAY")
+    exampleFrame.playerFrame.mainRightText = exampleFrame.playerFrame.textFrame:CreateFontString(nil, "OVERLAY")
     exampleFrame.playerFrame.mainRightText:SetPoint("RIGHT", 5, 6)
     exampleFrame.playerFrame.mainRightText:SetFont(addon_data.utils.GetFont(), 12)
     exampleFrame.playerFrame.mainRightText:SetText("1.5")
 
-    exampleFrame.playerFrame.offLeftText = exampleFrame.playerFrame:CreateFontString(nil, "OVERLAY")
+    exampleFrame.playerFrame.offLeftText = exampleFrame.playerFrame.textFrame:CreateFontString(nil, "OVERLAY")
     exampleFrame.playerFrame.offLeftText:SetPoint("LEFT", 5, -6)
     exampleFrame.playerFrame.offLeftText:SetFont(addon_data.utils.GetFont(), 12)
     exampleFrame.playerFrame.offLeftText:SetText(L"Off-Hand")
 
-    exampleFrame.playerFrame.offRightText = exampleFrame.playerFrame:CreateFontString(nil, "OVERLAY")
+    exampleFrame.playerFrame.offRightText = exampleFrame.playerFrame.textFrame:CreateFontString(nil, "OVERLAY")
     exampleFrame.playerFrame.offRightText:SetPoint("RIGHT", 5, -6)
     exampleFrame.playerFrame.offRightText:SetFont(addon_data.utils.GetFont(), 12)
     exampleFrame.playerFrame.offRightText:SetText("1.2")
@@ -769,40 +772,43 @@ function appearance.CreateExampleFrame()
     exampleFrame.txtTargetFrame = config.TextFactory(exampleFrame, L"Target Bars", 14)
     exampleFrame.txtTargetFrame:SetPoint("TOPLEFT", exampleFrame.targetFrame, 10, 20)
 
-    exampleFrame.targetFrame.mainBar = exampleFrame.targetFrame:CreateTexture(nil, "ARTWORK")
+    exampleFrame.targetFrame.mainBar = CreateFrame("StatusBar", nil, exampleFrame.targetFrame)
     exampleFrame.targetFrame.mainBar:SetPoint("TOPLEFT")
-    exampleFrame.targetFrame.mainBar:SetSize(random(0, EXAMPLE_WIDTH), EXAMPLE_HEIGHT)
+    exampleFrame.targetFrame.mainBar:SetSize(EXAMPLE_WIDTH, EXAMPLE_HEIGHT)
 
     exampleFrame.targetFrame.mainSpark = exampleFrame.targetFrame:CreateTexture(nil, "OVERLAY")
     exampleFrame.targetFrame.mainSpark:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Spark")
     exampleFrame.targetFrame.mainSpark:SetPoint("RIGHT", exampleFrame.targetFrame.mainBar, 8, 0)
     exampleFrame.targetFrame.mainSpark:SetSize(16, EXAMPLE_HEIGHT)
 
-    exampleFrame.targetFrame.offBar = exampleFrame.targetFrame:CreateTexture(nil, "ARTWORK")
+    exampleFrame.targetFrame.offBar = CreateFrame("StatusBar", nil, exampleFrame.targetFrame)
     exampleFrame.targetFrame.offBar:SetPoint("BOTTOMLEFT")
-    exampleFrame.targetFrame.offBar:SetSize(random(0, EXAMPLE_WIDTH), EXAMPLE_HEIGHT)
+    exampleFrame.targetFrame.offBar:SetSize(EXAMPLE_WIDTH, EXAMPLE_HEIGHT)
 
     exampleFrame.targetFrame.offSpark = exampleFrame.targetFrame:CreateTexture(nil, "OVERLAY")
     exampleFrame.targetFrame.offSpark:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Spark")
     exampleFrame.targetFrame.offSpark:SetPoint("RIGHT", exampleFrame.targetFrame.offBar, 8, 0)
     exampleFrame.targetFrame.offSpark:SetSize(16, EXAMPLE_HEIGHT)
 
-    exampleFrame.targetFrame.mainLeftText = exampleFrame.targetFrame:CreateFontString(nil, "OVERLAY")
+    exampleFrame.targetFrame.textFrame = CreateFrame("Frame", nil, exampleFrame.targetFrame)
+    exampleFrame.targetFrame.textFrame:SetAllPoints()
+
+    exampleFrame.targetFrame.mainLeftText = exampleFrame.targetFrame.textFrame:CreateFontString(nil, "OVERLAY")
     exampleFrame.targetFrame.mainLeftText:SetPoint("LEFT", 5, 6)
     exampleFrame.targetFrame.mainLeftText:SetFont(addon_data.utils.GetFont(), 12)
     exampleFrame.targetFrame.mainLeftText:SetText(L"Main-Hand")
 
-    exampleFrame.targetFrame.mainRightText = exampleFrame.targetFrame:CreateFontString(nil, "OVERLAY")
+    exampleFrame.targetFrame.mainRightText = exampleFrame.targetFrame.textFrame:CreateFontString(nil, "OVERLAY")
     exampleFrame.targetFrame.mainRightText:SetPoint("RIGHT", 5, 6)
     exampleFrame.targetFrame.mainRightText:SetFont(addon_data.utils.GetFont(), 12)
     exampleFrame.targetFrame.mainRightText:SetText("1.5")
 
-    exampleFrame.targetFrame.offLeftText = exampleFrame.targetFrame:CreateFontString(nil, "OVERLAY")
+    exampleFrame.targetFrame.offLeftText = exampleFrame.targetFrame.textFrame:CreateFontString(nil, "OVERLAY")
     exampleFrame.targetFrame.offLeftText:SetPoint("LEFT", 5, -6)
     exampleFrame.targetFrame.offLeftText:SetFont(addon_data.utils.GetFont(), 12)
     exampleFrame.targetFrame.offLeftText:SetText(L"Off-Hand")
 
-    exampleFrame.targetFrame.offRightText = exampleFrame.targetFrame:CreateFontString(nil, "OVERLAY")
+    exampleFrame.targetFrame.offRightText = exampleFrame.targetFrame.textFrame:CreateFontString(nil, "OVERLAY")
     exampleFrame.targetFrame.offRightText:SetPoint("RIGHT", 5, -6)
     exampleFrame.targetFrame.offRightText:SetFont(addon_data.utils.GetFont(), 12)
     exampleFrame.targetFrame.offRightText:SetText("1.2")
@@ -815,14 +821,14 @@ function appearance.CreateExampleFrame()
     exampleFrame.txtAutoFrame = config.TextFactory(exampleFrame, L"Auto Shot Bar", 14)
     exampleFrame.txtAutoFrame:SetPoint("TOPLEFT", exampleFrame.autoFrame, 10, 20)
 
-    exampleFrame.autoFrame.castBar = exampleFrame.autoFrame:CreateTexture(nil, "ARTWORK")
+    exampleFrame.autoFrame.castBar = CreateFrame("StatusBar", nil, exampleFrame.autoFrame)
     exampleFrame.autoFrame.castBar:SetPoint("TOP")
-    exampleFrame.autoFrame.castBar:SetSize(0, EXAMPLE_HEIGHT)
+    exampleFrame.autoFrame.castBar:SetSize(EXAMPLE_WIDTH, EXAMPLE_HEIGHT)
     exampleFrame.autoFrame.castBar:Hide()
 
-    exampleFrame.autoFrame.shotBar = exampleFrame.autoFrame:CreateTexture(nil, "ARTWORK")
+    exampleFrame.autoFrame.shotBar = CreateFrame("StatusBar", nil, exampleFrame.autoFrame)
     exampleFrame.autoFrame.shotBar:SetPoint("TOP")
-    exampleFrame.autoFrame.shotBar:SetSize(random(0, EXAMPLE_WIDTH), EXAMPLE_HEIGHT)
+    exampleFrame.autoFrame.shotBar:SetSize(EXAMPLE_WIDTH, EXAMPLE_HEIGHT)
 
     exampleFrame.autoFrame.leftSpark = exampleFrame.autoFrame:CreateTexture(nil, "OVERLAY")
     exampleFrame.autoFrame.leftSpark:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Spark")
@@ -834,11 +840,14 @@ function appearance.CreateExampleFrame()
     exampleFrame.autoFrame.rightSpark:SetPoint("RIGHT", exampleFrame.autoFrame.shotBar, 8, 0)
     exampleFrame.autoFrame.rightSpark:SetSize(16, EXAMPLE_HEIGHT)
 
-    exampleFrame.autoFrame.clipBar = exampleFrame.autoFrame:CreateTexture(nil, "OVERLAY", nil, -1)
+    exampleFrame.autoFrame.clipBar = CreateFrame("StatusBar", nil, exampleFrame.autoFrame)
     exampleFrame.autoFrame.clipBar:SetPoint("TOP")
-    exampleFrame.autoFrame.clipBar:SetSize(multiSpeed * rangedSecond, EXAMPLE_HEIGHT)
+    exampleFrame.autoFrame.clipBar:SetSize(EXAMPLE_WIDTH, EXAMPLE_HEIGHT)
 
-    exampleFrame.autoFrame.shotText = exampleFrame.autoFrame:CreateFontString(nil, "OVERLAY")
+    exampleFrame.autoFrame.textFrame = CreateFrame("Frame", nil, exampleFrame.autoFrame)
+    exampleFrame.autoFrame.textFrame:SetAllPoints()
+
+    exampleFrame.autoFrame.shotText = exampleFrame.autoFrame.textFrame:CreateFontString(nil, "OVERLAY")
     exampleFrame.autoFrame.shotText:SetPoint("RIGHT", -5, 0)
     exampleFrame.autoFrame.shotText:SetFont(addon_data.utils.GetFont(), 12)
     exampleFrame.autoFrame.shotText:SetText("0.5")
@@ -851,16 +860,19 @@ function appearance.CreateExampleFrame()
     exampleFrame.txtCastFrame = config.TextFactory(exampleFrame, L"Hunter Cast Bar", 14)
     exampleFrame.txtCastFrame:SetPoint("TOPLEFT", exampleFrame.castFrame, 10, 20)
 
-    exampleFrame.castFrame.castBar = exampleFrame.castFrame:CreateTexture(nil, "ARTWORK")
+    exampleFrame.castFrame.castBar = CreateFrame("StatusBar", nil, exampleFrame.castFrame)
     exampleFrame.castFrame.castBar:SetPoint("TOPLEFT")
-    exampleFrame.castFrame.castBar:SetSize(random(0, EXAMPLE_WIDTH), EXAMPLE_HEIGHT)
+    exampleFrame.castFrame.castBar:SetSize(EXAMPLE_WIDTH, EXAMPLE_HEIGHT)
 
     exampleFrame.castFrame.castSpark = exampleFrame.castFrame:CreateTexture(nil, "OVERLAY")
     exampleFrame.castFrame.castSpark:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Spark")
     exampleFrame.castFrame.castSpark:SetPoint("RIGHT", exampleFrame.castFrame.castBar, 8, 0)
     exampleFrame.castFrame.castSpark:SetSize(16, EXAMPLE_HEIGHT)
 
-    exampleFrame.castFrame.castText = exampleFrame.castFrame:CreateFontString(nil, "OVERLAY")
+    exampleFrame.castFrame.textFrame = CreateFrame("Frame", nil, exampleFrame.castFrame)
+    exampleFrame.castFrame.textFrame:SetAllPoints()
+
+    exampleFrame.castFrame.castText = exampleFrame.castFrame.textFrame:CreateFontString(nil, "OVERLAY")
     exampleFrame.castFrame.castText:SetPoint("CENTER")
     exampleFrame.castFrame.castText:SetFont(addon_data.utils.GetFont(), 12)
     exampleFrame.castFrame.castText:SetText(L"Aimed Shot")

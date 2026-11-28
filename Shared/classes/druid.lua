@@ -37,7 +37,7 @@ end
 
 local function UpdateColorPalettes()
     if not settings.coloring_enabled then
-        addon_data.queuing.UnregisterAllSpells()
+        addon_data.queuing.UnregisterSpell(L"Maul")
     else
         local maulPalette = {
             MainHand = {

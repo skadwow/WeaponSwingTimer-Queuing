@@ -45,21 +45,11 @@ function hunter.OnUnitSpellCastSucceeded(unit, spellID)
         elseif SHOOT_IDS[spellID] then
             hunter.FeignFullReset = false
             hunter.last_shot_time = GetTime()
-            hunter.ResetShotTimer()
-            hunter.casting_auto = false
 
             local new_range_speed, _, _, _, _, _ = UnitRangedDamage("player")
-            -- Handling for getting haste buffs in combat, don't need to update auto shot cast time until the next shot is ready
-            if new_range_speed ~= hunter.range_speed then
-                if not hunter.auto_shot_ready then
-                    hunter.shot_timer = hunter.shot_timer * (new_range_speed / hunter.range_speed)
-                end
-                if not new_range_speed or new_range_speed == 0 then
-                    new_range_speed = hunter.range_speed or 1
-                end
-                hunter.range_speed = new_range_speed
-                hunter.range_auto_speed_modified = hunter.range_cast_speed_modifer
-            end
+            hunter.UpdateRangedSpeed(new_range_speed)
+            hunter.ResetShotTimer()
+            hunter.casting_auto = false
         end
     end
 end

@@ -109,22 +109,24 @@ local idleTime                  = 0
 local fadingState               = 0
 
 -- Values pertaining to UI sizing for quicker access
----@type Texture
+---@type Frame|StatusBar|Texture
 local main_bar
 ---@type Texture
 local main_spark
 ---@type FontString
+local main_left_text
+---@type FontString
 local main_right_text
----@type Texture
+---@type Frame|StatusBar|Texture
 local off_bar
 ---@type Texture
 local off_spark
 ---@type FontString
+local off_left_text
+---@type FontString
 local off_right_text
 
 local bar_width                 = 300
-local main_second_width         = bar_width / player.mainSpeed
-local off_second_width          = bar_width / player.offSpeed
 
 local settings                  = {}
 player.default_settings         = {
@@ -399,6 +401,7 @@ function player.UpdateMainWeaponSpeed()
     else
         player.SetMainWeaponSpeed(player.speedScale * player.mainSpeedBase)
     end
+    main_bar:SetMinMaxValues(0, attackSpeed)
 end
 
 function player.UpdateOffWeaponSpeed()
@@ -408,6 +411,7 @@ function player.UpdateOffWeaponSpeed()
     else
         player.SetOffWeaponSpeed(player.speedScale * player.offSpeedBase)
     end
+    off_bar:SetMinMaxValues(0, offhandAttackSpeed or 0)
 end
 
 function player.SetMainWeaponSpeed(attackSpeed)
@@ -415,8 +419,6 @@ function player.SetMainWeaponSpeed(attackSpeed)
     player.mainSpeed = attackSpeed
     player.mainSpeedChanged = attackSpeed ~= player.mainSpeedPrev
     player.speedScale = attackSpeed / player.mainSpeedBase
-
-    main_second_width = bar_width / attackSpeed
 end
 
 function player.SetOffWeaponSpeed(attackSpeed)
@@ -426,7 +428,6 @@ function player.SetOffWeaponSpeed(attackSpeed)
 
     if attackSpeed then
         player.speedScale = attackSpeed / player.offSpeedBase
-        off_second_width = bar_width / attackSpeed
     end
 end
 
@@ -620,12 +621,16 @@ function player.UpdateMainSwingTimer(elapsed)
         if progress then
             local swingTimer = player.mainSwingTimer
             if settings.fill_empty then
-                main_bar:SetWidth(bar_width - swingTimer * main_second_width)
+                main_bar:SetValue(player.mainSpeed - swingTimer)
             else
-                main_bar:SetWidth(swingTimer * main_second_width + 0.001)
+                main_bar:SetValue(swingTimer)
             end
             main_spark:SetShown(addon_data.settings.appearance.sparks and swingTimer > 0)
             main_right_text:SetText(SimpleRound(swingTimer, 0.1))
+
+            if player.mainSwingTimer == 0 then
+                print(main_bar:GetValue(), player.mainSpeed)
+            end
 
             idleTime = 0
         else
@@ -664,9 +669,9 @@ function player.UpdateOffSwingTimer(elapsed)
             if progress then
                 local swingTimer = player.offSwingTimer
                 if settings.fill_empty then
-                    off_bar:SetWidth(bar_width - swingTimer * off_second_width)
+                    off_bar:SetValue(player.offSpeed - swingTimer)
                 else
-                    off_bar:SetWidth(swingTimer * off_second_width + 0.001)
+                    off_bar:SetValue(swingTimer)
                 end
                 off_spark:SetShown(settings.show_offhand and (settings.combined_bar or addon_data.settings.appearance.sparks and player.offSwingTimer > 0))
                 off_right_text:SetText(SimpleRound(swingTimer, 0.1))
@@ -687,16 +692,16 @@ function player.UpdateOffHandDisplay()
     local frame = player.frame
     if player.hasOffHand and settings.show_offhand and not settings.combined_bar then
         frame:SetHeight(settings.height * 2 + 2)
-        frame.off_bar:Show()
-        frame.off_spark:SetShown(player.hasOffHand and settings.show_offhand and (settings.combined_bar or addon_data.settings.appearance.sparks and player.offSwingTimer > 0))
-        frame.off_left_text:SetShown(settings.show_left_text)
-        frame.off_right_text:SetShown(settings.show_right_text)
+        off_bar:Show()
+        off_spark:SetShown(player.hasOffHand and settings.show_offhand and (settings.combined_bar or addon_data.settings.appearance.sparks and player.offSwingTimer > 0))
+        off_left_text:SetShown(settings.show_left_text)
+        off_right_text:SetShown(settings.show_right_text)
     else
         frame:SetHeight(settings.height)
-        frame.off_bar:Hide()
-        frame.off_spark:Hide()
-        frame.off_left_text:Hide()
-        frame.off_right_text:Hide()
+        off_bar:Hide()
+        off_spark:Hide()
+        off_left_text:Hide()
+        off_right_text:Hide()
     end
 
     addon_data.appearance.UpdateExampleFrameSettings()
@@ -752,10 +757,6 @@ function player.UpdateVisualsOnSettingsChange()
         frame:SetPoint(settings.point, UIParent, settings.rel_point, settings.x_offset, settings.y_offset)
         frame:SetWidth(settings.width)
         bar_width = settings.width
-        main_second_width = bar_width / player.mainSpeed
-        if player.offSpeed then
-            off_second_width = bar_width / player.offSpeed
-        end
         frame:SetAlpha(player.inCombat and settings.in_combat_alpha or settings.ooc_alpha)
         if player.hasOffHand and settings.show_offhand and not settings.combined_bar then
             frame:SetHeight((settings.height * 2) + 2)
@@ -765,56 +766,56 @@ function player.UpdateVisualsOnSettingsChange()
 
         addon_data.appearance.SetupFrame(frame, settings.show_border)
 
-        addon_data.appearance.SetupBar(frame.main_bar, settings.show_border)
-        addon_data.appearance.SetupBar(frame.off_bar, settings.show_border)
+        addon_data.appearance.SetupBar(main_bar, settings.show_border)
+        addon_data.appearance.SetupBar(off_bar, settings.show_border)
 
-        frame.main_bar:SetPoint("TOPLEFT", 0, 0)
-        frame.main_bar:SetHeight(settings.height)
-        frame.main_bar:SetVertexColor(settings.main_r, settings.main_g, settings.main_b, settings.main_a)
+        main_bar:SetStatusBarColor(settings.main_r, settings.main_g, settings.main_b, settings.main_a)
+        off_bar:SetStatusBarColor(settings.off_r, settings.off_g, settings.off_b, settings.off_a)
 
-        frame.off_bar:SetPoint("BOTTOMLEFT", 0, 0)
-        frame.off_bar:SetHeight(settings.height)
-        frame.off_bar:SetVertexColor(settings.off_r, settings.off_g, settings.off_b, settings.off_a)
+        main_bar:SetHeight(settings.height)
+        off_bar:SetHeight(settings.height)
 
         if settings.fill_empty then
-            main_bar:SetWidth(bar_width - player.mainSwingTimer * main_second_width)
-            off_bar:SetWidth(bar_width - player.offSwingTimer * off_second_width)
+            main_bar:SetValue(player.mainSpeed - player.mainSwingTimer)
+            if player.hasOffHand then
+                off_bar:SetValue(player.offSpeed - player.offSwingTimer)
+            end
         else
-            main_bar:SetWidth(player.mainSwingTimer * main_second_width + 0.001)
-            off_bar:SetWidth(player.offSwingTimer * off_second_width + 0.001)
+            main_bar:SetValue(player.mainSwingTimer)
+            off_bar:SetValue(player.offSwingTimer)
         end
 
-        frame.main_spark:SetSize(16, settings.height)
-        frame.off_spark:SetSize(16, settings.height)
+        main_spark:SetSize(16, settings.height)
+        off_spark:SetSize(16, settings.height)
 
         main_spark:SetShown(addon_data.settings.appearance.sparks and player.mainSwingTimer > 0)
         off_spark:SetShown(player.hasOffHand and settings.show_offhand and (settings.combined_bar or addon_data.settings.appearance.sparks and player.offSwingTimer > 0))
 
-        frame.main_left_text:SetPoint("TOPLEFT", 5, -(settings.height / 2) + (settings.fontsize / 2))
-        frame.main_left_text:SetTextColor(settings.main_text_r, settings.main_text_g, settings.main_text_b, settings.main_text_a)
-        frame.main_left_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
-        frame.main_right_text:SetPoint("TOPRIGHT", -5, -(settings.height / 2) + (settings.fontsize / 2))
-        frame.main_right_text:SetTextColor(settings.main_text_r, settings.main_text_g, settings.main_text_b, settings.main_text_a)
-        frame.main_right_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
+        main_left_text:SetPoint("TOPLEFT", 5, -(settings.height / 2) + (settings.fontsize / 2))
+        main_left_text:SetTextColor(settings.main_text_r, settings.main_text_g, settings.main_text_b, settings.main_text_a)
+        main_left_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
+        main_right_text:SetPoint("TOPRIGHT", -5, -(settings.height / 2) + (settings.fontsize / 2))
+        main_right_text:SetTextColor(settings.main_text_r, settings.main_text_g, settings.main_text_b, settings.main_text_a)
+        main_right_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
 
-        frame.main_left_text:SetShown(settings.show_left_text)
-        frame.main_right_text:SetShown(settings.show_right_text)
+        main_left_text:SetShown(settings.show_left_text)
+        main_right_text:SetShown(settings.show_right_text)
 
-        frame.off_left_text:SetPoint("BOTTOMLEFT", 5, (settings.height / 2) - (settings.fontsize / 2))
-        frame.off_left_text:SetTextColor(settings.off_text_r, settings.off_text_g, settings.off_text_b, settings.off_text_a)
-        frame.off_left_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
-        frame.off_right_text:SetPoint("BOTTOMRIGHT", -5, (settings.height / 2) - (settings.fontsize / 2))
-        frame.off_right_text:SetTextColor(settings.off_text_r, settings.off_text_g, settings.off_text_b, settings.off_text_a)
-        frame.off_right_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
+        off_left_text:SetPoint("BOTTOMLEFT", 5, (settings.height / 2) - (settings.fontsize / 2))
+        off_left_text:SetTextColor(settings.off_text_r, settings.off_text_g, settings.off_text_b, settings.off_text_a)
+        off_left_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
+        off_right_text:SetPoint("BOTTOMRIGHT", -5, (settings.height / 2) - (settings.fontsize / 2))
+        off_right_text:SetTextColor(settings.off_text_r, settings.off_text_g, settings.off_text_b, settings.off_text_a)
+        off_right_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
 
         if player.hasOffHand and settings.show_offhand and not settings.combined_bar then
-            frame.off_bar:Show()
-            frame.off_left_text:SetShown(settings.show_left_text)
-            frame.off_right_text:SetShown(settings.show_right_text)
+            off_bar:Show()
+            off_left_text:SetShown(settings.show_left_text)
+            off_right_text:SetShown(settings.show_right_text)
         else
-            frame.off_bar:Hide()
-            frame.off_left_text:Hide()
-            frame.off_right_text:Hide()
+            off_bar:Hide()
+            off_left_text:Hide()
+            off_right_text:Hide()
         end
 
         if (not settings.swing_error_pushback) then
@@ -859,46 +860,65 @@ function player.InitializeVisuals()
     frame:SetScript("OnDragStop", player.OnFrameDragStop)
 
     -- Create the main hand bar
-    frame.main_bar = frame:CreateTexture(nil,"ARTWORK")
+    frame.main_bar = CreateFrame("StatusBar", nil, frame)
     main_bar = frame.main_bar
+    main_bar:SetPoint("LEFT")
+    main_bar:SetPoint("RIGHT")
+    main_bar:SetPoint("TOP")
+    main_bar:SetMinMaxValues(0, player.mainSpeed)
     -- Create the main spark
     frame.main_spark = frame:CreateTexture(nil,"OVERLAY")
     main_spark = frame.main_spark
-    frame.main_spark:SetTexture('Interface/AddOns/WeaponSwingTimer/Shared/images/Spark')
-    frame.main_spark:SetPoint("RIGHT", frame.main_bar, 8, 0)
+    main_spark:SetTexture('Interface/AddOns/WeaponSwingTimer/Shared/images/Spark')
+    main_spark:SetPoint("RIGHT", frame.main_bar, 8, 0)
+    -- Create a holder frame for raising text frame level
+    main_bar.textFrame = CreateFrame("Frame", nil , main_bar)
+    main_bar.textFrame:SetFrameLevel(5)
+    main_bar.textFrame:SetAllPoints()
     -- Create the main hand bar left text
-    frame.main_left_text = frame:CreateFontString(nil, "OVERLAY")
-    frame.main_left_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
-    frame.main_left_text:SetText(L"Main-Hand")
-    frame.main_left_text:SetJustifyV("MIDDLE")
-    frame.main_left_text:SetJustifyH("LEFT")
+    main_bar.left_text = main_bar.textFrame:CreateFontString(nil, "OVERLAY")
+    main_left_text = main_bar.left_text
+    main_left_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
+    main_left_text:SetText(L"Main-Hand")
+    main_left_text:SetJustifyV("MIDDLE")
+    main_left_text:SetJustifyH("LEFT")
     -- Create the main hand bar right text
-    frame.main_right_text = frame:CreateFontString(nil, "OVERLAY")
-    main_right_text = frame.main_right_text
-    frame.main_right_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
-    frame.main_right_text:SetJustifyV("MIDDLE")
-    frame.main_right_text:SetJustifyH("RIGHT")
+    main_bar.right_text = main_bar.textFrame:CreateFontString(nil, "OVERLAY")
+    main_right_text = main_bar.right_text
+    main_right_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
+    main_right_text:SetJustifyV("MIDDLE")
+    main_right_text:SetJustifyH("RIGHT")
+
     -- Create the off hand bar
-    frame.off_bar = frame:CreateTexture(nil,"ARTWORK")
+    frame.off_bar = CreateFrame("StatusBar", nil, frame)
     off_bar = frame.off_bar
+    off_bar:SetPoint("LEFT")
+    off_bar:SetPoint("RIGHT")
+    off_bar:SetPoint("BOTTOM")
+    off_bar:SetMinMaxValues(0, player.offSpeed)
     -- Create the off spark
     frame.off_spark = frame:CreateTexture(nil,"OVERLAY")
     off_spark = frame.off_spark
-    frame.off_spark:SetTexture('Interface/AddOns/WeaponSwingTimer/Shared/images/Spark')
-    frame.off_spark:SetPoint("RIGHT", frame.off_bar, 8, 0)
+    off_spark:SetTexture('Interface/AddOns/WeaponSwingTimer/Shared/images/Spark')
+    off_spark:SetPoint("RIGHT", frame.off_bar, 8, 0)
+    -- Create a holder frame for raising text frame level
+    off_bar.textFrame = CreateFrame("Frame", nil , off_bar)
+    off_bar.textFrame:SetFrameLevel(5)
+    off_bar.textFrame:SetAllPoints()
     -- Create the off hand bar left text
-    frame.off_left_text = frame:CreateFontString(nil, "OVERLAY")
-    frame.off_left_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
-    frame.off_left_text:SetText(L"Off-Hand")
-    frame.off_left_text:SetJustifyV("MIDDLE")
-    frame.off_left_text:SetJustifyH("LEFT")
+    off_bar.left_text = frame.off_bar.textFrame:CreateFontString(nil, "OVERLAY")
+    off_left_text = frame.off_bar.left_text
+    off_left_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
+    off_left_text:SetText(L"Off-Hand")
+    off_left_text:SetJustifyV("MIDDLE")
+    off_left_text:SetJustifyH("LEFT")
     -- Create the off hand bar right text
-    frame.off_right_text = frame:CreateFontString(nil, "OVERLAY")
-    off_right_text = frame.off_right_text
-    frame.off_right_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
-    frame.off_right_text:SetJustifyV("MIDDLE")
-    frame.off_right_text:SetJustifyH("RIGHT")
-    -- Show it off
+    off_bar.right_text = frame.off_bar.textFrame:CreateFontString(nil, "OVERLAY")
+    off_right_text = frame.off_bar.right_text
+    off_right_text:SetFont(addon_data.utils.GetFont(), settings.fontsize)
+    off_right_text:SetJustifyV("MIDDLE")
+    off_right_text:SetJustifyH("RIGHT")
+
     player.UpdateVisualsOnSettingsChange()
     player.UpdateVisualsOnUpdate()
     frame:Show()

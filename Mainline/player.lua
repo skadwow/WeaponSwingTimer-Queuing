@@ -67,24 +67,36 @@ function addon_data.player.OnPlayerSwingOffHand(swingDuration)
     end
 end
 
+local PARRY_ANIMATION_BUFFER = 0.5 -- perhaps make this dynamic based on player animations (swings?) if possible?
+
 function addon_data.player.OnUnitCombat(event)
     if event == "PARRY" then
-        local min_swing_time = max(player.mainSpeed * 0.2 - 0.5, 0.01) -- 0.01 safety factor due to player progress check requiring > 0 swing timer. Ugly bandaid.
+        local min_swing_time = max(player.mainSpeed * 0.2 - PARRY_ANIMATION_BUFFER, 0.01) -- 0.01 safety factor due to player progress check requiring > 0 swing timer. Ugly bandaid.
         local ts = GetTimePreciseSec()
-        local dtReset = ts - player.tsPrevMhSwing
-        addon_data.utils.DebugPrint("UNIT_COMBAT Parry, isAttackEarly?", isEarlyAttack, "didSkipAttack?", didSkipAttack, "dtReset?", dtReset)
-        if player.mainSwingTimer > min_swing_time then
-            if didSkipAttack then
-                local dtSkip = ts - tsEarlyAttack
-                if dtSkip < 0.5 then
-                    player.ResetMainSwingTimer(dtSkip)
-                else
-                    addon_data.utils.DebugPrint("parryHaste!")
+        addon_data.utils.DebugPrint("UNIT_COMBAT Parry didSkipAttack?", didSkipAttack)
+
+        if didSkipAttack then
+            local dtSkip = ts - tsEarlyAttack
+            addon_data.utils.DebugPrint(" * dtSkip?", dtSkip)
+            if dtSkip < PARRY_ANIMATION_BUFFER then
+                addon_data.utils.DebugPrint("parry delayed reset T+", dtSkip)
+                player.ResetMainSwingTimer(dtSkip)
+            else
+                addon_data.utils.DebugPrint("parry haste")
+                if player.mainSwingTimer > min_swing_time then
                     addon_data.player.mainSwingTimer = max(player.mainSwingTimer - (player.mainSpeed * 0.4), min_swing_time)
                 end
-            elseif not isEarlyAttack or dtReset > 0.6 then
-                addon_data.utils.DebugPrint("parryHaste!")
-                addon_data.player.mainSwingTimer = max(player.mainSwingTimer - (player.mainSpeed * 0.4), min_swing_time)
+            end
+        else
+            local dtReset = ts - player.tsPrevMhSwing
+            addon_data.utils.DebugPrint(" * dtReset?", dtReset)
+            if dtReset < PARRY_ANIMATION_BUFFER then
+                addon_data.utils.DebugPrint("parry ignored, too close to swing")
+            else
+                addon_data.utils.DebugPrint("parry haste")
+                if player.mainSwingTimer > min_swing_time then
+                    addon_data.player.mainSwingTimer = max(player.mainSwingTimer - (player.mainSpeed * 0.4), min_swing_time)
+                end
             end
         end
     end

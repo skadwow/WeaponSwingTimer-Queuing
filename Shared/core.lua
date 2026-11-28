@@ -107,7 +107,7 @@ function core.RestoreAllDefaults()
     appearance.RestoreDefaults()
 end
 
-local function InitializeAllVisuals()
+function core.InitializeAllVisuals()
     player.InitializeVisuals()
     target.InitializeVisuals()
     if PLAYER_CLASS == "WARRIOR" then
@@ -190,7 +190,7 @@ function frame:OnAddonLoaded()
 
     profiles.LoadProfiles()
     core.LoadAllSettings()
-    InitializeAllVisuals()
+    core.InitializeAllVisuals()
 
     player.ZeroizeSwingTimers()
     target.ZeroizeSwingTimers()

@@ -18,13 +18,6 @@ local GetSpellIDs           = addon_data.spells.GetSpellIDs
 ---@type SpellID?
 WST_Queued                  = nil
 
----@type table<SpellID, true>
-local QUEUED_SPELL_IDS      = GetSpellIDs(
-    L"Heroic Strike",
-    L"Cleave",
-    L"Maul"
-)
-
 ---@type table<SpellID, SpellPalette>
 queuing.spellPalettes       = {}
 
@@ -44,18 +37,18 @@ local function ColorQueuedBars()
         local bar = spellPalette.MainHand.bar
         local text = spellPalette.MainHand.text
 
-        frame.main_bar:SetVertexColor(bar.r, bar.g, bar.b, bar.a)
-        frame.main_left_text:SetTextColor(text.r, text.g, text.b, text.a)
-        frame.main_right_text:SetTextColor(text.r, text.g, text.b, text.a)
+        frame.main_bar:SetStatusBarColor(bar.r, bar.g, bar.b, bar.a)
+        frame.main_bar.left_text:SetTextColor(text.r, text.g, text.b, text.a)
+        frame.main_bar.right_text:SetTextColor(text.r, text.g, text.b, text.a)
     end
 
     if spellPalette.OffHand then
         local bar = spellPalette.OffHand.bar
         local text = spellPalette.OffHand.text
 
-        frame.off_bar:SetVertexColor(bar.r, bar.g, bar.b, bar.a)
-        frame.off_left_text:SetTextColor(text.r, text.g, text.b, text.a)
-        frame.off_right_text:SetTextColor(text.r, text.g, text.b, text.a)
+        frame.off_bar:SetStatusBarColor(bar.r, bar.g, bar.b, bar.a)
+        frame.off_bar.left_text:SetTextColor(text.r, text.g, text.b, text.a)
+        frame.off_bar.right_text:SetTextColor(text.r, text.g, text.b, text.a)
     end
 end
 
@@ -64,13 +57,13 @@ local function UncolorQueuedBars()
 
     local frame = addon_data.player.frame
 
-    frame.main_bar:SetVertexColor(settings.main_r, settings.main_g, settings.main_b, settings.main_a)
-    frame.main_left_text:SetTextColor(settings.main_text_r, settings.main_text_g, settings.main_text_b, settings.main_text_a)
-    frame.main_right_text:SetTextColor(settings.main_text_r, settings.main_text_g, settings.main_text_b, settings.main_text_a)
+    frame.main_bar:SetStatusBarColor(settings.main_r, settings.main_g, settings.main_b, settings.main_a)
+    frame.main_bar.left_text:SetTextColor(settings.main_text_r, settings.main_text_g, settings.main_text_b, settings.main_text_a)
+    frame.main_bar.right_text:SetTextColor(settings.main_text_r, settings.main_text_g, settings.main_text_b, settings.main_text_a)
 
-    frame.off_bar:SetVertexColor(settings.off_r, settings.off_g, settings.off_b, settings.off_a)
-    frame.off_left_text:SetTextColor(settings.off_text_r, settings.off_text_g, settings.off_text_b, settings.off_text_a)
-    frame.off_right_text:SetTextColor(settings.off_text_r, settings.off_text_g, settings.off_text_b, settings.off_text_a)
+    frame.off_bar:SetStatusBarColor(settings.off_r, settings.off_g, settings.off_b, settings.off_a)
+    frame.off_bar.left_text:SetTextColor(settings.off_text_r, settings.off_text_g, settings.off_text_b, settings.off_text_a)
+    frame.off_bar.right_text:SetTextColor(settings.off_text_r, settings.off_text_g, settings.off_text_b, settings.off_text_a)
 end
 queuing.UncolorQueuedBars = UncolorQueuedBars
 
@@ -110,7 +103,7 @@ end
 local function CheckQueueEvent(unit, spellID)
     if unit ~= "player" then return end
 
-    if QUEUED_SPELL_IDS[spellID] then
+    if queuing.spellPalettes[spellID] then
         WST_Queued = spellID
         ColorQueuedBars()
     end
@@ -184,7 +177,7 @@ end
 function queuing.OnUnitSpellCastFailedQuiet(unit, spellID)
     if unit ~= "player" then return end
 
-    if QUEUED_SPELL_IDS[spellID] then
+    if queuing.spellPalettes[spellID] then
         PeriodicCheck(unit, spellID)
     end
 end

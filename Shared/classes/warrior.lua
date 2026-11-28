@@ -15,6 +15,11 @@ addon_data.warrior          = warrior
 local queuing               = addon_data.queuing
 local player                = addon_data.player
 
+---@type Frame|StatusBar|Texture
+local barSlamDelay
+---@type Texture
+local sparkSlamGCD
+
 local settings              = {}
 warrior.default_settings    = {
     -- bar coloring
@@ -74,17 +79,17 @@ local function UpdateSlamDisplay()
     local frame = player.frame
 
     if warrior.IsSlamNotApplicable() then
-        frame.slam_delay_bar:Hide()
-        frame.slam_gcd_spark:Hide()
+        barSlamDelay:Hide()
+        sparkSlamGCD:Hide()
         return
     end
 
     if player.hasTwoHand or settings.slam_delay_one_handing then
-        frame.slam_delay_bar:SetShown(settings.slam_delay_enabled and settings.slam_delay > 0)
-        frame.slam_gcd_spark:SetShown(settings.slam_gcd_spark)
+        barSlamDelay:SetShown(settings.slam_delay_enabled and settings.slam_delay > 0)
+        sparkSlamGCD:SetShown(settings.slam_gcd_spark)
     else
-        frame.slam_delay_bar:Hide()
-        frame.slam_gcd_spark:Hide()
+        barSlamDelay:Hide()
+        sparkSlamGCD:Hide()
     end
 end
 warrior.UpdateSlamDisplay = UpdateSlamDisplay
@@ -95,17 +100,17 @@ function UpdateIndicators()
     local frameWidth = frame:GetWidth()
     local secondWidth = frameWidth / player.mainSpeed
 
-    frame.slam_delay_bar:SetWidth(settings.slam_delay * secondWidth)
+    local attackSpeed = UnitAttackSpeed("player")
+    barSlamDelay:SetMinMaxValues(0, attackSpeed)
+    barSlamDelay:SetValue(settings.slam_delay)
     if addon_data.settings.player.fill_empty then
-        frame.slam_delay_bar:ClearPoint("LEFT")
-        frame.slam_delay_bar:SetPoint("RIGHT")
-        frame.slam_gcd_spark:ClearPoint("LEFT")
-        frame.slam_gcd_spark:SetPoint("RIGHT", -1.5 * secondWidth + 8, 0)
+        barSlamDelay:SetReverseFill(true)
+        sparkSlamGCD:ClearPoint("LEFT")
+        sparkSlamGCD:SetPoint("RIGHT", -1.5 * secondWidth + 8, 0)
     else
-        frame.slam_delay_bar:ClearPoint("RIGHT")
-        frame.slam_delay_bar:SetPoint("LEFT")
-        frame.slam_gcd_spark:ClearPoint("RIGHT")
-        frame.slam_gcd_spark:SetPoint("LEFT", 1.5 * secondWidth - 8, 0)
+        barSlamDelay:SetReverseFill(false)
+        sparkSlamGCD:ClearPoint("RIGHT")
+        sparkSlamGCD:SetPoint("LEFT", 1.5 * secondWidth - 8, 0)
     end
 end
 
@@ -212,9 +217,9 @@ function warrior.UpdateVisualsOnSettingsChange()
     if player.class ~= "WARRIOR" then return end
 
     local frame = player.frame
-    addon_data.appearance.SetupBar(frame.slam_delay_bar, addon_data.settings.player.show_border, "Right")
-    frame.slam_delay_bar:SetVertexColor(settings.slam_delay_r, settings.slam_delay_g, settings.slam_delay_b, settings.slam_delay_a)
-    frame.slam_gcd_spark:SetVertexColor(settings.slam_delay_r, settings.slam_delay_g, settings.slam_delay_b, settings.slam_delay_a)
+    addon_data.appearance.SetupBar(barSlamDelay, addon_data.settings.player.show_border, "Right")
+    barSlamDelay:SetStatusBarColor(settings.slam_delay_r, settings.slam_delay_g, settings.slam_delay_b, settings.slam_delay_a)
+    sparkSlamGCD:SetVertexColor(settings.slam_delay_r, settings.slam_delay_g, settings.slam_delay_b, settings.slam_delay_a)
     UpdateColorPalettes()
     UpdateSlamDisplay()
     UpdateIndicators()
@@ -222,17 +227,19 @@ end
 
 function warrior.InitializeVisuals()
     local frame = player.frame
-    frame.slam_delay_bar = frame:CreateTexture(nil, "ARTWORK", nil, 1)
-    frame.slam_delay_bar:SetPoint("TOP")
-    frame.slam_delay_bar:SetPoint("BOTTOM")
-    frame.slam_delay_bar:Hide()
+    frame.slamIndicators = CreateFrame("Frame", nil, frame)
+    frame.slamIndicators:SetAllPoints()
 
-    frame.slam_gcd_spark = frame:CreateTexture(nil, "OVERLAY")
-    frame.slam_gcd_spark:SetPoint("TOP")
-    frame.slam_gcd_spark:SetPoint("BOTTOM")
-    frame.slam_gcd_spark:SetWidth(16)
-    frame.slam_gcd_spark:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Spark")
-    frame.slam_gcd_spark:Hide()
+    frame.slamIndicators.barSlamDelay = CreateFrame("StatusBar", nil, frame.slamIndicators)
+    barSlamDelay = frame.slamIndicators.barSlamDelay
+    barSlamDelay:SetAllPoints()
+
+    frame.slamIndicators.sparkSlamGCD = frame.slamIndicators:CreateTexture(nil, "OVERLAY")
+    sparkSlamGCD = frame.slamIndicators.sparkSlamGCD
+    sparkSlamGCD:SetPoint("TOP")
+    sparkSlamGCD:SetPoint("BOTTOM")
+    sparkSlamGCD:SetWidth(16)
+    sparkSlamGCD:SetTexture("Interface/AddOns/WeaponSwingTimer/Shared/images/Spark")
 
     warrior.UpdateVisualsOnSettingsChange()
 end
